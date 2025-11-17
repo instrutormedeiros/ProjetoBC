@@ -4,7 +4,7 @@
    Integração com Google Apps Script
    ============================ */
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwIF8Fr3HzawCHFPvAH4Cl955GcFaQqy2-4OH9OhA8d8QgYZz28hcNhusb3yDgpRw6taw/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzbnB7HLTEzClwotviGMsFtZI02D30kqptFFENz1kJ1MsIm4Gq6juhN9xvMWGuapQb4kA/exec";
 
 /* Carrega dados salvos localmente */
 function getLocalUser() {
