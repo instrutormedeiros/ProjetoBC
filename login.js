@@ -7,7 +7,7 @@
 */
 
 (function(){
-  const API_URL = "https://script.google.com/macros/s/AKfycbzbnB7HLTEzClwotviGMsFtZI02D30kqptFFENz1kJ1MsIm4Gq6juhN9xvMWGuapQb4kA/exec";
+ const API_URL = "https://script.google.com/macros/s/AKfycbwwuLs6S7Fer-eFntco7OO3EEP2EtlNwGlh4l9Kga8rzajAtytbKoqicv0exn0ZdA6t/exec";
 
   function debugLog(...args){ 
     try { console.log("[LOGIN.JS]", ...args); } catch(e){} 
