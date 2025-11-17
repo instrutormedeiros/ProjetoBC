@@ -1,164 +1,145 @@
-/* ============================
-   LOGIN.JS – Projeto Bravo Charlie
-   Acesso por Nome + Email + 30 dias grátis
-   Integração com Google Apps Script
-   ============================ */
+/* login.js - Projeto Bravo Charlie
+   Versão com logs de debug e integração mínima com Apps Script
+   Deve ser incluído ENTRE data.js e app.js:
+   <script src="data.js" defer></script>
+   <script src="login.js" defer></script>
+   <script src="app.js" defer></script>
+*/
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzbnB7HLTEzClwotviGMsFtZI02D30kqptFFENz1kJ1MsIm4Gq6juhN9xvMWGuapQb4kA/exec";
+(function(){
+  const API_URL = "https://script.google.com/macros/s/AKfycbzbnB7HLTEzClwotviGMsFtZI02D30kqptFFENz1kJ1MsIm4Gq6juhN9xvMWGuapQb4kA/exec";
 
-/* Carrega dados salvos localmente */
-function getLocalUser() {
+  function debugLog(...args){ 
+    try { console.log("[LOGIN.JS]", ...args); } catch(e){} 
+  }
+
+  function getLocalUser(){
+    try { return JSON.parse(localStorage.getItem("pbc_user")) || null; }
+    catch(e){ return null; }
+  }
+  function saveLocalUser(u){
+    try { localStorage.setItem("pbc_user", JSON.stringify(u)); debugLog("saved user to localStorage", u); }
+    catch(e){ debugLog("failed saving user:", e); }
+  }
+
+  async function registerUser(name, email){
+    debugLog("registerUser()", name, email);
     try {
-        return JSON.parse(localStorage.getItem("pbc_user")) || null;
-    } catch {
-        return null;
-    }
-}
-
-/* Salva dados localmente */
-function saveLocalUser(user) {
-    localStorage.setItem("pbc_user", JSON.stringify(user));
-}
-
-/* Esconde overlay */
-function hideOverlay() {
-    const ov = document.getElementById("access-overlay");
-    if (ov) {
-        ov.style.display = "none";
-        ov.classList.add("hidden");
-    }
-}
-
-/* Mostra overlay */
-function showOverlay() {
-    const ov = document.getElementById("access-overlay");
-    if (ov) {
-        ov.style.display = "flex";
-        ov.classList.remove("hidden");
-    }
-}
-
-/* ============================
-   1) REGISTRAR NOVO ALUNO
-   ============================ */
-async function registerUser(name, email) {
-    const res = await fetch(API_URL, {
+      const res = await fetch(API_URL, {
         method: "POST",
-        body: JSON.stringify({
-            action: "register",
-            name,
-            email
-        }),
+        body: JSON.stringify({ action: "register", name, email}),
+        headers: { "Content-Type": "application/json" },
         redirect: "follow"
-    });
-
-    const data = await res.json();
-    return data;
-}
-
-/* ============================
-   2) LOGIN
-   ============================ */
-async function loginUser(email) {
-    const res = await fetch(API_URL + "?action=login&email=" + encodeURIComponent(email));
-    const data = await res.json();
-    return data;
-}
-
-/* ============================
-   3) VALIDAR ACESSO
-   ============================ */
-function hasAccess(user) {
-    if (!user) return false;
-
-    if (user.premium === true) return true;
-
-    // Trial de 30 dias
-    const now = Date.now();
-    const since = Number(user.createdAt || 0);
-    const diff = now - since;
-
-    const days = diff / (1000 * 60 * 60 * 24);
-    return days <= 30;
-}
-
-/* ============================
-   4) INITIALIZAÇÃO DO SISTEMA
-   ============================ */
-function initializeCourse() {
-    if (typeof window.initCourse === "function") {
-        console.log("📘 Iniciando curso...");
-        window.initCourse();
-    } else {
-        console.warn("⚠ initCourse ainda não está disponível.");
+      });
+      const json = await res.json();
+      debugLog("register response:", json);
+      return json;
+    } catch(err){
+      debugLog("registerUser error:", err);
+      return { success: false, message: "Erro na requisição" };
     }
-}
+  }
 
-/* ============================
-   5) BOOT DO LOGIN
-   ============================ */
-document.addEventListener("DOMContentLoaded", () => {
+  async function loginUser(email){
+    debugLog("loginUser()", email);
+    try {
+      const res = await fetch(API_URL + "?action=login&email=" + encodeURIComponent(email));
+      const json = await res.json();
+      debugLog("login response:", json);
+      return json;
+    } catch(err){
+      debugLog("loginUser error:", err);
+      return { success: false, message: "Erro na requisição" };
+    }
+  }
+
+  function hasAccess(user){
+    if(!user) return false;
+    if(user.premium === true) return true;
+    const created = Number(user.createdAt || 0);
+    const days = (Date.now() - created) / (1000*60*60*24);
+    return days <= 30;
+  }
+
+  function hideOverlay(){
+    const ov = document.getElementById("access-overlay");
+    if(ov){ ov.style.display = "none"; ov.classList.add("hidden"); debugLog("overlay hidden"); }
+  }
+  function showOverlay(){
+    const ov = document.getElementById("access-overlay");
+    if(ov){ ov.style.display = "flex"; ov.classList.remove("hidden"); debugLog("overlay shown"); }
+  }
+
+  function initializeCourse(){
+    if(typeof window.initCourse === "function"){ debugLog("calling initCourse()"); window.initCourse(); }
+    else debugLog("initCourse not available yet");
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    debugLog("DOMContentLoaded - login.js running");
     const btnRegister = document.getElementById("ac-register");
     const btnLogin = document.getElementById("ac-login");
     const btnGuest = document.getElementById("ac-continue-guest");
-
     const inputName = document.getElementById("ac-name");
     const inputEmail = document.getElementById("ac-email");
 
-    const overlay = document.getElementById("access-overlay");
-
-    /* Caso já tenha usuário salvo */
-    const savedUser = getLocalUser();
-
-    if (savedUser && hasAccess(savedUser)) {
-        hideOverlay();
-        initializeCourse();
-        return;
+    if(!btnRegister || !btnLogin || !inputEmail){
+      debugLog("Some login elements missing:", { btnRegister: !!btnRegister, btnLogin: !!btnLogin, inputName: !!inputName, inputEmail: !!inputEmail });
+      return;
     }
 
-    /* Criar conta */
-    btnRegister.onclick = async () => {
-        const name = inputName.value.trim();
-        const email = inputEmail.value.trim().toLowerCase();
+    // Se já existe usuário com acesso => iniciar curso
+    const saved = getLocalUser();
+    if(saved && hasAccess(saved)){
+      debugLog("saved user has access, skipping overlay");
+      hideOverlay();
+      initializeCourse();
+      return;
+    } else {
+      debugLog("no saved user or access expired");
+      showOverlay();
+    }
 
-        if (!name || !email) {
-            alert("Preencha nome e e-mail");
-            return;
-        }
-
-        const result = await registerUser(name, email);
-
-        if (result.success) {
-            saveLocalUser(result.user);
-            hideOverlay();
-            initializeCourse();
-        } else {
-            alert(result.message || "Erro ao registrar.");
-        }
-    };
-
-    /* Login */
-    btnLogin.onclick = async () => {
-        const email = inputEmail.value.trim().toLowerCase();
-        if (!email) {
-            alert("Informe um e-mail válido.");
-            return;
-        }
-
-        const result = await loginUser(email);
-
-        if (result.success) {
-            saveLocalUser(result.user);
-            hideOverlay();
-            initializeCourse();
-        } else {
-            alert(result.message || "E-mail não encontrado.");
-        }
-    };
-
-    /* Acesso somente leitura */
-    btnGuest.onclick = () => {
+    btnRegister.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const name = (inputName && inputName.value || "").trim();
+      const email = (inputEmail.value || "").trim().toLowerCase();
+      if(!name || !email){ alert("Preencha nome e e-mail."); return; }
+      btnRegister.disabled = true;
+      const r = await registerUser(name, email);
+      btnRegister.disabled = false;
+      if(r && r.success){
+        saveLocalUser(r.user);
         hideOverlay();
         initializeCourse();
-    };
-});
+      } else {
+        alert(r.message || "Erro ao registrar. Veja o console.");
+        debugLog("register failed:", r);
+      }
+    });
+
+    btnLogin.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const email = (inputEmail.value || "").trim().toLowerCase();
+      if(!email){ alert("Informe um e-mail válido."); return; }
+      btnLogin.disabled = true;
+      const r = await loginUser(email);
+      btnLogin.disabled = false;
+      if(r && r.success){
+        saveLocalUser(r.user);
+        hideOverlay();
+        initializeCourse();
+      } else {
+        alert(r.message || "E-mail não encontrado.");
+        debugLog("login failed:", r);
+      }
+    });
+
+    btnGuest.addEventListener("click", (e) => {
+      e.preventDefault();
+      debugLog("guest continue");
+      hideOverlay();
+      initializeCourse();
+    });
+  });
+})();
