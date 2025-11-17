@@ -379,16 +379,16 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.style.webkitUserSelect = 'none';
         document.body.style.mozUserSelect = 'none';
         document.body.style.msUserSelect = 'none';
-        document.addEventListener('contextmenu', e => e.preventDefault());
-        document.addEventListener('keydown', e => {
-          if (e.ctrlKey || e.metaKey) {
-            if (['c','a','x','v','s','p','u'].includes(e.key.toLowerCase())) e.preventDefault();
-          }
-          if (e.key === 'F12') e.preventDefault();
-          if (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key.toUpperCase())) e.preventDefault();
-          if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-            e.preventDefault();
-            console.warn('Impressão desativada para proteger o conteúdo.'); 
+       // document.addEventListener('contextmenu', e => e.preventDefault());
+      //  document.addEventListener('keydown', e => {
+      //    if (e.ctrlKey || e.metaKey) {
+      //      if (['c','a','x','v','s','p','u'].includes(e.key.toLowerCase())) e.preventDefault();
+      //    }
+      //    if (e.key === 'F12') e.preventDefault();
+      //    if (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key.toUpperCase())) e.preventDefault();
+      //    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+      //      e.preventDefault();
+       //     console.warn('Impressão desativada para proteger o conteúdo.'); 
           }
         });
         document.querySelectorAll('img').forEach(img => {
