@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-    <!-- ÍCONE ATUALIZADO -->
+    <!-- ÍCONE -->
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/LOGO_QUADRADA.png">
     <link rel="shortcut icon" href="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/LOGO_QUADRADA.png" type="image/png">
     
@@ -47,7 +47,7 @@
     <div id="print-watermark" style="display: none;"></div>
     <div id="toast-container"></div>
     
-    <!-- AVISO DE TRIAL DISCRETO (NOVO) -->
+    <!-- AVISO DE TRIAL DISCRETO -->
     <div id="trial-floating-notify" class="hidden fixed bottom-20 right-4 bg-white dark:bg-gray-800 border-l-4 border-yellow-500 text-gray-800 dark:text-white p-4 rounded-r shadow-2xl z-50 flex items-center gap-4 animate-slide-in max-w-sm">
         <div>
             <p class="font-bold text-sm">Período de Teste</p>
@@ -354,6 +354,27 @@
             </div>
         </div>
     </div>
+
+    <!-- MODAL INSTRUÇÕES IOS (NOVO) -->
+    <div id="ios-install-modal" class="modal">
+        <div class="p-6 text-center">
+            <i class="fab fa-apple text-5xl text-gray-300 mb-4"></i>
+            <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Instalar no iPhone</h2>
+            <div class="text-left text-gray-600 dark:text-gray-300 space-y-4 mb-6">
+                <p>Para instalar o aplicativo no seu iPhone, siga os passos:</p>
+                <div class="flex items-start">
+                    <span class="bg-gray-200 dark:bg-gray-700 text-sm font-bold rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0">1</span>
+                    <p>Toque no botão <strong>Compartilhar</strong> <img src="https://img.icons8.com/ios-glyphs/30/000000/share-rounded.png" class="inline w-5 h-5 dark:invert"> na barra inferior do navegador.</p>
+                </div>
+                <div class="flex items-start">
+                    <span class="bg-gray-200 dark:bg-gray-700 text-sm font-bold rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0">2</span>
+                    <p>Role para cima e selecione <strong>Adicionar à Tela de Início</strong> <i class="fas fa-plus-square"></i>.</p>
+                </div>
+            </div>
+            <button id="close-ios-modal" class="action-button w-full">Entendi</button>
+        </div>
+    </div>
+    <div id="ios-modal-overlay" class="modal-overlay"></div>
 
     <!-- Modais Auxiliares -->
     <div id="reset-modal" class="modal"><div class="p-4"><i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i><h2 class="text-2xl font-bold mb-2">Resetar Progresso?</h2><div class="flex justify-center gap-4"><button id="cancel-reset-button" class="action-button bg-gray-500">Cancelar</button><button id="confirm-reset-button" class="action-button bg-red-600">Confirmar</button></div></div></div>
