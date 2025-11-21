@@ -47,7 +47,7 @@
     <div id="print-watermark" style="display: none;"></div>
     <div id="toast-container"></div>
     
-    <!-- AVISO DE TRIAL DISCRETO (MUDANÇA 3 - TEXTO) -->
+    <!-- AVISO DE TRIAL DISCRETO -->
     <div id="trial-floating-notify" class="hidden fixed bottom-20 right-4 bg-white dark:bg-gray-800 border-l-4 border-yellow-500 text-gray-800 dark:text-white p-4 rounded-r shadow-2xl z-50 flex items-center gap-4 animate-slide-in max-w-sm">
         <div>
             <p class="font-bold text-sm" id="trial-title-text">Período de Experiência</p>
@@ -216,63 +216,62 @@
     
     <button id="back-to-top" class="action-button fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full hidden justify-center items-center shadow-lg text-2xl"><i class="fas fa-arrow-up"></i></button>
     
-    <!-- MODAL DE LOGIN (MUDANÇA 4: AJUSTE DE TAMANHO E MUDANÇA 1: NOME COMPLETO) -->
-    <div id="name-prompt-modal" class="modal premium-login-modal w-full max-w-md mx-auto overflow-hidden flex flex-col max-h-[90vh]" style="background: #0f172a; border: 1px solid #334155;">
+    <!-- MODAL DE LOGIN (MOBILE AJUSTADO) -->
+    <div id="name-prompt-modal" class="modal premium-login-modal w-[95%] max-w-md mx-auto overflow-hidden flex flex-col max-h-[90vh]" style="background: #0f172a; border: 1px solid #334155;">
         <!-- Header Fixo -->
-        <div class="relative bg-gradient-to-b from-orange-600 to-gray-900 p-6 text-center overflow-hidden flex-shrink-0">
+        <div class="relative bg-gradient-to-b from-orange-600 to-gray-900 p-4 text-center overflow-hidden flex-shrink-0">
             <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
             <div class="relative z-10 flex flex-col items-center">
-                <div class="inline-block p-3 bg-black/40 rounded-full border-2 border-orange-500/50 mb-2 shadow-[0_0_20px_rgba(249,115,22,0.5)]">
-                        <i class="fas fa-user-shield text-4xl text-orange-500"></i>
+                <div class="inline-block p-2 bg-black/40 rounded-full border-2 border-orange-500/50 mb-1 shadow-[0_0_20px_rgba(249,115,22,0.5)]">
+                        <i class="fas fa-user-shield text-3xl text-orange-500"></i>
                 </div>
-                <h2 id="auth-title" class="text-2xl font-serif font-bold text-white tracking-wide drop-shadow-lg leading-tight">
+                <h2 id="auth-title" class="text-xl font-serif font-bold text-white tracking-wide drop-shadow-lg leading-tight">
                     Área do Aluno
                 </h2>
             </div>
         </div>
 
-        <!-- Corpo com Scroll -->
-        <div class="p-6 pt-4 bg-gray-900 overflow-y-auto custom-scrollbar">
-            <div class="space-y-4 text-left">
-                <!-- MUDANÇA 1: Nome Completo -->
+        <!-- Corpo com Scroll (Padding reduzido e texto maior) -->
+        <div class="p-4 pt-2 bg-gray-900 overflow-y-auto custom-scrollbar">
+            <div class="space-y-3 text-left">
                 <div id="name-field-container" class="hidden transition-all duration-300">
                     <label class="text-xs font-bold text-orange-500 ml-1 uppercase tracking-wider">Nome Completo</label>
                     <div class="relative">
-                        <i class="fas fa-user absolute left-4 top-3.5 text-gray-400"></i>
-                        <input type="text" id="name-input" class="w-full pl-12 p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder-gray-500 transition-all outline-none text-sm" placeholder="Seu nome completo">
+                        <i class="fas fa-user absolute left-4 top-3 text-gray-400"></i>
+                        <input type="text" id="name-input" class="w-full pl-12 p-2.5 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder-gray-500 transition-all outline-none text-sm" placeholder="Seu nome completo">
                     </div>
                 </div>
                 <div id="cpf-field-container" class="hidden transition-all duration-300">
                     <label class="text-xs font-bold text-orange-500 ml-1 uppercase tracking-wider">CPF</label>
                     <div class="relative">
-                        <i class="fas fa-id-card absolute left-4 top-3.5 text-gray-400"></i>
-                        <input type="text" id="cpf-input" maxlength="11" class="w-full pl-12 p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder-gray-500 transition-all outline-none text-sm" placeholder="Apenas números">
+                        <i class="fas fa-id-card absolute left-4 top-3 text-gray-400"></i>
+                        <input type="text" id="cpf-input" maxlength="11" class="w-full pl-12 p-2.5 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder-gray-500 transition-all outline-none text-sm" placeholder="Apenas números">
                     </div>
                 </div>
                 <div>
                     <label class="text-xs font-bold text-orange-500 ml-1 uppercase tracking-wider">Email de Acesso</label>
                     <div class="relative">
-                        <i class="fas fa-envelope absolute left-4 top-3.5 text-gray-400"></i>
-                        <input type="email" id="email-input" class="w-full pl-12 p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder-gray-500 transition-all outline-none text-sm" placeholder="seu@email.com">
+                        <i class="fas fa-envelope absolute left-4 top-3 text-gray-400"></i>
+                        <input type="email" id="email-input" class="w-full pl-12 p-2.5 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder-gray-500 transition-all outline-none text-sm" placeholder="seu@email.com">
                     </div>
                 </div>
                 <div>
                     <label class="text-xs font-bold text-orange-500 ml-1 uppercase tracking-wider">Senha</label>
                     <div class="relative">
-                        <i class="fas fa-lock absolute left-4 top-3.5 text-gray-400"></i>
-                        <input type="password" id="password-input" class="w-full pl-12 p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder-gray-500 transition-all outline-none text-sm" placeholder="••••••••">
+                        <i class="fas fa-lock absolute left-4 top-3 text-gray-400"></i>
+                        <input type="password" id="password-input" class="w-full pl-12 p-2.5 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder-gray-500 transition-all outline-none text-sm" placeholder="••••••••">
                     </div>
                 </div>
             </div>
             
-            <p id="auth-feedback" class="text-center text-sm mt-4 text-orange-400 min-h-[20px] font-semibold"></p>
+            <p id="auth-feedback" class="text-center text-sm mt-3 text-orange-400 min-h-[20px] font-semibold"></p>
             
-            <div id="login-button-group" class="w-full mt-6 space-y-3">
-                <button id="login-button" class="w-full py-3 px-6 bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 bg-[length:200%_auto] animate-gradient hover:scale-[1.02] text-white font-bold text-md rounded-xl shadow-[0_10px_20px_rgba(234,88,12,0.3)] transition-all transform uppercase tracking-wide">
+            <div id="login-button-group" class="w-full mt-4 space-y-3">
+                <button id="login-button" class="w-full py-3 px-6 bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 bg-[length:200%_auto] animate-gradient hover:scale-[1.02] text-white font-bold text-sm rounded-xl shadow-[0_10px_20px_rgba(234,88,12,0.3)] transition-all transform uppercase tracking-wide">
                     ENTRAR NO SISTEMA <i class="fas fa-arrow-right ml-2"></i>
                 </button>
                 
-                <div class="flex flex-col space-y-2 pt-4 items-center border-t border-gray-800 mt-4">
+                <div class="flex flex-col space-y-2 pt-3 items-center border-t border-gray-800 mt-3">
                     <div class="grid grid-cols-2 gap-3 w-full">
                         <button id="show-signup-button" class="text-xs text-gray-300 hover:text-white hover:bg-gray-800 border border-gray-700 rounded-lg py-3 transition-all font-medium">
                             Criar Conta
@@ -284,12 +283,11 @@
                 </div>
             </div>
             
-            <div id="signup-button-group" class="w-full mt-6 space-y-4 hidden">
-                <!-- Mensagem de Trial atualizada (Mudança 3) -->
+            <div id="signup-button-group" class="w-full mt-4 space-y-4 hidden">
                 <div class="my-2 border-y border-orange-500/30 py-1 px-2 bg-black/20 rounded text-center">
                     <p id="auth-message" class="text-xs text-orange-200">Cadastre-se para o Acesso Degustação.</p>
                 </div>
-                <button id="signup-button" class="w-full py-3 px-6 bg-gradient-to-r from-green-600 to-teal-600 text-white font-bold text-md rounded-xl shadow-lg hover:scale-[1.02] transition-all uppercase">
+                <button id="signup-button" class="w-full py-3 px-6 bg-gradient-to-r from-green-600 to-teal-600 text-white font-bold text-sm rounded-xl shadow-lg hover:scale-[1.02] transition-all uppercase">
                     Confirmar Cadastro
                 </button>
                 <button id="show-login-button" class="w-full text-xs text-gray-400 hover:text-white hover:underline block text-center mt-2">
