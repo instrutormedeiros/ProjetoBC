@@ -1,9 +1,9 @@
-/* === ARQUIVO app_final.js (VERSÃO FINAL - ATUALIZADA) === */
+/* === ARQUIVO app_final.js (VERSÃO FINAL - ATUALIZADA 2.0) === */
 
 // ESPERA O HTML ESTAR 100% CARREGADO ANTES DE EXECUTAR QUALQUER COISA
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- PWA INSTALLATION LOGIC (PONTO 7) ---
+    // --- PWA INSTALLATION LOGIC (PONTO 7 & PEDIDO 1: DESKTOP INSTALL) ---
     let deferredPrompt;
     const installBtn = document.getElementById('install-app-btn');
     const installBtnMobile = document.getElementById('install-app-btn-mobile');
@@ -17,12 +17,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if(installBtnMobile) installBtnMobile.classList.remove('hidden');
     }
 
-    // Escuta o evento de instalação (Android/PC)
+    // Escuta o evento de instalação (Android/PC/Desktop Chrome/Edge)
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
+      // Mostra os botões se o navegador permitir instalação
       if(installBtn) installBtn.classList.remove('hidden'); 
       if(installBtnMobile) installBtnMobile.classList.remove('hidden'); 
+    });
+
+    // Ouve se o app foi instalado para esconder o botão
+    window.addEventListener('appinstalled', () => {
+        if(installBtn) installBtn.classList.add('hidden');
+        if(installBtnMobile) installBtnMobile.classList.add('hidden');
+        deferredPrompt = null;
     });
 
     async function triggerInstall() {
@@ -49,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert("Para instalar no iPhone:\n1. Toque em Compartilhar (quadrado com seta).\n2. Toque em 'Adicionar à Tela de Início'.");
             }
         } else if (deferredPrompt) {
-            // Se for Android/PC
+            // Se for Android/PC (Chrome/Edge)
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
             if (outcome === 'accepted') {
@@ -58,8 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             deferredPrompt = null;
         } else {
-            // Fallback genérico
-            alert("Para instalar:\nAndroid: Toque nos 3 pontos > Instalar aplicativo.\niOS: Toque em Compartilhar > Adicionar à Tela de Início.");
+            // Fallback genérico se o botão aparecer mas o evento não estiver pronto
+            alert("Para instalar:\nPC/Android: Procure o ícone de instalação na barra de endereço ou menu.\niOS: Toque em Compartilhar > Adicionar à Tela de Início.");
         }
     }
 
@@ -433,7 +441,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const shuffledQuestions = shuffleArray(allQuestions);
                 const selectedQuestions = shuffledQuestions.slice(0, count);
 
-                let quizHtml = `<hr><h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Exercícios de Fixação</h3>`;
+                // --- SEPARADOR DE QUIZ (PEDIDO 3) ---
+                let quizHtml = `<div class="quiz-section-separator"></div>
+                                <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Exercícios de Fixação</h3>`;
                 
                 selectedQuestions.forEach((q, index) => {
                     const questionNumber = index + 1;
@@ -453,9 +463,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 html += quizHtml;
             } else {
-                // Não mostra aviso de falta de exercício se for simulado/bônus (conteúdo dummy)
                 if (d.id.startsWith('module9')) {
-                    // Não faz nada
+                    // simulado/bônus
                 } else {
                     html += `<div class="warning-box mt-8">
                                 <p><strong><i class="fas fa-exclamation-triangle mr-2"></i> Exercícios não encontrados.</strong></p>
@@ -752,37 +761,48 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('desktop-module-container').innerHTML = getModuleListHTML();
         document.getElementById('mobile-module-container').innerHTML = getModuleListHTML();
     }
-    function getModuleListHTML() {
-    let html = `<h2 class="text-2xl font-semibold mb-5 flex items-center text-blue-900 dark:text-white"><i class="fas fa-list-ul mr-3 text-orange-500"></i> Conteúdo do Curso</h2>
-                    <div class="mb-4 relative"><input type="text" class="module-search w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700" placeholder="Buscar módulo."><i class="fas fa-search absolute right-3 top-3.5 text-gray-400"></i></div>
-                    <div class="module-accordion-container space-y-2">`;
 
-    for (const k in moduleCategories) {
-        const cat = moduleCategories[k];
-        html += `<div><button class="accordion-button"><span><i class="${cat.icon} w-6 mr-2 text-gray-500"></i>${cat.title}</span><i class="fas fa-chevron-down"></i></button><div class="accordion-panel">`;
-        for (let i = cat.range[0]; i <= cat.range[1]; i++) {
-            const m = moduleContent[`module${i}`];
-            if (m) {
-                const isDone = Array.isArray(completedModules) && completedModules.includes(m.id);
-                html += `<div class="module-list-item${isDone ? ' completed' : ''}" data-module="${m.id}">
-                            <i class="${m.iconClass} module-icon"></i>
-                            <span style="flex:1">${m.title}</span>
-                            ${isDone ? '<i class="fas fa-check-circle completion-icon" aria-hidden="true"></i>' : ''}
-                         </div>`;
+    // --- FUNÇÃO GERADORA DE HTML DA LISTA (COM NOVO DESIGN DE CONQUISTAS - PEDIDO 2) ---
+    function getModuleListHTML() {
+        let html = `<h2 class="text-2xl font-semibold mb-5 flex items-center text-blue-900 dark:text-white"><i class="fas fa-list-ul mr-3 text-orange-500"></i> Conteúdo do Curso</h2>
+                        <div class="mb-4 relative"><input type="text" class="module-search w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700" placeholder="Buscar módulo..."><i class="fas fa-search absolute right-3 top-3.5 text-gray-400"></i></div>
+                        <div class="module-accordion-container space-y-2">`;
+
+        for (const k in moduleCategories) {
+            const cat = moduleCategories[k];
+            html += `<div><button class="accordion-button"><span><i class="${cat.icon} w-6 mr-2 text-gray-500"></i>${cat.title}</span><i class="fas fa-chevron-down"></i></button><div class="accordion-panel">`;
+            for (let i = cat.range[0]; i <= cat.range[1]; i++) {
+                const m = moduleContent[`module${i}`];
+                if (m) {
+                    const isDone = Array.isArray(completedModules) && completedModules.includes(m.id);
+                    html += `<div class="module-list-item${isDone ? ' completed' : ''}" data-module="${m.id}">
+                                <i class="${m.iconClass} module-icon"></i>
+                                <span style="flex:1">${m.title}</span>
+                                ${isDone ? '<i class="fas fa-check-circle completion-icon" aria-hidden="true"></i>' : ''}
+                             </div>`;
+                }
             }
+            html += `</div></div>`;
+        }
+
+        html += `</div>`;
+        
+        // --- ÁREA DE CONQUISTAS MODERNA ---
+        html += `<div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <h3 class="text-xl font-semibold mb-6 text-gray-800 dark:text-white flex items-center"><i class="fas fa-medal mr-2 text-yellow-500"></i> Conquistas por Área</h3>
+                    <div id="achievements-grid" class="grid grid-cols-2 gap-4">`;
+        
+        for (const key in moduleCategories) {
+            const cat = moduleCategories[key];
+            html += `
+                <div id="ach-cat-${key}" class="achievement-card" title="Conclua a área para ganhar: ${cat.achievementTitle}">
+                    <div class="achievement-icon"><i class="${cat.icon}"></i></div>
+                    <p class="achievement-title">${cat.achievementTitle}</p>
+                </div>`;
         }
         html += `</div></div>`;
+        return html;
     }
-
-    html += `</div>`;
-    html += `<div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700"><h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Conquistas por Área</h3><div id="achievements-grid" class="grid grid-cols-2 gap-4">`;
-    for (const key in moduleCategories) {
-        const cat = moduleCategories[key];
-        html += `<div id="ach-cat-${key}" class="achievement" title="Conclua a área para ganhar: ${cat.achievementTitle}"><div class="achievement-icon"><i class="${cat.icon}"></i></div><p class="text-sm font-bold text-gray-700 dark:text-gray-300">${cat.achievementTitle}</p></div>`;
-    }
-    html += `</div></div>`;
-    return html;
-}
 
     function updateProgress() {
         const p = (completedModules.length / totalModules) * 100;
@@ -839,6 +859,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 newNotification = true;
             }
             
+            // Atualiza visual dos cards de conquista
             document.querySelectorAll(`#ach-cat-${key}`).forEach(el => el.classList.toggle('unlocked', allComplete));
         }
         if (newNotification) {
@@ -1019,17 +1040,39 @@ document.addEventListener('DOMContentLoaded', () => {
         closeAchButton?.addEventListener('click', hideAchievementModal);
         achievementOverlay?.addEventListener('click', hideAchievementModal);
 
-
+        // --- FUNÇÃO DE PESQUISA CORRIGIDA (PEDIDO 4) ---
         document.body.addEventListener('input', e => {
             if(e.target.matches('.module-search')) {
                 const s = e.target.value.toLowerCase();
+                // Busca o container da lista (o div "module-accordion-container" é irmão do pai do input)
                 const container = e.target.closest('div.relative');
                 if (container) {
                     const accordionContainer = container.nextElementSibling;
                     if (accordionContainer) {
+                         // Itera sobre todos os itens de módulo
                          accordionContainer.querySelectorAll('.module-list-item').forEach(i => {
-                            i.style.display = i.textContent.toLowerCase().includes(s) ? 'flex' : 'none';
+                            const text = i.textContent.toLowerCase();
+                            const match = text.includes(s);
+                            i.style.display = match ? 'flex' : 'none';
+                            
+                            // Se tiver texto e der match, abre o acordeão automaticamente
+                            if(match && s.length > 0) {
+                                const panel = i.closest('.accordion-panel');
+                                const btn = panel.previousElementSibling;
+                                if(!btn.classList.contains('active')) {
+                                    btn.classList.add('active');
+                                    panel.style.maxHeight = panel.scrollHeight + "px";
+                                }
+                            }
                         });
+                        
+                        // Se a busca estiver vazia, fecha tudo para limpar a visão
+                        if(s.length === 0) {
+                            accordionContainer.querySelectorAll('.accordion-button').forEach(btn => {
+                                btn.classList.remove('active');
+                                btn.nextElementSibling.style.maxHeight = null;
+                            });
+                        }
                     }
                 }
             }
