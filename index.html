@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Curso de Formação | Bombeiro Civil e Brigadista</title>
     
-    <!-- Configurações do PWA -->
-    <link rel="manifest" href="manifest.json">
+    <!-- Configurações do PWA (Caminhos corrigidos com ./) -->
+    <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#0b1220">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="./assets/icons/icon-192.png">
+    <link rel="shortcut icon" href="./assets/icons/icon-192.png" type="image/png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -44,6 +45,13 @@
     <div id="print-watermark" style="display: none;"></div>
     <div id="toast-container"></div>
     
+    <!-- BARRA DE AVISO DE TESTE (NOVIDADE PARA MONETIZAÇÃO) -->
+    <div id="trial-warning-bar" class="hidden bg-yellow-500 text-black text-center py-2 px-4 font-bold text-sm fixed top-0 left-0 w-full z-[60] shadow-md">
+        <i class="fas fa-clock mr-2"></i>
+        <span id="trial-days-left">Restam 30 dias</span> de acesso gratuito. 
+        <button id="trial-subscribe-btn" class="ml-2 underline hover:text-white transition-colors">Assinar Agora</button>
+    </div>
+
     <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-40 opacity-0 pointer-events-none sidebar-overlay lg:hidden"></div>
     
     <div id="off-canvas-sidebar" class="fixed top-0 left-0 h-full w-4/5 max-w-sm z-50 transform -translate-x-full transition-transform duration-300 ease-in-out">
@@ -63,8 +71,8 @@
     </div>
     
     <div id="main-wrapper">
-        <!-- CABEÇALHO -->
-        <header id="main-header" class="fixed top-0 left-0 w-full z-40 backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 shadow-md transition-all duration-500">
+        <!-- CABEÇALHO (Ajustado top para acomodar a barra de aviso se necessário) -->
+        <header id="main-header" class="fixed top-0 left-0 w-full z-40 backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 shadow-md transition-all duration-500 mt-0">
             <div class="container mx-auto px-4 md:px-6 max-w-7xl">
                 <div class="flex justify-between items-center py-4">
                     <div class="flex items-center space-x-4">
@@ -157,7 +165,7 @@
             </div>
         </div>
         
-        <!-- RODAPÉ ATUALIZADO (4 ITENS) -->
+        <!-- RODAPÉ -->
         <footer class="bg-gray-800 dark:bg-black text-white py-10 mt-12">
             <div class="container mx-auto px-4 md:px-6 max-w-7xl">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -177,7 +185,6 @@
                             <a href="https://instrutormedeiros.github.io/fardamento-acampamento/" class="flex items-center text-gray-300 hover:text-green-500 transition-colors social-link" target="_blank">
                                 <i class="fas fa-tshirt w-6 text-center"></i> Artigos Militares
                             </a>
-                            <!-- NOVO ITEM ADICIONADO -->
                             <a href="https://www.instagram.com/bombeirocivilbrasilia/" class="flex items-center text-gray-300 hover:text-red-500 transition-colors social-link" target="_blank">
                                 <i class="fab fa-instagram w-6 text-center"></i> Bombeiro Civil Brasília
                             </a>
@@ -200,28 +207,24 @@
     
     <button id="back-to-top" class="action-button fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full hidden justify-center items-center shadow-lg text-2xl"><i class="fas fa-arrow-up"></i></button>
     
-    <!-- MODAL DE LOGIN "PREMIUM" ATUALIZADO (HARMONIZADO E COM BOTÕES MAIORES) -->
+    <!-- MODAL DE LOGIN -->
     <div id="name-prompt-modal" class="modal premium-login-modal w-full max-w-md mx-auto overflow-hidden" style="background: #0f172a; border: 1px solid #334155;">
-        
-        <!-- Cabeçalho Harmonizado -->
         <div class="relative bg-gradient-to-b from-orange-600 to-gray-900 p-8 text-center overflow-hidden">
             <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
             <div class="relative z-10 flex flex-col items-center">
                 <div class="inline-block p-4 bg-black/40 rounded-full border-2 border-orange-500/50 mb-4 shadow-[0_0_20px_rgba(249,115,22,0.5)]">
                         <i class="fas fa-user-shield text-5xl text-orange-500"></i>
                 </div>
-                <!-- TÍTULO HARMONIZADO -->
                 <h2 id="auth-title" class="text-3xl font-serif font-bold text-white tracking-wide drop-shadow-lg leading-tight">
                     Área do Aluno
                 </h2>
                 <div class="my-3 border-y border-orange-500/30 py-1 px-6 bg-black/20 rounded-full">
-                    <p class="text-sm font-sans uppercase tracking-[0.2em] text-orange-200 font-semibold">Acesso Restrito</p>
+                    <p id="auth-message" class="text-sm font-sans uppercase tracking-[0.2em] text-orange-200 font-semibold">Acesso Restrito</p>
                 </div>
                 <h3 class="text-xl font-bold text-white/90 tracking-tight">Projeto Bravo Charlie</h3>
             </div>
         </div>
 
-        <!-- Corpo do Modal -->
         <div class="p-8 pt-6 bg-gray-900">
             <div class="space-y-5 text-left">
                 <div id="name-field-container" class="hidden transition-all duration-300">
@@ -256,7 +259,6 @@
             
             <p id="auth-feedback" class="text-center text-sm mt-4 text-orange-400 min-h-[20px] font-semibold"></p>
             
-            <!-- Botão Principal -->
             <div id="login-button-group" class="w-full mt-8 space-y-4">
                 <button id="login-button" class="w-full py-4 px-6 bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 bg-[length:200%_auto] animate-gradient hover:scale-[1.02] text-white font-bold text-lg rounded-xl shadow-[0_10px_20px_rgba(234,88,12,0.3)] transition-all transform uppercase tracking-wide">
                     ENTRAR NO SISTEMA <i class="fas fa-arrow-right ml-2"></i>
@@ -264,7 +266,6 @@
                 
                 <div class="flex flex-col space-y-3 pt-4 items-center border-t border-gray-800 mt-6">
                     <div class="grid grid-cols-2 gap-4 w-full">
-                        <!-- BOTÕES AUMENTADOS (text-sm e py-4) -->
                         <button id="show-signup-button" class="text-sm text-gray-300 hover:text-white hover:bg-gray-800 border border-gray-700 rounded-lg py-4 transition-all font-medium">
                             Criar Conta
                         </button>
@@ -287,7 +288,7 @@
     </div>
     <div id="name-modal-overlay" class="modal-overlay bg-black/90 backdrop-blur-sm"></div>
 
-    <!-- MODAL DE PAGAMENTO (MANTIDO IGUAL) -->
+    <!-- MODAL DE PAGAMENTO -->
     <div id="expired-modal" class="modal bg-gray-900 text-white p-0 rounded-2xl shadow-2xl border border-gray-700 w-full max-w-5xl mx-auto overflow-hidden">
         <div class="bg-gradient-to-r from-gray-900 to-gray-800 p-6 border-b border-gray-700 flex justify-between items-center">
             <div>
@@ -298,19 +299,19 @@
         </div>
         <div class="p-6 md:p-8 bg-gray-900 overflow-y-auto max-h-[80vh]">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- PLANO MENSAL -->
+                <!-- PLANOS (Caminhos de Imagem Corrigidos com ./) -->
                 <div class="bg-gray-800 rounded-xl border border-gray-700 hover:border-blue-500 transition-all hover:shadow-xl hover:-translate-y-1 relative overflow-hidden flex flex-col">
                     <div class="p-5 text-center bg-gray-800/50 border-b border-gray-700">
                         <h3 class="text-xl font-bold text-blue-400">MENSAL</h3>
                         <div class="mt-3"><span class="text-sm text-gray-400">R$</span><span class="text-4xl font-extrabold text-white">29,90</span></div>
                     </div>
                     <div class="p-5 flex-grow flex flex-col items-center">
-                        <img src="https://raw.githubusercontent.com/instrutormedeiros/monetizar/refs/heads/main/assets/img/29%2C99.jpeg" class="w-32 h-32 object-cover rounded-lg mb-4 border-2 border-blue-500/30" alt="QR Code Mensal">
+                        <img src="./assets/img/29,99.jpeg" class="w-32 h-32 object-cover rounded-lg mb-4 border-2 border-blue-500/30" alt="QR Code Mensal">
                         <ul class="text-sm text-gray-300 space-y-2 mb-6 text-left w-full pl-4"><li><i class="fas fa-check text-blue-500 mr-2"></i> Acesso por 30 dias</li><li><i class="fas fa-check text-blue-500 mr-2"></i> Conteúdo Completo</li></ul>
                         <a href="https://pay.infinitepay.io/pixmedeiros/VC1D-7jMqYZwKN-29,99" target="_blank" class="w-full block text-center bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition-colors mt-auto">ASSINAR MENSAL</a>
                     </div>
                 </div>
-                <!-- PLANO SEMESTRAL -->
+                
                 <div class="bg-gray-800 rounded-xl border-2 border-orange-500 shadow-[0_0_20px_rgba(234,88,12,0.15)] transform md:-translate-y-2 relative overflow-hidden flex flex-col">
                     <div class="absolute top-0 right-0 bg-orange-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">MAIS POPULAR</div>
                     <div class="p-5 text-center bg-gradient-to-b from-gray-800 to-gray-700 border-b border-gray-600">
@@ -319,12 +320,12 @@
                         <p class="text-xs text-orange-300 mt-1">Economia Gigante!</p>
                     </div>
                     <div class="p-5 flex-grow flex flex-col items-center">
-                        <img src="https://raw.githubusercontent.com/instrutormedeiros/monetizar/refs/heads/main/assets/img/49%2C99.jpeg" class="w-36 h-36 object-cover rounded-lg mb-4 border-2 border-orange-500" alt="QR Code Semestral">
+                        <img src="./assets/img/49,99.jpeg" class="w-36 h-36 object-cover rounded-lg mb-4 border-2 border-orange-500" alt="QR Code Semestral">
                         <ul class="text-sm text-gray-300 space-y-2 mb-6 text-left w-full pl-4"><li><i class="fas fa-check text-orange-500 mr-2"></i> Acesso por 6 meses</li><li><i class="fas fa-check text-orange-500 mr-2"></i> Vídeos e Fotos Liberados</li></ul>
                         <a href="https://pay.infinitepay.io/pixmedeiros/VC1D-6jVuG1yMV1-49,99" target="_blank" class="w-full block text-center bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-bold py-4 rounded-lg transition-all shadow-lg mt-auto animate-pulse">ASSINAR AGORA</a>
                     </div>
                 </div>
-                <!-- PLANO ANUAL -->
+                
                 <div class="bg-gray-800 rounded-xl border border-gray-700 hover:border-green-500 transition-all hover:shadow-xl hover:-translate-y-1 relative overflow-hidden flex flex-col">
                     <div class="p-5 text-center bg-gray-800/50 border-b border-gray-700">
                         <h3 class="text-xl font-bold text-green-400">ANUAL</h3>
@@ -332,7 +333,7 @@
                         <p class="text-xs text-green-300 mt-1">Melhor Custo-Benefício</p>
                     </div>
                     <div class="p-5 flex-grow flex flex-col items-center">
-                        <img src="https://raw.githubusercontent.com/instrutormedeiros/monetizar/refs/heads/main/assets/img/69%2C99.jpeg" class="w-32 h-32 object-cover rounded-lg mb-4 border-2 border-green-500/30" alt="QR Code Anual">
+                        <img src="./assets/img/69,99.jpeg" class="w-32 h-32 object-cover rounded-lg mb-4 border-2 border-green-500/30" alt="QR Code Anual">
                         <ul class="text-sm text-gray-300 space-y-2 mb-6 text-left w-full pl-4"><li><i class="fas fa-check text-green-500 mr-2"></i> Acesso por 1 ANO</li><li><i class="fas fa-check text-green-500 mr-2"></i> Todo o Conteúdo</li><li><i class="fas fa-star text-yellow-500 mr-2"></i> Prioridade no Suporte</li></ul>
                         <a href="https://pay.infinitepay.io/pixmedeiros/VC1D-6jVuclBoT3-69,99" target="_blank" class="w-full block text-center bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg transition-colors mt-auto">ASSINAR ANUAL</a>
                     </div>
