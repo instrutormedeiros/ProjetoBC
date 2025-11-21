@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
             printWatermark.textContent = `Licenciado para ${userData.name} (CPF: ${userData.cpf || '...'}) - Proibida a Cópia`;
         }
 
-        // 3. MONETIZAÇÃO: MOSTRAR DIAS RESTANTES
+        // 3. MONETIZAÇÃO: MOSTRAR DIAS RESTANTES (NOVO FORMATO FLUTUANTE)
         checkTrialStatus(userData.acesso_ate);
 
         // 4. Inicia o conteúdo
@@ -158,26 +158,30 @@ document.addEventListener('DOMContentLoaded', () => {
         handleInitialLoad();
     }
 
-    // --- NOVA FUNÇÃO: VERIFICA TRIAL ---
+    // --- NOVA FUNÇÃO: VERIFICA TRIAL (TOAST DISCRETO) ---
     function checkTrialStatus(expiryDateString) {
         const expiryDate = new Date(expiryDateString);
         const today = new Date();
         const diffTime = Math.abs(expiryDate - today);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
         
-        const trialBar = document.getElementById('trial-warning-bar');
+        const trialToast = document.getElementById('trial-floating-notify');
         const daysLeftSpan = document.getElementById('trial-days-left');
         const trialBtn = document.getElementById('trial-subscribe-btn');
+        const closeTrialBtn = document.getElementById('close-trial-notify');
 
-        // Se faltar 30 dias ou menos, mostra o aviso
-        if (trialBar && diffDays <= 30 && diffDays >= 0) {
-            trialBar.classList.remove('hidden');
-            daysLeftSpan.textContent = `Restam ${diffDays} dias`;
-            document.body.classList.add('has-trial-warning'); // Ajusta CSS do header
+        // Se faltar 30 dias ou menos, mostra o toast
+        if (trialToast && diffDays <= 30 && diffDays >= 0) {
+            trialToast.classList.remove('hidden');
+            if(daysLeftSpan) daysLeftSpan.textContent = diffDays;
             
             trialBtn?.addEventListener('click', () => {
                 document.getElementById('expired-modal').classList.add('show');
                 document.getElementById('name-modal-overlay').classList.add('show');
+            });
+            
+            closeTrialBtn?.addEventListener('click', () => {
+                trialToast.classList.add('hidden');
             });
         }
     }
@@ -417,10 +421,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 html += quizHtml;
             } else {
-                html += `<div class="warning-box mt-8">
-                            <p><strong><i class="fas fa-exclamation-triangle mr-2"></i> Exercícios não encontrados.</strong></p>
-                            <p>Não foi possível encontrar as perguntas de fixação para este módulo.</p>
-                         </div>`;
+                // Não mostra aviso de falta de exercício se for simulado/bônus (conteúdo dummy)
+                if (d.id.startsWith('module9')) {
+                    // Não faz nada
+                } else {
+                    html += `<div class="warning-box mt-8">
+                                <p><strong><i class="fas fa-exclamation-triangle mr-2"></i> Exercícios não encontrados.</strong></p>
+                                <p>Não foi possível encontrar as perguntas de fixação para este módulo.</p>
+                             </div>`;
+                }
             }
 
             html += `
