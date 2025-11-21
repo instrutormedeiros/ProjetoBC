@@ -18,6 +18,22 @@ h1, h2, h3 { font-family: 'Lora', serif; }
 .pulse { animation: pulse 2s infinite; }
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
 
+/* === AJUSTE PARA O HEADER COM O AVISO DE TRIAL === */
+body.has-trial-warning header#main-header {
+    top: 36px; /* Altura aproximada da barra amarela */
+}
+body.has-trial-warning #off-canvas-sidebar {
+    top: 36px;
+    height: calc(100% - 36px);
+}
+body.has-trial-warning .sticky-progress-wrapper {
+    top: calc(5.5rem + 36px);
+}
+@media (max-width: 1024px) {
+    body.has-trial-warning .sticky-progress-wrapper {
+        top: calc(7.5rem + 36px);
+    }
+}
 
 /* === BARRA DE PROGRESSO CORRIGIDA (Ponto 3) === */
 @keyframes progress-gradient-flow {
@@ -36,6 +52,7 @@ h1, h2, h3 { font-family: 'Lora', serif; }
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     color: var(--light-text);
     position: relative;
+    transition: top 0.3s ease; /* Suaviza o ajuste quando o aviso aparece */
 }
 
 /* Ajuste Específico para Mobile - Garante que a barra desça */
