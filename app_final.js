@@ -1,4 +1,4 @@
-/* === ARQUIVO app_final.js (VERSÃO FINAL - ADMIN E DRIVE LOCK) === */
+/* === ARQUIVO app_final.js (VERSÃO FINAL - ADMINISTRAÇÃO TOTAL) === */
 
 // ESPERA O HTML ESTAR 100% CARREGADO ANTES DE EXECUTAR QUALQUER COISA
 document.addEventListener('DOMContentLoaded', () => {
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
         handleInitialLoad();
     }
 
-    // --- PAINEL ADMINISTRATIVO ---
+    // --- PAINEL ADMINISTRATIVO AVANÇADO ---
     window.openAdminPanel = async function() {
         if (!currentUserData || !currentUserData.isAdmin) return;
         
@@ -178,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center">Carregando...</td></tr>';
 
         try {
-            const snapshot = await window.__fbDB.collection('users').get();
+            const snapshot = await window.__fbDB.collection('users').orderBy('name').get();
             tbody.innerHTML = '';
             
             snapshot.forEach(doc => {
@@ -186,23 +186,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 const uid = doc.id;
                 const isPremium = u.status === 'premium';
                 const validade = u.acesso_ate ? new Date(u.acesso_ate).toLocaleDateString('pt-BR') : '-';
+                const cpf = u.cpf || 'Sem CPF';
                 
                 const row = `
-                    <tr class="border-b">
-                        <td class="p-3 font-bold">${u.name}</td>
-                        <td class="p-3 text-gray-600">${u.email}<br><span class="text-xs text-gray-400">CPF: ${u.cpf}</span></td>
+                    <tr class="border-b hover:bg-gray-50 transition-colors">
+                        <td class="p-3 font-bold text-gray-800">${u.name}</td>
+                        <td class="p-3 text-gray-600 text-sm">${u.email}<br><span class="text-xs text-gray-500">CPF: ${cpf}</span></td>
                         <td class="p-3">
-                            <span class="px-2 py-1 rounded text-xs font-bold ${isPremium ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                            <span class="px-2 py-1 rounded text-xs font-bold uppercase ${isPremium ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
                                 ${u.status || 'trial'}
                             </span>
                         </td>
-                        <td class="p-3 text-sm">${validade}</td>
-                        <td class="p-3 flex gap-2">
-                            <button onclick="toggleUserStatus('${uid}', '${u.status}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs" title="Mudar Status">
-                                <i class="fas fa-sync"></i>
+                        <td class="p-3 text-sm font-medium">${validade}</td>
+                        <td class="p-3 flex flex-wrap gap-2">
+                            <!-- Botões de Ação -->
+                            <button onclick="editUserData('${uid}', '${u.name}', '${cpf}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Editar Dados">
+                                <i class="fas fa-pen"></i>
                             </button>
-                            <button onclick="sendResetEmail('${u.email}')" class="bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-xs" title="Resetar Senha">
+                            <button onclick="extendUserAccess('${uid}', '${u.acesso_ate}')" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Renovar Acesso">
+                                <i class="fas fa-calendar-plus"></i>
+                            </button>
+                            <button onclick="sendResetEmail('${u.email}')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Resetar Senha (E-mail)">
                                 <i class="fas fa-key"></i>
+                            </button>
+                            <button onclick="deleteUser('${uid}', '${u.name}', '${cpf}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Excluir Usuário">
+                                <i class="fas fa-trash"></i>
                             </button>
                         </td>
                     </tr>
@@ -214,22 +222,124 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.toggleUserStatus = async function(uid, currentStatus) {
-        const newStatus = currentStatus === 'premium' ? 'trial' : 'premium';
-        // Se virar premium, damos + 365 dias. Se virar trial, mantemos a data ou reduzimos (lógica simplificada aqui)
-        const newDate = new Date();
-        newDate.setDate(newDate.getDate() + (newStatus === 'premium' ? 365 : 30));
+    // 1. Editar Dados (Nome e CPF)
+    window.editUserData = async function(uid, oldName, oldCpf) {
+        const newName = prompt("Novo nome do aluno:", oldName);
+        if (newName === null) return;
         
-        if(confirm(`Mudar status para ${newStatus.toUpperCase()}?`)) {
-            await window.__fbDB.collection('users').doc(uid).update({
-                status: newStatus,
-                acesso_ate: newDate.toISOString()
-            });
-            alert('Status atualizado!');
-            openAdminPanel(); // Recarrega tabela
+        const newCpfRaw = prompt("Novo CPF (apenas números):", oldCpf === 'Sem CPF' ? '' : oldCpf);
+        if (newCpfRaw === null) return;
+        
+        const newCpf = newCpfRaw.replace(/\D/g, ''); // Limpa CPF
+        
+        if (!newName || !newCpf) {
+            alert("Nome e CPF são obrigatórios.");
+            return;
+        }
+
+        try {
+            const batch = window.__fbDB.batch();
+            
+            // Atualiza dados do usuário
+            const userRef = window.__fbDB.collection('users').doc(uid);
+            batch.update(userRef, { name: newName, cpf: newCpf });
+
+            // Se o CPF mudou, precisa atualizar a coleção de segurança 'cpfs'
+            if (oldCpf !== 'Sem CPF' && oldCpf !== newCpf) {
+                // Deleta CPF antigo
+                const oldCpfRef = window.__fbDB.collection('cpfs').doc(oldCpf);
+                batch.delete(oldCpfRef);
+                // Cria CPF novo
+                const newCpfRef = window.__fbDB.collection('cpfs').doc(newCpf);
+                batch.set(newCpfRef, { uid: uid });
+            } else if (oldCpf === 'Sem CPF') {
+                 // Apenas cria o novo se não tinha
+                const newCpfRef = window.__fbDB.collection('cpfs').doc(newCpf);
+                batch.set(newCpfRef, { uid: uid });
+            }
+
+            await batch.commit();
+            alert("Dados atualizados com sucesso!");
+            openAdminPanel();
+        } catch (err) {
+            alert("Erro ao atualizar: " + err.message);
         }
     };
 
+    // 2. Renovar Acesso (1 mês, 6 meses, 1 ano)
+    window.extendUserAccess = async function(uid, currentExpiryStr) {
+        const opcao = prompt(
+            "Escolha o novo período de acesso:\n\n" +
+            "1 - Mensal (+30 dias)\n" +
+            "2 - Semestral (+180 dias)\n" +
+            "3 - Anual (+365 dias)\n" +
+            "4 - Liberar Premium Permanente (10 anos)\n\n" +
+            "Digite o número da opção:"
+        );
+
+        if (!opcao) return;
+
+        let diasToAdd = 0;
+        if (opcao === '1') diasToAdd = 30;
+        else if (opcao === '2') diasToAdd = 180;
+        else if (opcao === '3') diasToAdd = 365;
+        else if (opcao === '4') diasToAdd = 3650;
+        else { alert("Opção inválida"); return; }
+
+        // Calcula nova data
+        // Se já expirou, soma a partir de HOJE. Se ainda vale, soma a partir do VENCIMENTO.
+        const hoje = new Date();
+        let baseDate = new Date(currentExpiryStr);
+        
+        // Se data inválida ou já expirada, usa hoje como base
+        if (isNaN(baseDate.getTime()) || baseDate < hoje) {
+            baseDate = hoje;
+        }
+
+        baseDate.setDate(baseDate.getDate() + diasToAdd);
+        const newExpiryISO = baseDate.toISOString();
+
+        try {
+            await window.__fbDB.collection('users').doc(uid).update({
+                status: 'premium', // Força status premium ao renovar
+                acesso_ate: newExpiryISO
+            });
+            alert("Acesso renovado com sucesso!");
+            openAdminPanel();
+        } catch (err) {
+            alert("Erro ao renovar: " + err.message);
+        }
+    };
+
+    // 3. Excluir Usuário
+    window.deleteUser = async function(uid, name, cpf) {
+        if(confirm(`TEM CERTEZA que deseja excluir o aluno ${name}?\n\nEssa ação não pode ser desfeita e o aluno perderá o acesso imediatamente.`)) {
+            const userConfirm = prompt("Para confirmar, digite DELETAR:");
+            if (userConfirm !== "DELETAR") return;
+
+            try {
+                const batch = window.__fbDB.batch();
+                
+                // Deleta documento do usuário
+                const userRef = window.__fbDB.collection('users').doc(uid);
+                batch.delete(userRef);
+
+                // Deleta registro do CPF se existir
+                if (cpf && cpf !== 'Sem CPF' && cpf !== 'undefined') {
+                    const cpfRef = window.__fbDB.collection('cpfs').doc(cpf);
+                    batch.delete(cpfRef);
+                }
+
+                await batch.commit();
+                alert("Usuário excluído do banco de dados.");
+                openAdminPanel();
+            } catch (err) {
+                alert("Erro ao excluir: " + err.message);
+            }
+        }
+    };
+
+    // 4. Resetar Senha (Mantido)
     window.sendResetEmail = async function(email) {
         if(confirm(`Enviar e-mail de redefinição de senha para ${email}?`)) {
             try {
@@ -408,7 +518,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return questions;
     }
 
-    // --- FUNÇÃO DE ABERTURA DE CONTEÚDO (DRIVE E PREMIUM CORRIGIDO) ---
     async function loadModuleContent(id) {
         if (!id || !moduleContent[id]) return;
         
@@ -425,7 +534,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const isPremiumContent = moduleCategory && moduleCategory.isPremium;
         const userIsNotPremium = !currentUserData || currentUserData.status !== 'premium';
 
-        // BLOQUEIO 1: Se o módulo for da categoria PREMIUM (Bônus/Simulado)
         if (isPremiumContent && userIsNotPremium) {
             renderPremiumLockScreen(moduleContent[id].title);
             return;
@@ -459,7 +567,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- BLOQUEIO 2: BOTÃO DRIVE (FOTOS E VÍDEOS) ---
             if (d.driveLink) {
                 if (userIsNotPremium) {
-                    // Botão Bloqueado
                     html += `
                     <div class="mt-10 mb-8">
                         <button onclick="document.getElementById('expired-modal').classList.add('show'); document.getElementById('name-modal-overlay').classList.add('show');" class="drive-button opacity-75 hover:opacity-100 relative overflow-hidden">
@@ -474,7 +581,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     `;
                 } else {
-                    // Botão Liberado
                     html += `
                     <div class="mt-10 mb-8">
                         <a href="${d.driveLink}" target="_blank" class="drive-button">
@@ -751,7 +857,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="module-accordion-container space-y-2">`;
 
         for (const k in moduleCategories) {
+            // FILTRO REMOVIDO - TUDO APARECE AGORA
+            
             const cat = moduleCategories[k];
+            // MOSTRA CADEADO SE FOR PREMIUM E O USUÁRIO NÃO FOR PREMIUM
             const isLocked = cat.isPremium && (!currentUserData || currentUserData.status !== 'premium');
             const lockIcon = isLocked ? '<i class="fas fa-lock text-xs ml-2 text-yellow-500"></i>' : '';
             
@@ -760,6 +869,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const m = moduleContent[`module${i}`];
                 if (m) {
                     const isDone = Array.isArray(completedModules) && completedModules.includes(m.id);
+                    // Adiciona cadeado pequeno também no item se estiver bloqueado
                     const itemLock = isLocked ? '<i class="fas fa-lock text-xs text-gray-400 ml-2"></i>' : '';
                     html += `<div class="module-list-item${isDone ? ' completed' : ''}" data-module="${m.id}">
                                 <i class="${m.iconClass} module-icon"></i>
