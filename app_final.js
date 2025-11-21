@@ -1,4 +1,4 @@
-/* === ARQUIVO app_final.js (VERSÃO FINAL - ATUALIZADA 4.0) === */
+/* === ARQUIVO app_final.js (VERSÃO FINAL - CORREÇÃO VISUAL E FILTRO) === */
 
 // ESPERA O HTML ESTAR 100% CARREGADO ANTES DE EXECUTAR QUALQUER COISA
 document.addEventListener('DOMContentLoaded', () => {
@@ -339,10 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // LÓGICA DE BLOQUEIO CORRIGIDA (Allow List)
-        // Bloqueia se: (Categoria é Premium) E (Usuário NÃO é 'premium')
-        // currentUserData.status === 'premium' é a única chave que libera.
-        // 'trial', undefined, null ou qualquer outra coisa será bloqueada.
+        // LÓGICA DE BLOQUEIO
         const isPremiumContent = moduleCategory && moduleCategory.isPremium;
         const userIsNotPremium = !currentUserData || currentUserData.status !== 'premium';
 
@@ -635,12 +632,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('mobile-module-container').innerHTML = getModuleListHTML();
     }
 
+    // --- CORREÇÃO: LISTA DE MÓDULOS ---
     function getModuleListHTML() {
         let html = `<h2 class="text-2xl font-semibold mb-5 flex items-center text-blue-900 dark:text-white"><i class="fas fa-list-ul mr-3 text-orange-500"></i> Conteúdo do Curso</h2>
                         <div class="mb-4 relative"><input type="text" class="module-search w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700" placeholder="Buscar módulo..."><i class="fas fa-search absolute right-3 top-3.5 text-gray-400"></i></div>
                         <div class="module-accordion-container space-y-2">`;
 
         for (const k in moduleCategories) {
+            // --- FILTRO EXPLÍCITO ---
+            // Aqui garantimos que 'simulados' e 'bonus' não sejam desenhados na lista
+            if (k === 'simulados' || k === 'bonus') continue;
+
             const cat = moduleCategories[k];
             const lockIcon = cat.isPremium ? '<i class="fas fa-lock text-xs ml-2 text-yellow-500"></i>' : '';
             html += `<div><button class="accordion-button"><span><i class="${cat.icon} w-6 mr-2 text-gray-500"></i>${cat.title} ${lockIcon}</span><i class="fas fa-chevron-down"></i></button><div class="accordion-panel">`;
