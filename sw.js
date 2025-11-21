@@ -1,7 +1,7 @@
-/* sw.js — Service Worker V2 (Forçando atualização)
+/* sw.js — Service Worker V3 (Forçando atualização)
    - Cache-then-network strategy
 */
-const CACHE_NAME = 'pbc-static-v2'; // <--- MUDAMOS PARA V2 PARA FORÇAR ATUALIZAÇÃO
+const CACHE_NAME = 'pbc-static-v3'; // <--- MUDAMOS PARA V3 PARA FORÇAR ATUALIZAÇÃO
 const PRECACHE_URLS = [
   '/', 
   '/index.html',
@@ -26,7 +26,7 @@ self.addEventListener('activate', event => {
   clients.claim(); // Controla as páginas abertas imediatamente
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
-      keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)) // Deleta o cache antigo (v1)
+      keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)) // Deleta o cache antigo (v1 e v2)
     ))
   );
 });
