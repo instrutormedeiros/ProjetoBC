@@ -7,8 +7,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let deferredPrompt;
     const installBtn = document.getElementById('install-app-btn');
     const installBtnMobile = document.getElementById('install-app-btn-mobile');
+    
+    // DETECTAR IOS (iPhone/iPad)
+    const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-    // Escuta o evento de instalação (Chromium/Android)
+    // Se for iOS, forçar o botão a aparecer (já que o evento beforeinstallprompt não existe lá)
+    if (isIos) {
+        if(installBtn) installBtn.classList.remove('hidden'); 
+        if(installBtnMobile) installBtnMobile.classList.remove('hidden');
+    }
+
+    // Escuta o evento de instalação (Android/PC)
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
@@ -17,7 +26,30 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function triggerInstall() {
-        if (deferredPrompt) {
+        if (isIos) {
+            // Se for iOS, mostra o modal explicativo
+            const iosModal = document.getElementById('ios-install-modal');
+            const iosOverlay = document.getElementById('ios-modal-overlay');
+            if (iosModal && iosOverlay) {
+                iosModal.classList.add('show');
+                iosOverlay.classList.add('show');
+                
+                // Fecha o modal ao clicar no botão
+                document.getElementById('close-ios-modal')?.addEventListener('click', () => {
+                    iosModal.classList.remove('show');
+                    iosOverlay.classList.remove('show');
+                });
+                
+                // Fecha ao clicar fora
+                iosOverlay.addEventListener('click', () => {
+                    iosModal.classList.remove('show');
+                    iosOverlay.classList.remove('show');
+                });
+            } else {
+                alert("Para instalar no iPhone:\n1. Toque em Compartilhar (quadrado com seta).\n2. Toque em 'Adicionar à Tela de Início'.");
+            }
+        } else if (deferredPrompt) {
+            // Se for Android/PC
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
             if (outcome === 'accepted') {
@@ -26,8 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             deferredPrompt = null;
         } else {
-            // Fallback para iOS ou se o prompt não disparou
-            alert("Para instalar no iOS:\n1. Toque no botão de Compartilhar (quadrado com seta).\n2. Role para baixo e toque em 'Adicionar à Tela de Início'.\n\nPara Android (se o botão não funcionar):\nToque nos 3 pontos do navegador e selecione 'Instalar aplicativo'.");
+            // Fallback genérico
+            alert("Para instalar:\nAndroid: Toque nos 3 pontos > Instalar aplicativo.\niOS: Toque em Compartilhar > Adicionar à Tela de Início.");
         }
     }
 
