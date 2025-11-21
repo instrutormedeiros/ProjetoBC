@@ -290,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
             nameField.classList.add('hidden');
             cpfField.classList.add('hidden'); 
             authTitle.textContent = "Área do Aluno";
-            authMsg.textContent = "Acesso Restrito • Elite Profissional";
+            authMsg.textContent = "Acesso Restrito";
             feedback.textContent = "";
         });
         
