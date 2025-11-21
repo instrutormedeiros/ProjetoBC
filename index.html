@@ -5,13 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Curso de Formação | Bombeiro Civil e Brigadista</title>
     
-    <!-- Configurações do PWA (Caminhos corrigidos com ./) -->
+    <!-- Configurações do PWA -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#0b1220">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="./assets/icons/icon-192.png">
-    <link rel="shortcut icon" href="./assets/icons/icon-192.png" type="image/png">
+    
+    <!-- ÍCONE ATUALIZADO -->
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/LOGO%20SEM%20FUNDO.png">
+    <link rel="shortcut icon" href="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/LOGO%20SEM%20FUNDO.png" type="image/png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -45,11 +47,18 @@
     <div id="print-watermark" style="display: none;"></div>
     <div id="toast-container"></div>
     
-    <!-- BARRA DE AVISO DE TESTE (NOVIDADE PARA MONETIZAÇÃO) -->
-    <div id="trial-warning-bar" class="hidden bg-yellow-500 text-black text-center py-2 px-4 font-bold text-sm fixed top-0 left-0 w-full z-[60] shadow-md">
-        <i class="fas fa-clock mr-2"></i>
-        <span id="trial-days-left">Restam 30 dias</span> de acesso gratuito. 
-        <button id="trial-subscribe-btn" class="ml-2 underline hover:text-white transition-colors">Assinar Agora</button>
+    <!-- AVISO DE TRIAL DISCRETO (NOVO) -->
+    <div id="trial-floating-notify" class="hidden fixed bottom-20 right-4 bg-white dark:bg-gray-800 border-l-4 border-yellow-500 text-gray-800 dark:text-white p-4 rounded-r shadow-2xl z-50 flex items-center gap-4 animate-slide-in max-w-sm">
+        <div>
+            <p class="font-bold text-sm">Período de Teste</p>
+            <p class="text-xs text-gray-600 dark:text-gray-400"><span id="trial-days-left">...</span> dias restantes.</p>
+        </div>
+        <button id="trial-subscribe-btn" class="bg-green-600 hover:bg-green-500 text-white text-xs font-bold py-2 px-3 rounded transition-colors">
+            ASSINAR
+        </button>
+        <button id="close-trial-notify" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+            <i class="fas fa-times"></i>
+        </button>
     </div>
 
     <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-40 opacity-0 pointer-events-none sidebar-overlay lg:hidden"></div>
@@ -71,8 +80,7 @@
     </div>
     
     <div id="main-wrapper">
-        <!-- CABEÇALHO (Ajustado top para acomodar a barra de aviso se necessário) -->
-        <header id="main-header" class="fixed top-0 left-0 w-full z-40 backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 shadow-md transition-all duration-500 mt-0">
+        <header id="main-header" class="fixed top-0 left-0 w-full z-40 backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 shadow-md transition-all duration-500">
             <div class="container mx-auto px-4 md:px-6 max-w-7xl">
                 <div class="flex justify-between items-center py-4">
                     <div class="flex items-center space-x-4">
@@ -86,14 +94,15 @@
                     </div>
 
                     <div class="hidden lg:flex items-center space-x-4">
-                        <button id="header-subscribe-btn" class="action-button pulse-button bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-6 rounded-full shadow-lg border-2 border-green-400 transform hover:scale-105 transition-all">
-                            <i class="fas fa-crown mr-2"></i> ASSINAR AGORA
-                        </button>
-                        
-                        <button id="install-app-btn" class="hidden bg-gray-100/80 dark:bg-gray-800/80 py-2 px-4 rounded-full text-sm font-bold border border-gray-300 dark:border-gray-600 hover:text-orange-500 hover:border-orange-500 transition-all">
+                        <!-- Botão Instalar Desktop -->
+                        <button id="install-app-btn" class="hidden bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-full text-sm font-bold shadow-md transition-all flex items-center">
                             <i class="fas fa-download mr-2"></i> Instalar App
                         </button>
 
+                        <button id="header-subscribe-btn" class="action-button pulse-button bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-6 rounded-full shadow-lg border-2 border-green-400 transform hover:scale-105 transition-all">
+                            <i class="fas fa-crown mr-2"></i> ASSINAR
+                        </button>
+                        
                         <button id="home-button-desktop" title="Voltar ao Início" class="text-gray-800 dark:text-gray-100 text-xl hover:text-orange-500 transition-colors">
                             <i class="fas fa-home"></i>
                         </button>
@@ -114,7 +123,7 @@
 
                     <div class="lg:hidden flex items-center gap-3">
                         <button id="mobile-subscribe-btn" class="pulse-button bg-green-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg border border-green-400">
-                            <i class="fas fa-crown"></i> ASSINAR
+                            <i class="fas fa-crown"></i>
                         </button>
                         <button id="mobile-menu-button" class="text-gray-900 dark:text-white text-2xl hover:text-orange-500 transition-colors">
                             <i class="fas fa-bars"></i>
@@ -299,7 +308,7 @@
         </div>
         <div class="p-6 md:p-8 bg-gray-900 overflow-y-auto max-h-[80vh]">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- PLANOS (Caminhos de Imagem Corrigidos com ./) -->
+                <!-- PLANO MENSAL -->
                 <div class="bg-gray-800 rounded-xl border border-gray-700 hover:border-blue-500 transition-all hover:shadow-xl hover:-translate-y-1 relative overflow-hidden flex flex-col">
                     <div class="p-5 text-center bg-gray-800/50 border-b border-gray-700">
                         <h3 class="text-xl font-bold text-blue-400">MENSAL</h3>
