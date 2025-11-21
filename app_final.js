@@ -1,4 +1,4 @@
-/* === ARQUIVO app_final.js (VERSÃO FINAL - CORREÇÃO ERRO CONSOLE) === */
+/* === ARQUIVO app_final.js (VERSÃO FINAL - CORREÇÃO MÓDULOS PREMIUM VISÍVEIS) === */
 
 // ESPERA O HTML ESTAR 100% CARREGADO ANTES DE EXECUTAR QUALQUER COISA
 document.addEventListener('DOMContentLoaded', () => {
@@ -153,10 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         populateModuleLists();
         updateProgress();
-        
-        // AQUI ESTAVA O ERRO: addEventListeners não existia. Agora existe!
         addEventListeners(); 
-        
         handleInitialLoad();
     }
 
@@ -340,6 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        // LÓGICA DE BLOQUEIO
         const isPremiumContent = moduleCategory && moduleCategory.isPremium;
         const userIsNotPremium = !currentUserData || currentUserData.status !== 'premium';
 
@@ -632,24 +630,30 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('mobile-module-container').innerHTML = getModuleListHTML();
     }
 
+    // --- CORREÇÃO: EXIBIÇÃO DE MÓDULOS E BLOQUEIO VISUAL ---
     function getModuleListHTML() {
         let html = `<h2 class="text-2xl font-semibold mb-5 flex items-center text-blue-900 dark:text-white"><i class="fas fa-list-ul mr-3 text-orange-500"></i> Conteúdo do Curso</h2>
                         <div class="mb-4 relative"><input type="text" class="module-search w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700" placeholder="Buscar módulo..."><i class="fas fa-search absolute right-3 top-3.5 text-gray-400"></i></div>
                         <div class="module-accordion-container space-y-2">`;
 
         for (const k in moduleCategories) {
-            if (k === 'simulados' || k === 'bonus') continue;
-
+            // FILTRO REMOVIDO PARA EXIBIR TUDO
+            
             const cat = moduleCategories[k];
-            const lockIcon = cat.isPremium ? '<i class="fas fa-lock text-xs ml-2 text-yellow-500"></i>' : '';
+            // MOSTRA CADEADO SE FOR PREMIUM E O USUÁRIO NÃO FOR PREMIUM
+            const isLocked = cat.isPremium && (!currentUserData || currentUserData.status !== 'premium');
+            const lockIcon = isLocked ? '<i class="fas fa-lock text-xs ml-2 text-yellow-500"></i>' : '';
+            
             html += `<div><button class="accordion-button"><span><i class="${cat.icon} w-6 mr-2 text-gray-500"></i>${cat.title} ${lockIcon}</span><i class="fas fa-chevron-down"></i></button><div class="accordion-panel">`;
             for (let i = cat.range[0]; i <= cat.range[1]; i++) {
                 const m = moduleContent[`module${i}`];
                 if (m) {
                     const isDone = Array.isArray(completedModules) && completedModules.includes(m.id);
+                    // Adiciona cadeado pequeno também no item se estiver bloqueado
+                    const itemLock = isLocked ? '<i class="fas fa-lock text-xs text-gray-400 ml-2"></i>' : '';
                     html += `<div class="module-list-item${isDone ? ' completed' : ''}" data-module="${m.id}">
                                 <i class="${m.iconClass} module-icon"></i>
-                                <span style="flex:1">${m.title}</span>
+                                <span style="flex:1">${m.title} ${itemLock}</span>
                                 ${isDone ? '<i class="fas fa-check-circle completion-icon" aria-hidden="true"></i>' : ''}
                              </div>`;
                 }
@@ -826,11 +830,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- CORREÇÃO: FUNÇÃO addEventListeners QUE ESTAVA FALTANDO ---
-    // Esta função agrupa todos os ouvintes de evento para que o 'onLoginSuccess' funcione corretamente
     function addEventListeners() {
-        
-        // 1. Busca
         document.body.addEventListener('input', e => {
             if(e.target.matches('.module-search')) {
                 const s = e.target.value.toLowerCase();
@@ -862,7 +862,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 2. Resetar Progresso
         document.getElementById('reset-progress')?.addEventListener('click', () => { document.getElementById('reset-modal')?.classList.add('show'); document.getElementById('reset-modal-overlay')?.classList.add('show'); });
         document.getElementById('cancel-reset-button')?.addEventListener('click', () => { document.getElementById('reset-modal')?.classList.remove('show'); document.getElementById('reset-modal-overlay')?.classList.remove('show'); });
         document.getElementById('confirm-reset-button')?.addEventListener('click', () => {
@@ -873,7 +872,6 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.reload();
         });
         
-        // 3. Back to Top
         document.getElementById('back-to-top')?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
         window.addEventListener('scroll', () => {
             const btn = document.getElementById('back-to-top');
@@ -883,17 +881,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 4. Ouvinte de CLIQUES nos Módulos (CRÍTICO)
         document.body.addEventListener('click', e => {
-            // Detecta clique no item de módulo
             const moduleItem = e.target.closest('.module-list-item');
             if (moduleItem) {
                 loadModuleContent(moduleItem.dataset.module);
                 const nextButton = document.getElementById('next-module');
-                nextButton?.classList.remove('blinking-button');
+                if(nextButton) nextButton.classList.remove('blinking-button');
             }
 
-            // Detecta clique no botão acordeão
             if (e.target.closest('.accordion-button')) {
                 const b = e.target.closest('.accordion-button');
                 const p = b.nextElementSibling;
@@ -916,7 +911,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 5. Botões de Navegação e Menu
         document.getElementById('mobile-menu-button')?.addEventListener('click', openSidebar);
         document.getElementById('close-sidebar-button')?.addEventListener('click', closeSidebar);
         sidebarOverlay?.addEventListener('click', closeSidebar);
