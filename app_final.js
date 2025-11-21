@@ -1,4 +1,4 @@
-/* === ARQUIVO app_final.js (VERSÃO FINAL - CORREÇÃO VISUAL E FILTRO) === */
+/* === ARQUIVO app_final.js (VERSÃO FINAL - CORREÇÃO DE CLIQUES E PREMIUM) === */
 
 // ESPERA O HTML ESTAR 100% CARREGADO ANTES DE EXECUTAR QUALQUER COISA
 document.addEventListener('DOMContentLoaded', () => {
@@ -130,11 +130,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function onLoginSuccess(user, userData) {
+        // ATUALIZA SEMPRE OS DADOS (CORREÇÃO PREMIUM EM TEMPO REAL)
+        currentUserData = userData; 
+
         if (document.body.getAttribute('data-app-ready') === 'true') return;
         document.body.setAttribute('data-app-ready', 'true');
         
-        currentUserData = userData; 
-
         document.getElementById('name-prompt-modal')?.classList.remove('show');
         document.getElementById('name-modal-overlay')?.classList.remove('show');
         document.getElementById('expired-modal')?.classList.remove('show');
@@ -339,8 +340,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // LÓGICA DE BLOQUEIO
+        // LÓGICA DE BLOQUEIO (VERIFICAÇÃO CONTRA currentUserData)
         const isPremiumContent = moduleCategory && moduleCategory.isPremium;
+        // Garante que só entra se status for EXATAMENTE 'premium'
         const userIsNotPremium = !currentUserData || currentUserData.status !== 'premium';
 
         if (isPremiumContent && userIsNotPremium) {
@@ -639,8 +641,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="module-accordion-container space-y-2">`;
 
         for (const k in moduleCategories) {
-            // --- FILTRO EXPLÍCITO ---
-            // Aqui garantimos que 'simulados' e 'bonus' não sejam desenhados na lista
+            // --- FILTRO EXPLÍCITO: Esconde Simulados e Bônus da Sidebar ---
             if (k === 'simulados' || k === 'bonus') continue;
 
             const cat = moduleCategories[k];
@@ -879,7 +880,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- CORREÇÃO IMPORTANTE: RESTAURA O CLICK LISTENER DOS MÓDULOS ---
     document.body.addEventListener('click', e => {
+        // Detecta clique no item de módulo
+        const moduleItem = e.target.closest('.module-list-item');
+        if (moduleItem) {
+            loadModuleContent(moduleItem.dataset.module);
+            const nextButton = document.getElementById('next-module');
+            nextButton?.classList.remove('blinking-button');
+        }
+
+        // Detecta clique no botão acordeão
         if (e.target.closest('.accordion-button')) {
             const b = e.target.closest('.accordion-button');
             const p = b.nextElementSibling;
