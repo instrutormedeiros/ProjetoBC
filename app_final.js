@@ -1,4 +1,4 @@
-/* === ARQUIVO app_final.js (VERSÃO FINAL - CORREÇÃO DE CLIQUES E PREMIUM) === */
+/* === ARQUIVO app_final.js (VERSÃO FINAL - CORREÇÃO ERRO CONSOLE) === */
 
 // ESPERA O HTML ESTAR 100% CARREGADO ANTES DE EXECUTAR QUALQUER COISA
 document.addEventListener('DOMContentLoaded', () => {
@@ -130,7 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function onLoginSuccess(user, userData) {
-        // ATUALIZA SEMPRE OS DADOS (CORREÇÃO PREMIUM EM TEMPO REAL)
         currentUserData = userData; 
 
         if (document.body.getAttribute('data-app-ready') === 'true') return;
@@ -154,7 +153,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         populateModuleLists();
         updateProgress();
+        
+        // AQUI ESTAVA O ERRO: addEventListeners não existia. Agora existe!
         addEventListeners(); 
+        
         handleInitialLoad();
     }
 
@@ -325,11 +327,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return questions;
     }
 
-    // --- CORREÇÃO 1: VERIFICAÇÃO DE PREMIUM MAIS ROBUSTA ---
     async function loadModuleContent(id) {
         if (!id || !moduleContent[id]) return;
         
-        // Encontrar a categoria do módulo
         const num = parseInt(id.replace('module', ''));
         let moduleCategory = null;
         for (const key in moduleCategories) {
@@ -340,9 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // LÓGICA DE BLOQUEIO (VERIFICAÇÃO CONTRA currentUserData)
         const isPremiumContent = moduleCategory && moduleCategory.isPremium;
-        // Garante que só entra se status for EXATAMENTE 'premium'
         const userIsNotPremium = !currentUserData || currentUserData.status !== 'premium';
 
         if (isPremiumContent && userIsNotPremium) {
@@ -634,14 +632,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('mobile-module-container').innerHTML = getModuleListHTML();
     }
 
-    // --- CORREÇÃO: LISTA DE MÓDULOS ---
     function getModuleListHTML() {
         let html = `<h2 class="text-2xl font-semibold mb-5 flex items-center text-blue-900 dark:text-white"><i class="fas fa-list-ul mr-3 text-orange-500"></i> Conteúdo do Curso</h2>
                         <div class="mb-4 relative"><input type="text" class="module-search w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700" placeholder="Buscar módulo..."><i class="fas fa-search absolute right-3 top-3.5 text-gray-400"></i></div>
                         <div class="module-accordion-container space-y-2">`;
 
         for (const k in moduleCategories) {
-            // --- FILTRO EXPLÍCITO: Esconde Simulados e Bônus da Sidebar ---
             if (k === 'simulados' || k === 'bonus') continue;
 
             const cat = moduleCategories[k];
@@ -830,106 +826,115 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    document.body.addEventListener('input', e => {
-        if(e.target.matches('.module-search')) {
-            const s = e.target.value.toLowerCase();
-            const container = e.target.closest('div.relative');
-            if (container) {
-                const accordionContainer = container.nextElementSibling;
-                if (accordionContainer) {
-                        accordionContainer.querySelectorAll('.module-list-item').forEach(i => {
-                        const text = i.textContent.toLowerCase();
-                        const match = text.includes(s);
-                        i.style.display = match ? 'flex' : 'none';
-                        if(match && s.length > 0) {
-                            const panel = i.closest('.accordion-panel');
-                            const btn = panel.previousElementSibling;
-                            if(!btn.classList.contains('active')) {
-                                btn.classList.add('active');
-                                panel.style.maxHeight = panel.scrollHeight + "px";
+    // --- CORREÇÃO: FUNÇÃO addEventListeners QUE ESTAVA FALTANDO ---
+    // Esta função agrupa todos os ouvintes de evento para que o 'onLoginSuccess' funcione corretamente
+    function addEventListeners() {
+        
+        // 1. Busca
+        document.body.addEventListener('input', e => {
+            if(e.target.matches('.module-search')) {
+                const s = e.target.value.toLowerCase();
+                const container = e.target.closest('div.relative');
+                if (container) {
+                    const accordionContainer = container.nextElementSibling;
+                    if (accordionContainer) {
+                            accordionContainer.querySelectorAll('.module-list-item').forEach(i => {
+                            const text = i.textContent.toLowerCase();
+                            const match = text.includes(s);
+                            i.style.display = match ? 'flex' : 'none';
+                            if(match && s.length > 0) {
+                                const panel = i.closest('.accordion-panel');
+                                const btn = panel.previousElementSibling;
+                                if(!btn.classList.contains('active')) {
+                                    btn.classList.add('active');
+                                    panel.style.maxHeight = panel.scrollHeight + "px";
+                                }
                             }
-                        }
-                    });
-                    if(s.length === 0) {
-                        accordionContainer.querySelectorAll('.accordion-button').forEach(btn => {
-                            btn.classList.remove('active');
-                            btn.nextElementSibling.style.maxHeight = null;
                         });
+                        if(s.length === 0) {
+                            accordionContainer.querySelectorAll('.accordion-button').forEach(btn => {
+                                btn.classList.remove('active');
+                                btn.nextElementSibling.style.maxHeight = null;
+                            });
+                        }
                     }
                 }
             }
-        }
-    });
+        });
 
-    document.getElementById('reset-progress')?.addEventListener('click', () => { document.getElementById('reset-modal')?.classList.add('show'); document.getElementById('reset-modal-overlay')?.classList.add('show'); });
-    document.getElementById('cancel-reset-button')?.addEventListener('click', () => { document.getElementById('reset-modal')?.classList.remove('show'); document.getElementById('reset-modal-overlay')?.classList.remove('show'); });
-    document.getElementById('confirm-reset-button')?.addEventListener('click', () => {
-        localStorage.removeItem('gateBombeiroCompletedModules_v3');
-        localStorage.removeItem('gateBombeiroNotifiedAchievements_v3');
-        Object.keys(localStorage).forEach(key => { if (key.startsWith('note-')) localStorage.removeItem(key); });
-        alert('Progresso local resetado.');
-        window.location.reload();
-    });
-    
-    document.getElementById('back-to-top')?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-    window.addEventListener('scroll', () => {
-        const btn = document.getElementById('back-to-top');
-        if(btn) {
-            if (window.scrollY > 300) { btn.style.display = 'flex'; setTimeout(() => { btn.style.opacity = '1'; btn.style.transform = 'translateY(0)'; }, 10); } 
-            else { btn.style.opacity = '0'; btn.style.transform = 'translateY(20px)'; setTimeout(() => btn.style.display = 'none', 300); }
-        }
-    });
-
-    // --- CORREÇÃO IMPORTANTE: RESTAURA O CLICK LISTENER DOS MÓDULOS ---
-    document.body.addEventListener('click', e => {
-        // Detecta clique no item de módulo
-        const moduleItem = e.target.closest('.module-list-item');
-        if (moduleItem) {
-            loadModuleContent(moduleItem.dataset.module);
-            const nextButton = document.getElementById('next-module');
-            nextButton?.classList.remove('blinking-button');
-        }
-
-        // Detecta clique no botão acordeão
-        if (e.target.closest('.accordion-button')) {
-            const b = e.target.closest('.accordion-button');
-            const p = b.nextElementSibling;
-            if (!p) return;
-            const isActive = b.classList.contains('active');
-            const allPanels = b.closest('.module-accordion-container, .sidebar, #mobile-module-container').querySelectorAll('.accordion-panel');
-            allPanels.forEach(op => {
-                if (op !== p && op.previousElementSibling) {
-                        op.style.maxHeight = null;
-                        op.previousElementSibling.classList.remove('active');
-                }
-            });
-            if (!isActive) {
-                b.classList.add('active');
-                p.style.maxHeight = p.scrollHeight + "px";
-            } else {
-                b.classList.remove('active');
-                p.style.maxHeight = null;
+        // 2. Resetar Progresso
+        document.getElementById('reset-progress')?.addEventListener('click', () => { document.getElementById('reset-modal')?.classList.add('show'); document.getElementById('reset-modal-overlay')?.classList.add('show'); });
+        document.getElementById('cancel-reset-button')?.addEventListener('click', () => { document.getElementById('reset-modal')?.classList.remove('show'); document.getElementById('reset-modal-overlay')?.classList.remove('show'); });
+        document.getElementById('confirm-reset-button')?.addEventListener('click', () => {
+            localStorage.removeItem('gateBombeiroCompletedModules_v3');
+            localStorage.removeItem('gateBombeiroNotifiedAchievements_v3');
+            Object.keys(localStorage).forEach(key => { if (key.startsWith('note-')) localStorage.removeItem(key); });
+            alert('Progresso local resetado.');
+            window.location.reload();
+        });
+        
+        // 3. Back to Top
+        document.getElementById('back-to-top')?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        window.addEventListener('scroll', () => {
+            const btn = document.getElementById('back-to-top');
+            if(btn) {
+                if (window.scrollY > 300) { btn.style.display = 'flex'; setTimeout(() => { btn.style.opacity = '1'; btn.style.transform = 'translateY(0)'; }, 10); } 
+                else { btn.style.opacity = '0'; btn.style.transform = 'translateY(20px)'; setTimeout(() => btn.style.display = 'none', 300); }
             }
-        }
-    });
+        });
 
-    document.getElementById('mobile-menu-button')?.addEventListener('click', openSidebar);
-    document.getElementById('close-sidebar-button')?.addEventListener('click', closeSidebar);
-    sidebarOverlay?.addEventListener('click', closeSidebar);
-    document.getElementById('home-button-desktop')?.addEventListener('click', goToHomePage);
-    document.getElementById('bottom-nav-home')?.addEventListener('click', goToHomePage);
-    document.getElementById('bottom-nav-modules')?.addEventListener('click', openSidebar);
-    document.getElementById('bottom-nav-theme')?.addEventListener('click', toggleTheme);
-    document.getElementById('dark-mode-toggle-desktop')?.addEventListener('click', toggleTheme);
-    document.getElementById('focus-mode-toggle')?.addEventListener('click', toggleFocusMode);
-    document.getElementById('bottom-nav-focus')?.addEventListener('click', toggleFocusMode);
-    document.getElementById('focus-menu-modules')?.addEventListener('click', openSidebar);
-    document.getElementById('focus-menu-exit')?.addEventListener('click', toggleFocusMode);
-    document.getElementById('focus-nav-modules')?.addEventListener('click', openSidebar);
-    document.getElementById('focus-nav-exit')?.addEventListener('click', toggleFocusMode);
-    document.getElementById('close-congrats')?.addEventListener('click', () => { document.getElementById('congratulations-modal').classList.remove('show'); document.getElementById('modal-overlay').classList.remove('show'); });
-    closeAchButton?.addEventListener('click', hideAchievementModal);
-    achievementOverlay?.addEventListener('click', hideAchievementModal);
+        // 4. Ouvinte de CLIQUES nos Módulos (CRÍTICO)
+        document.body.addEventListener('click', e => {
+            // Detecta clique no item de módulo
+            const moduleItem = e.target.closest('.module-list-item');
+            if (moduleItem) {
+                loadModuleContent(moduleItem.dataset.module);
+                const nextButton = document.getElementById('next-module');
+                nextButton?.classList.remove('blinking-button');
+            }
+
+            // Detecta clique no botão acordeão
+            if (e.target.closest('.accordion-button')) {
+                const b = e.target.closest('.accordion-button');
+                const p = b.nextElementSibling;
+                if (!p) return;
+                const isActive = b.classList.contains('active');
+                const allPanels = b.closest('.module-accordion-container, .sidebar, #mobile-module-container').querySelectorAll('.accordion-panel');
+                allPanels.forEach(op => {
+                    if (op !== p && op.previousElementSibling) {
+                            op.style.maxHeight = null;
+                            op.previousElementSibling.classList.remove('active');
+                    }
+                });
+                if (!isActive) {
+                    b.classList.add('active');
+                    p.style.maxHeight = p.scrollHeight + "px";
+                } else {
+                    b.classList.remove('active');
+                    p.style.maxHeight = null;
+                }
+            }
+        });
+
+        // 5. Botões de Navegação e Menu
+        document.getElementById('mobile-menu-button')?.addEventListener('click', openSidebar);
+        document.getElementById('close-sidebar-button')?.addEventListener('click', closeSidebar);
+        sidebarOverlay?.addEventListener('click', closeSidebar);
+        document.getElementById('home-button-desktop')?.addEventListener('click', goToHomePage);
+        document.getElementById('bottom-nav-home')?.addEventListener('click', goToHomePage);
+        document.getElementById('bottom-nav-modules')?.addEventListener('click', openSidebar);
+        document.getElementById('bottom-nav-theme')?.addEventListener('click', toggleTheme);
+        document.getElementById('dark-mode-toggle-desktop')?.addEventListener('click', toggleTheme);
+        document.getElementById('focus-mode-toggle')?.addEventListener('click', toggleFocusMode);
+        document.getElementById('bottom-nav-focus')?.addEventListener('click', toggleFocusMode);
+        document.getElementById('focus-menu-modules')?.addEventListener('click', openSidebar);
+        document.getElementById('focus-menu-exit')?.addEventListener('click', toggleFocusMode);
+        document.getElementById('focus-nav-modules')?.addEventListener('click', openSidebar);
+        document.getElementById('focus-nav-exit')?.addEventListener('click', toggleFocusMode);
+        document.getElementById('close-congrats')?.addEventListener('click', () => { document.getElementById('congratulations-modal').classList.remove('show'); document.getElementById('modal-overlay').classList.remove('show'); });
+        closeAchButton?.addEventListener('click', hideAchievementModal);
+        achievementOverlay?.addEventListener('click', hideAchievementModal);
+    }
 
     init();
 });
