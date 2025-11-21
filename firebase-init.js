@@ -1,5 +1,6 @@
 /* firebase-init.js
    Funções de autenticação e sessão com BATCH WRITE para evitar erros de cadastro.
+   CORREÇÃO: Verificação de CPF movida para após o login para evitar erro de permissão.
 */
 
 (function(){
@@ -31,27 +32,36 @@
       return true;
   }
 
-  // --- 2. CADASTRO BLINDADO (BATCH WRITE) ---
+  // --- 2. CADASTRO BLINDADO (CORRIGIDO) ---
   window.FirebaseCourse.signUpWithEmail = async function(name, email, password, cpfRaw){
     const cpf = cpfRaw.replace(/[^\d]+/g,'');
     if (!validarCPF(cpf)) throw new Error("CPF inválido.");
 
-    // Verifica CPF
-    const cpfDocRef = __fbDB.collection('cpfs').doc(cpf);
-    const cpfSnapshot = await cpfDocRef.get();
-    if (cpfSnapshot.exists) throw new Error("CPF já cadastrado.");
-
-    // Cria Auth
+    // 1. CRIA O USUÁRIO NO AUTH PRIMEIRO
+    // Isso garante que request.auth não seja null nas regras de segurança
     const userCred = await __fbAuth.createUserWithEmailAndPassword(email, password);
     const uid = userCred.user.uid;
-    const trialEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-    const sessionId = Date.now().toString();
 
     try {
-        // GRAVAÇÃO ATÔMICA (Tudo ou Nada)
+        // 2. AGORA VERIFICA O CPF (JÁ LOGADO)
+        const cpfDocRef = __fbDB.collection('cpfs').doc(cpf);
+        const cpfSnapshot = await cpfDocRef.get();
+        
+        if (cpfSnapshot.exists) {
+            throw new Error("CPF já cadastrado.");
+        }
+
+        // 3. PREPARA DADOS
+        const trialEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        const sessionId = Date.now().toString();
+
+        // 4. GRAVAÇÃO ATÔMICA (Batch Write)
         const batch = __fbDB.batch();
+        
+        // Reserva o CPF
         batch.set(cpfDocRef, { uid: uid });
         
+        // Cria o documento do usuário
         const userDocRef = __fbDB.collection('users').doc(uid);
         batch.set(userDocRef, {
           name: name,
@@ -59,15 +69,21 @@
           cpf: cpf,
           status: 'trial',
           acesso_ate: trialEndDate,
-          current_session_id: sessionId
+          current_session_id: sessionId,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        await batch.commit(); // Executa a gravação
+        await batch.commit(); // Confirma a gravação no banco
         return { uid, acesso_ate: trialEndDate };
 
     } catch (error) {
-        await userCred.user.delete(); // Se falhar no banco, deleta o login para não travar
-        throw new Error("Erro ao salvar dados. Tente novamente.");
+        // SE DEU ERRO (CPF duplicado ou erro de rede), APAGA O USUÁRIO DO AUTH
+        // Para não ficar um usuário "fantasma" sem dados no banco
+        if (userCred && userCred.user) {
+            await userCred.user.delete().catch(err => console.error("Erro ao limpar usuário:", err));
+        }
+        // Joga o erro para o app_final.js mostrar na tela (ex: "CPF já cadastrado")
+        throw error;
     }
   };
 
@@ -75,7 +91,7 @@
   window.FirebaseCourse.signInWithEmail = async function(email, password){
     const userCred = await __fbAuth.signInWithEmailAndPassword(email, password);
     const newSessionId = Date.now().toString();
-    // Atualiza sessão sem travar o login se falhar
+    // Atualiza sessão sem travar o login se falhar a escrita (melhor UX)
     __fbDB.collection('users').doc(userCred.user.uid).update({ current_session_id: newSessionId }).catch(()=>{});
     return userCred.user;
   };
@@ -97,27 +113,31 @@
       if (user) {
         // Monitora o documento do usuário em tempo real
         unsubscribe = __fbDB.collection('users').doc(user.uid).onSnapshot((doc) => {
-            if (!doc.exists) return; // Aguarda criação se for novo cadastro
+            // Se o doc não existe, pode ser que o cadastro esteja em andamento ou falhou.
+            // Não fazemos nada e aguardamos. O fluxo de cadastro cuidará disso.
+            if (!doc.exists) return; 
             
             const userData = doc.data();
             const hoje = new Date();
             const validade = new Date(userData.acesso_ate);
 
-            // Verifica validade
+            // Verifica validade do acesso
             if (hoje > validade) {
                 if(expiredModal) {
                     expiredModal.classList.add('show');
                     if(loginOverlay) loginOverlay.classList.add('show');
                 }
-                return;
+                return; // Não executa o sucesso se expirado
             }
 
-            // Verifica sessão única
+            // Verifica sessão única (anti-compartilhamento)
             const localSession = localStorage.getItem('my_session_id');
             if (!localSession) {
+                // Primeiro acesso neste navegador
                 localStorage.setItem('my_session_id', userData.current_session_id);
                 onLoginSuccess(user, userData);
             } else if (localSession !== userData.current_session_id) {
+                // Sessão diferente da salva no banco = logou em outro lugar
                 alert("Conta acessada em outro dispositivo. Desconectando...");
                 localStorage.removeItem('my_session_id');
                 FirebaseCourse.signOutUser();
