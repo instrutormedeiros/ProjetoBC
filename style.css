@@ -18,24 +18,16 @@ h1, h2, h3 { font-family: 'Lora', serif; }
 .pulse { animation: pulse 2s infinite; }
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
 
-/* === AJUSTE PARA O HEADER COM O AVISO DE TRIAL === */
-body.has-trial-warning header#main-header {
-    top: 36px; /* Altura aproximada da barra amarela */
+/* Animação para o Toast Deslizar */
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
 }
-body.has-trial-warning #off-canvas-sidebar {
-    top: 36px;
-    height: calc(100% - 36px);
-}
-body.has-trial-warning .sticky-progress-wrapper {
-    top: calc(5.5rem + 36px);
-}
-@media (max-width: 1024px) {
-    body.has-trial-warning .sticky-progress-wrapper {
-        top: calc(7.5rem + 36px);
-    }
+.animate-slide-in {
+    animation: slideInRight 0.5s ease-out forwards;
 }
 
-/* === BARRA DE PROGRESSO CORRIGIDA (Ponto 3) === */
+/* === BARRA DE PROGRESSO === */
 @keyframes progress-gradient-flow {
   0% { background-position: 200% center; }
   100% { background-position: 0% center; }
@@ -52,7 +44,6 @@ body.has-trial-warning .sticky-progress-wrapper {
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     color: var(--light-text);
     position: relative;
-    transition: top 0.3s ease; /* Suaviza o ajuste quando o aviso aparece */
 }
 
 /* Ajuste Específico para Mobile - Garante que a barra desça */
@@ -260,7 +251,9 @@ body.has-trial-warning .sticky-progress-wrapper {
 .achievement { background: var(--panel-bg); border-radius: 1rem; padding: 1.5rem; box-shadow: 0 5px 15px rgba(0,0,0,0.08); text-align: center; transition: all 0.3s ease; border: 2px solid transparent; }
 .achievement.unlocked { border-color: var(--accent); transform: scale(1.05); background: linear-gradient(135deg, #fffbeb, #fff); }
 .dark .achievement.unlocked { background: linear-gradient(135deg, #4b5563, #374151); }
-.achievement-icon { font-size: 3rem; color: #ced4da; margin-bottom: 1rem; transition: color 0.5s ease; }
+
+/* --- AJUSTE DO ÍCONE DE CONQUISTA (MENOR) --- */
+.achievement-icon { font-size: 2rem; color: #ced4da; margin-bottom: 0.75rem; transition: color 0.5s ease; } /* Reduzi de 3rem para 2rem */
 .dark .achievement-icon { color: #4b5563; }
 .achievement.unlocked .achievement-icon { color: var(--accent); animation: pulse 1.5s infinite; }
 
