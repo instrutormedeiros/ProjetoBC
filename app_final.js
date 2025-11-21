@@ -1,109 +1,7 @@
-/* === ARQUIVO app_final.js (VERSÃO FINAL - ATUALIZADA 2.0) === */
+/* === ARQUIVO app_final.js (VERSÃO FINAL - ATUALIZADA 4.0) === */
 
 // ESPERA O HTML ESTAR 100% CARREGADO ANTES DE EXECUTAR QUALQUER COISA
 document.addEventListener('DOMContentLoaded', () => {
-
-    // --- PWA INSTALLATION LOGIC (PONTO 7 & PEDIDO 1: DESKTOP INSTALL) ---
-    let deferredPrompt;
-    const installBtn = document.getElementById('install-app-btn');
-    const installBtnMobile = document.getElementById('install-app-btn-mobile');
-    
-    // DETECTAR IOS (iPhone/iPad)
-    const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-    // Se for iOS, forçar o botão a aparecer (já que o evento beforeinstallprompt não existe lá)
-    if (isIos) {
-        if(installBtn) installBtn.classList.remove('hidden'); 
-        if(installBtnMobile) installBtnMobile.classList.remove('hidden');
-    }
-
-    // Escuta o evento de instalação (Android/PC/Desktop Chrome/Edge)
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      // Mostra os botões se o navegador permitir instalação
-      if(installBtn) installBtn.classList.remove('hidden'); 
-      if(installBtnMobile) installBtnMobile.classList.remove('hidden'); 
-    });
-
-    // Ouve se o app foi instalado para esconder o botão
-    window.addEventListener('appinstalled', () => {
-        if(installBtn) installBtn.classList.add('hidden');
-        if(installBtnMobile) installBtnMobile.classList.add('hidden');
-        deferredPrompt = null;
-    });
-
-    async function triggerInstall() {
-        if (isIos) {
-            // Se for iOS, mostra o modal explicativo
-            const iosModal = document.getElementById('ios-install-modal');
-            const iosOverlay = document.getElementById('ios-modal-overlay');
-            if (iosModal && iosOverlay) {
-                iosModal.classList.add('show');
-                iosOverlay.classList.add('show');
-                
-                // Fecha o modal ao clicar no botão
-                document.getElementById('close-ios-modal')?.addEventListener('click', () => {
-                    iosModal.classList.remove('show');
-                    iosOverlay.classList.remove('show');
-                });
-                
-                // Fecha ao clicar fora
-                iosOverlay.addEventListener('click', () => {
-                    iosModal.classList.remove('show');
-                    iosOverlay.classList.remove('show');
-                });
-            } else {
-                alert("Para instalar no iPhone:\n1. Toque em Compartilhar (quadrado com seta).\n2. Toque em 'Adicionar à Tela de Início'.");
-            }
-        } else if (deferredPrompt) {
-            // Se for Android/PC (Chrome/Edge)
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
-                if(installBtn) installBtn.classList.add('hidden');
-                if(installBtnMobile) installBtnMobile.classList.add('hidden');
-            }
-            deferredPrompt = null;
-        } else {
-            // Fallback genérico se o botão aparecer mas o evento não estiver pronto
-            alert("Para instalar:\nPC/Android: Procure o ícone de instalação na barra de endereço ou menu.\niOS: Toque em Compartilhar > Adicionar à Tela de Início.");
-        }
-    }
-
-    if(installBtn) installBtn.addEventListener('click', triggerInstall);
-    if(installBtnMobile) installBtnMobile.addEventListener('click', triggerInstall);
-
-    // --- VERIFICAÇÃO DE SEGURANÇA (Primeira coisa a rodar) ---
-    if (typeof moduleContent === 'undefined' || typeof moduleCategories === 'undefined' || typeof questionSources === 'undefined') {
-        // Esconde elementos da UI se falhar
-        document.getElementById('main-header')?.classList.add('hidden');
-        document.querySelector('footer')?.classList.add('hidden');
-        document.querySelector('nav.lg\\:hidden')?.classList.add('hidden');
-        document.getElementById('welcome-greeting-container')?.classList.add('hidden');
-        document.getElementById('breadcrumb-container')?.classList.add('hidden');
-        document.getElementById('sticky-progress-wrapper')?.classList.add('hidden');
-
-        const contentAreaError = document.getElementById('content-area');
-        if (contentAreaError) {
-            contentAreaError.innerHTML = `
-                <div class="text-center py-10 px-6">
-                    <div class="inline-block p-5 bg-red-100 dark:bg-red-900/50 rounded-full mb-6 floating">
-                        <i class="fas fa-exclamation-triangle text-6xl text-red-600"></i>
-                    </div>
-                    <h2 class="text-3xl font-bold mb-4 text-red-700 dark:text-red-300">Erro Crítico de Carregamento</h2>
-                    <p class="text-lg text-gray-700 dark:text-gray-300 max-w-2xl mx-auto mb-8">
-                        O arquivo de dados essencial (<code>data.js</code> ou <code>course.js</code>) não foi encontrado ou está corrompido. 
-                    </p>
-                    <button onclick="location.reload()" class="action-button pulse text-lg">
-                        <i class="fas fa-sync-alt mr-2"></i> Tentar Recarregar
-                    </button>
-                </div>`;
-            contentAreaError.closest('.bg-white')?.classList.remove('hidden');
-            document.getElementById('loading-spinner')?.classList.add('hidden');
-        }
-        return; // Interrompe a execução
-    }
 
     // --- VARIÁVEIS GLOBAIS DO APP ---
     const contentArea = document.getElementById('content-area');
@@ -112,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let notifiedAchievements = JSON.parse(localStorage.getItem('gateBombeiroNotifiedAchievements_v3')) || [];
     let currentModuleId = null;
     let cachedQuestionBanks = {}; 
+    let currentUserData = null; 
 
     // --- SELETORES DO DOM ---
     const toastContainer = document.getElementById('toast-container');
@@ -129,12 +28,80 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmResetButton = document.getElementById('confirm-reset-button');
     const cancelResetButton = document.getElementById('cancel-reset-button');
 
-    // --- FUNÇÃO PRINCIPAL DE INICIALIZAÇÃO ---
+    // --- PWA INSTALLATION LOGIC ---
+    let deferredPrompt;
+    const installBtn = document.getElementById('install-app-btn');
+    const installBtnMobile = document.getElementById('install-app-btn-mobile');
+    const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    if (isIos) {
+        if(installBtn) installBtn.classList.remove('hidden'); 
+        if(installBtnMobile) installBtnMobile.classList.remove('hidden');
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if(installBtn) installBtn.classList.remove('hidden'); 
+      if(installBtnMobile) installBtnMobile.classList.remove('hidden'); 
+    });
+
+    window.addEventListener('appinstalled', () => {
+        if(installBtn) installBtn.classList.add('hidden');
+        if(installBtnMobile) installBtnMobile.classList.add('hidden');
+        deferredPrompt = null;
+    });
+
+    async function triggerInstall() {
+        if (isIos) {
+            const iosModal = document.getElementById('ios-install-modal');
+            const iosOverlay = document.getElementById('ios-modal-overlay');
+            if (iosModal && iosOverlay) {
+                iosModal.classList.add('show');
+                iosOverlay.classList.add('show');
+                
+                document.getElementById('close-ios-modal')?.addEventListener('click', () => {
+                    iosModal.classList.remove('show');
+                    iosOverlay.classList.remove('show');
+                });
+                iosOverlay.addEventListener('click', () => {
+                    iosModal.classList.remove('show');
+                    iosOverlay.classList.remove('show');
+                });
+            } else {
+                alert("Para instalar no iPhone:\n1. Toque em Compartilhar (quadrado com seta).\n2. Toque em 'Adicionar à Tela de Início'.");
+            }
+        } else if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                if(installBtn) installBtn.classList.add('hidden');
+                if(installBtnMobile) installBtnMobile.classList.add('hidden');
+            }
+            deferredPrompt = null;
+        } else {
+            alert("Para instalar:\nPC/Android: Procure o ícone de instalação na barra de endereço ou menu.\niOS: Toque em Compartilhar > Adicionar à Tela de Início.");
+        }
+    }
+
+    if(installBtn) installBtn.addEventListener('click', triggerInstall);
+    if(installBtnMobile) installBtnMobile.addEventListener('click', triggerInstall);
+
+    // --- VERIFICAÇÃO DE SEGURANÇA ---
+    if (typeof moduleContent === 'undefined' || typeof moduleCategories === 'undefined' || typeof questionSources === 'undefined') {
+        document.getElementById('main-header')?.classList.add('hidden');
+        document.querySelector('footer')?.classList.add('hidden');
+        const contentAreaError = document.getElementById('content-area');
+        if (contentAreaError) {
+            contentAreaError.innerHTML = `<div class="text-center py-10 px-6"><h2 class="text-3xl font-bold text-red-700">Erro Crítico</h2><p>Dados não carregados. Recarregue a página.</p><button onclick="location.reload()" class="action-button mt-4">Recarregar</button></div>`;
+        }
+        return; 
+    }
+
     function init() {
         setupProtection();
         setupTheme();
         
-        // --- INICIALIZAÇÃO DO FIREBASE ---
         const firebaseConfig = {
           apiKey: "AIzaSyDNet1QC72jr79u8JpnFMLBoPI26Re6o3g",
           authDomain: "projeto-bravo-charlie-app.firebaseapp.com",
@@ -145,39 +112,33 @@ document.addEventListener('DOMContentLoaded', () => {
           measurementId: "G-Y7VZFQ0D9F"
         };
         
-        if (typeof FirebaseCourse === 'undefined') {
-            console.error("Firebase-init.js não foi carregado a tempo.");
-            return;
+        if (typeof FirebaseCourse !== 'undefined') {
+            FirebaseCourse.init(firebaseConfig);
+            setupAuthEventListeners(); 
+            
+            document.getElementById('logout-button')?.addEventListener('click', FirebaseCourse.signOutUser);
+            document.getElementById('logout-expired-button')?.addEventListener('click', FirebaseCourse.signOutUser);
+            document.getElementById('logout-button-header')?.addEventListener('click', FirebaseCourse.signOutUser);
+
+            FirebaseCourse.checkAuth((user, userData) => {
+                onLoginSuccess(user, userData);
+            });
         }
-
-        FirebaseCourse.init(firebaseConfig);
-        setupAuthEventListeners(); 
-        
-        document.getElementById('logout-button')?.addEventListener('click', FirebaseCourse.signOutUser);
-        document.getElementById('logout-expired-button')?.addEventListener('click', FirebaseCourse.signOutUser);
-        document.getElementById('logout-button-header')?.addEventListener('click', FirebaseCourse.signOutUser);
-
-        FirebaseCourse.checkAuth((user, userData) => {
-            onLoginSuccess(user, userData);
-        });
         
         setupHeaderScroll();
         setupRippleEffects();
     }
     
-    // --- FUNÇÃO: INICIA O APP APÓS LOGIN VÁLIDO ---
     function onLoginSuccess(user, userData) {
         if (document.body.getAttribute('data-app-ready') === 'true') return;
         document.body.setAttribute('data-app-ready', 'true');
-
-        console.log(`Login bem-sucedido. Iniciando app para ${userData.name}`);
         
-        // 1. Esconde modais de bloqueio
+        currentUserData = userData; 
+
         document.getElementById('name-prompt-modal')?.classList.remove('show');
         document.getElementById('name-modal-overlay')?.classList.remove('show');
         document.getElementById('expired-modal')?.classList.remove('show');
         
-        // 2. Define a saudação e marca d'água
         const greetingEl = document.getElementById('welcome-greeting');
         if(greetingEl) greetingEl.textContent = `Olá, ${userData.name.split(' ')[0]}!`;
         
@@ -185,10 +146,8 @@ document.addEventListener('DOMContentLoaded', () => {
             printWatermark.textContent = `Licenciado para ${userData.name} (CPF: ${userData.cpf || '...'}) - Proibida a Cópia`;
         }
 
-        // 3. MONETIZAÇÃO: MOSTRAR DIAS RESTANTES (NOVO FORMATO FLUTUANTE)
         checkTrialStatus(userData.acesso_ate);
 
-        // 4. Inicia o conteúdo
         document.getElementById('total-modules').textContent = totalModules;
         document.getElementById('course-modules-count').textContent = totalModules;
         
@@ -198,22 +157,22 @@ document.addEventListener('DOMContentLoaded', () => {
         handleInitialLoad();
     }
 
-    // --- NOVA FUNÇÃO: VERIFICA TRIAL (TOAST DISCRETO) ---
     function checkTrialStatus(expiryDateString) {
         const expiryDate = new Date(expiryDateString);
         const today = new Date();
-        const diffTime = Math.abs(expiryDate - today);
+        const diffTime = expiryDate - today; 
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
         
         const trialToast = document.getElementById('trial-floating-notify');
         const daysLeftSpan = document.getElementById('trial-days-left');
         const trialBtn = document.getElementById('trial-subscribe-btn');
         const closeTrialBtn = document.getElementById('close-trial-notify');
+        const trialTitle = document.getElementById('trial-title-text');
 
-        // Se faltar 30 dias ou menos, mostra o toast
         if (trialToast && diffDays <= 30 && diffDays >= 0) {
             trialToast.classList.remove('hidden');
             if(daysLeftSpan) daysLeftSpan.textContent = diffDays;
+            if(trialTitle) trialTitle.textContent = "Período de Experiência";
             
             trialBtn?.addEventListener('click', () => {
                 document.getElementById('expired-modal').classList.add('show');
@@ -226,7 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- FUNÇÃO: LOGIN, CADASTRO E PAGAMENTO ---
     function setupAuthEventListeners() {
         const nameField = document.getElementById('name-field-container');
         const cpfField = document.getElementById('cpf-field-container'); 
@@ -288,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
             nameField.classList.remove('hidden');
             cpfField.classList.remove('hidden'); 
             authTitle.textContent = "Criar Nova Conta";
-            authMsg.textContent = "Preencha seus dados para iniciar o trial de 30 dias.";
+            authMsg.textContent = "Cadastre-se para o Período de Experiência.";
             feedback.textContent = "";
         });
         
@@ -306,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const email = emailInput.value;
             const password = passwordInput.value;
             if (!email || !password) {
-                feedback.textContent = "Por favor, preencha e-mail e senha.";
+                feedback.textContent = "Preencha e-mail e senha.";
                 feedback.className = "text-center text-sm mt-4 font-semibold text-red-500";
                 return;
             }
@@ -316,17 +274,10 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 localStorage.removeItem('my_session_id'); 
                 await FirebaseCourse.signInWithEmail(email, password);
-                feedback.textContent = "Verificando acesso...";
+                feedback.textContent = "Verificando...";
             } catch (error) {
-                console.error("Erro de Login:", error.code);
                 feedback.className = "text-center text-sm mt-4 text-red-400 font-semibold";
-                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-                    feedback.textContent = "E-mail ou senha incorretos.";
-                } else if (error.code === 'auth/too-many-requests') {
-                    feedback.textContent = "Muitas tentativas. Aguarde um pouco.";
-                } else {
-                    feedback.textContent = "Erro ao entrar: " + error.message;
-                }
+                feedback.textContent = "Erro ao entrar. Verifique seus dados.";
             }
         });
         
@@ -341,33 +292,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 feedback.className = "text-center text-sm mt-4 font-semibold text-red-500";
                 return;
             }
-            if (password.length < 6) {
-                feedback.textContent = "A senha deve ter no mínimo 6 caracteres.";
-                feedback.className = "text-center text-sm mt-4 font-semibold text-red-500";
-                return;
-            }
             
-            feedback.textContent = "Verificando dados...";
+            feedback.textContent = "Criando conta...";
             feedback.className = "text-center text-sm mt-4 text-blue-400 font-semibold";
 
             try {
                 await FirebaseCourse.signUpWithEmail(name, email, password, cpf);
-                feedback.textContent = "Conta criada! Iniciando...";
+                feedback.textContent = "Sucesso! Iniciando...";
             } catch (error) {
-                console.error("Erro de Cadastro:", error);
                 feedback.className = "text-center text-sm mt-4 text-red-400 font-semibold";
-                if (error.code === 'auth/email-already-in-use') {
-                    feedback.textContent = "Este e-mail já está em uso. Faça login.";
-                } else if (error.message.includes("CPF")) {
-                    feedback.textContent = error.message; 
-                } else {
-                    feedback.textContent = "Erro ao criar conta: " + error.message;
-                }
+                feedback.textContent = error.message || "Erro ao criar conta.";
             }
         });
     }
 
-    // --- Lógica de Carregamento Inicial ---
     function handleInitialLoad() {
         const lastModule = localStorage.getItem('gateBombeiroLastModule');
         if (lastModule) {
@@ -377,26 +315,63 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- LAZY LOADING DE PERGUNTAS ---
     async function loadQuestionBank(moduleId) {
-        if (cachedQuestionBanks[moduleId]) {
-            return cachedQuestionBanks[moduleId];
-        }
-        if (typeof QUIZ_DATA === 'undefined') {
-            console.error("Erro fatal: quizzes.js não carregou.");
-            return null;
-        }
+        if (cachedQuestionBanks[moduleId]) return cachedQuestionBanks[moduleId];
+        if (typeof QUIZ_DATA === 'undefined') return null;
         const questions = QUIZ_DATA[moduleId];
-        if (!questions || !Array.isArray(questions) || questions.length === 0) {
-            return null; 
-        }
+        if (!questions || !Array.isArray(questions) || questions.length === 0) return null; 
         cachedQuestionBanks[moduleId] = questions;
         return questions;
     }
 
-    // --- FUNÇÃO DE CARREGAR MÓDULO ---
+    // --- CORREÇÃO 1: VERIFICAÇÃO DE PREMIUM MAIS ROBUSTA ---
     async function loadModuleContent(id) {
         if (!id || !moduleContent[id]) return;
+        
+        // Encontrar a categoria do módulo
+        const num = parseInt(id.replace('module', ''));
+        let moduleCategory = null;
+        for (const key in moduleCategories) {
+            const cat = moduleCategories[key];
+            if (num >= cat.range[0] && num <= cat.range[1]) {
+                moduleCategory = cat;
+                break;
+            }
+        }
+
+        // LÓGICA DE BLOQUEIO CORRIGIDA (Allow List)
+        // Bloqueia se: (Categoria é Premium) E (Usuário NÃO é 'premium')
+        // currentUserData.status === 'premium' é a única chave que libera.
+        // 'trial', undefined, null ou qualquer outra coisa será bloqueada.
+        const isPremiumContent = moduleCategory && moduleCategory.isPremium;
+        const userIsNotPremium = !currentUserData || currentUserData.status !== 'premium';
+
+        if (isPremiumContent && userIsNotPremium) {
+            contentArea.innerHTML = `
+                <div class="text-center py-12 px-6">
+                    <div class="inline-block p-6 bg-yellow-100 dark:bg-yellow-900/30 rounded-full mb-6">
+                        <i class="fas fa-lock text-5xl text-yellow-600 dark:text-yellow-500"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold mb-4 text-gray-800 dark:text-white">Conteúdo Exclusivo</h2>
+                    <p class="text-lg text-gray-600 dark:text-gray-300 max-w-md mx-auto mb-8">
+                        O módulo <strong>${moduleContent[id].title}</strong> faz parte do nosso pacote avançado. Assine agora para desbloquear Simulados, Bônus e muito mais.
+                    </p>
+                    <button id="premium-lock-btn" class="action-button pulse-button text-lg px-8 py-4">
+                        <i class="fas fa-crown mr-2"></i> DESBLOQUEAR TUDO AGORA
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('premium-lock-btn').addEventListener('click', () => {
+                document.getElementById('expired-modal').classList.add('show');
+                document.getElementById('name-modal-overlay').classList.add('show');
+            });
+            
+            updateActiveModuleInList();
+            updateNavigationButtons();
+            return;
+        }
+
         currentModuleId = id;
         localStorage.setItem('gateBombeiroLastModule', id);
         
@@ -411,9 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let allQuestions = null;
         try {
             allQuestions = await loadQuestionBank(id);
-        } catch(error) {
-             console.error("Erro no carregamento do quiz:", error);
-        }
+        } catch(error) { console.error(error); }
         
         setTimeout(() => {
             loadingSpinner.classList.add('hidden');
@@ -425,14 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
 
             if (d.driveLink) {
-                html += `
-                <div class="mt-10 mb-8">
-                    <a href="${d.driveLink}" target="_blank" class="drive-button">
-                        <i class="fab fa-google-drive"></i>
-                        VER FOTOS E VÍDEOS DESTA MATÉRIA
-                    </a>
-                </div>
-                `;
+                html += `<div class="mt-10 mb-8"><a href="${d.driveLink}" target="_blank" class="drive-button"><i class="fab fa-google-drive"></i>VER FOTOS E VÍDEOS DESTA MATÉRIA</a></div>`;
             }
 
             if (allQuestions && allQuestions.length > 0) {
@@ -441,7 +407,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const shuffledQuestions = shuffleArray(allQuestions);
                 const selectedQuestions = shuffledQuestions.slice(0, count);
 
-                // --- SEPARADOR DE QUIZ (PEDIDO 3) ---
                 let quizHtml = `<div class="quiz-section-separator"></div>
                                 <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Exercícios de Fixação</h3>`;
                 
@@ -450,26 +415,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     quizHtml += `<div class="quiz-block" data-question-id="${q.id}">
                                     <p class="font-semibold mt-4 mb-2 text-gray-700 dark:text-gray-200">${questionNumber}. ${q.question}</p>
                                     <div class="quiz-options-group space-y-2 mb-4">`;
-                    
                     for (const key in q.options) {
                         quizHtml += `<div class="quiz-option" data-module="${id}" data-question-id="${q.id}" data-answer="${key}">
                                         <span class="option-key">${key.toUpperCase()})</span> ${q.options[key]}
                                         <span class="ripple"></span>
                                     </div>`;
                     }
-                    
                     quizHtml += `</div><div id="feedback-${q.id}" class="feedback-area hidden"></div></div>`;
                 });
-                
                 html += quizHtml;
             } else {
-                if (d.id.startsWith('module9')) {
-                    // simulado/bônus
-                } else {
-                    html += `<div class="warning-box mt-8">
-                                <p><strong><i class="fas fa-exclamation-triangle mr-2"></i> Exercícios não encontrados.</strong></p>
-                                <p>Não foi possível encontrar as perguntas de fixação para este módulo.</p>
-                             </div>`;
+                if (!d.id.startsWith('module9')) {
+                    html += `<div class="warning-box mt-8"><p><strong><i class="fas fa-exclamation-triangle mr-2"></i> Exercícios não encontrados.</strong></p></div>`;
                 }
             }
 
@@ -492,7 +449,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             contentArea.style.opacity = '1';
             contentArea.style.transition = 'opacity 0.3s ease';
-            
             window.scrollTo({ top: 0, behavior: 'smooth' });
             
             updateActiveModuleInList();
@@ -504,64 +460,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('next-module')?.classList.remove('blinking-button');
 
         }, 300);
-    }
-
-    function triggerSuccessParticles(clickEvent, element) {
-      if (typeof confetti === 'function') {
-        confetti({
-          particleCount: 28,
-          spread: 70,
-          startVelocity: 45,
-          origin: {
-            x: (clickEvent && clickEvent.clientX) ? clickEvent.clientX / window.innerWidth : 0.5,
-            y: (clickEvent && clickEvent.clientY) ? clickEvent.clientY / window.innerHeight : 0.5
-          },
-          colors: ['#FFD700', '#FFCF66', '#F7A325'],
-          zIndex: 3000
-        });
-      }
-
-      const container = document.createElement('div');
-      container.className = 'gold-particles-container';
-      container.style.position = 'fixed'; 
-      container.style.left = '0';
-      container.style.top = '0';
-      container.style.pointerEvents = 'none';
-      container.style.width = '100%';
-      container.style.height = '100%';
-      container.style.zIndex = '4000';
-      document.body.appendChild(container);
-
-      const rect = (element && element.getBoundingClientRect) ? element.getBoundingClientRect() : { left: window.innerWidth/2, top: window.innerHeight/2, width: 0, height: 0 };
-      const cx = rect.left + (rect.width / 2);
-      const cy = rect.top + (rect.height / 2);
-
-      for (let i = 0; i < 12; i++) {
-        const p = document.createElement('div');
-        p.className = 'gold-particle';
-        p.style.left = `${cx}px`;
-        p.style.top = `${cy}px`;
-        p.style.transform = 'translate(-50%, -50%)';
-        
-        container.appendChild(p);
-
-        const dx = (Math.random() - 0.5) * 180;
-        const dy = -Math.random() * 150 - 20;
-        const rot = Math.random() * 360;
-
-        p.animate(
-          [
-            { transform: `translate(-50%, -50%) translate(0px, 0px) rotate(0deg)`, opacity: 1 },
-            { transform: `translate(-50%, -50%) translate(${dx}px, ${dy}px) rotate(${rot}deg)`, opacity: 0 }
-          ],
-          {
-            duration: 900 + Math.random() * 400,
-            easing: 'cubic-bezier(.2,.7,.2,1)'
-          }
-        );
-        setTimeout(() => p.remove(), 1500);
-      }
-      setTimeout(() => { if (container && container.parentNode) container.remove(); }, 1800);
     }
 
     function handleQuizOptionClick(e) {
@@ -580,22 +478,17 @@ document.addEventListener('DOMContentLoaded', () => {
         
         optionsGroup.querySelectorAll(`.quiz-option[data-question-id="${questionId}"]`).forEach(opt => {
             opt.disabled = true;
-            if (opt.dataset.answer === correctAnswer) {
-                opt.classList.add('correct');
-            }
+            if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
         });
         
         let feedbackContent = '';
         if (selectedAnswer === correctAnswer) {
             o.classList.add('correct');
             feedbackContent = `<strong class="font-semibold text-green-700 dark:text-green-400"><i class="fas fa-check-circle mr-2"></i> Correto!</strong> ${explanationText}`;
-            try {
-                triggerSuccessParticles(e, o);
-            } catch (err) { console.error(err); }
+            try { triggerSuccessParticles(e, o); } catch (err) {}
         } else {
             o.classList.add('incorrect');
-            feedbackContent = `<strong class="font-semibold text-red-700 dark:text-red-400"><i class="fas fa-times-circle mr-2"></i> Incorreto.</strong> ${explanationText} 
-                                <span class="text-sm italic block mt-1"> (Dica: A resposta correta foi destacada em verde.)</span>`;
+            feedbackContent = `<strong class="font-semibold text-red-700 dark:text-red-400"><i class="fas fa-times-circle mr-2"></i> Incorreto.</strong> ${explanationText} <span class="text-sm italic block mt-1"> (Dica: A resposta correta foi destacada em verde.)</span>`;
         }
         if (feedbackArea) {
             feedbackArea.innerHTML = `<div class="explanation mt-2">${feedbackContent}</div>`;
@@ -629,7 +522,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function setupNotesListener(id) {
         const notesTextarea = document.getElementById(`notes-module-${id}`);
         if (notesTextarea) {
-            notesTextarea.style.userSelect = 'auto';
             notesTextarea.addEventListener('keyup', () => {
                 localStorage.setItem('note-' + id, notesTextarea.value);
             });
@@ -638,31 +530,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function goToHomePage() {
         localStorage.removeItem('gateBombeiroLastModule'); 
-        
-        if (contentArea) {
-            contentArea.innerHTML = getWelcomeContent();
-        }
+        if (contentArea) contentArea.innerHTML = getWelcomeContent();
         document.getElementById('module-nav')?.classList.add('hidden');
         document.querySelectorAll('.module-list-item.active').forEach(i => i.classList.remove('active'));
         currentModuleId = null;
         closeSidebar();
-        document.getElementById('next-module')?.classList.remove('blinking-button');
         
         const btn = document.getElementById('start-course');
         if (btn) {
             const newBtn = btn.cloneNode(true);
             btn.parentNode.replaceChild(newBtn, btn);
-            
             newBtn.addEventListener('click', () => {
                 loadModuleContent('module1');
-                const firstAccordionButton = document.querySelector('#desktop-module-container .accordion-button');
-                if(firstAccordionButton) {
-                     const firstPanel = firstAccordionButton.nextElementSibling;
-                     if (firstPanel) {
-                         firstAccordionButton.classList.add('active');
-                         firstPanel.style.maxHeight = firstPanel.scrollHeight + "px";
-                     }
-                }
             });
         }
         updateBreadcrumbs();
@@ -672,9 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return `<div class="text-center py-8">
                         <div class="floating inline-block p-5 bg-red-100 dark:bg-red-900/50 rounded-full mb-6"><i class="fas fa-fire-extinguisher text-6xl text-red-600"></i></div>
                         <h2 class="text-4xl font-bold mb-4 text-blue-900 dark:text-white">Torne-se um Profissional de Elite</h2>
-                        <p class="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-8">
-                            Bem-vindo ao <strong class="font-bold text-orange-500 dark:text-orange-400">Curso de Formação para Bombeiro Civil e Brigadista</strong>.
-                        </p>
+                        <p class="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-8">Bem-vindo ao <strong class="font-bold text-orange-500 dark:text-orange-400">Curso de Formação para Bombeiro Civil e Brigadista</strong>.</p>
                         <button id="start-course" class="action-button pulse text-lg"><i class="fas fa-play-circle mr-2"></i> Iniciar Curso Agora</button>
                     </div>`;
     }
@@ -687,9 +564,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (['c','a','x','v','s','p','u'].includes(e.key.toLowerCase())) e.preventDefault();
           }
           if (e.key === 'F12') e.preventDefault();
-          if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-            e.preventDefault();
-          }
         });
         document.querySelectorAll('img').forEach(img => {
           img.draggable = false;
@@ -724,7 +598,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function getCategoryColor(moduleId) {
         if (!moduleId) return 'text-gray-500'; 
         const num = parseInt(moduleId.replace('module', ''));
-        
         for (const key in moduleCategories) {
             const cat = moduleCategories[key];
             if (num >= cat.range[0] && num <= cat.range[1]) {
@@ -762,7 +635,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('mobile-module-container').innerHTML = getModuleListHTML();
     }
 
-    // --- FUNÇÃO GERADORA DE HTML DA LISTA (COM NOVO DESIGN DE CONQUISTAS - PEDIDO 2) ---
     function getModuleListHTML() {
         let html = `<h2 class="text-2xl font-semibold mb-5 flex items-center text-blue-900 dark:text-white"><i class="fas fa-list-ul mr-3 text-orange-500"></i> Conteúdo do Curso</h2>
                         <div class="mb-4 relative"><input type="text" class="module-search w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700" placeholder="Buscar módulo..."><i class="fas fa-search absolute right-3 top-3.5 text-gray-400"></i></div>
@@ -770,7 +642,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (const k in moduleCategories) {
             const cat = moduleCategories[k];
-            html += `<div><button class="accordion-button"><span><i class="${cat.icon} w-6 mr-2 text-gray-500"></i>${cat.title}</span><i class="fas fa-chevron-down"></i></button><div class="accordion-panel">`;
+            const lockIcon = cat.isPremium ? '<i class="fas fa-lock text-xs ml-2 text-yellow-500"></i>' : '';
+            html += `<div><button class="accordion-button"><span><i class="${cat.icon} w-6 mr-2 text-gray-500"></i>${cat.title} ${lockIcon}</span><i class="fas fa-chevron-down"></i></button><div class="accordion-panel">`;
             for (let i = cat.range[0]; i <= cat.range[1]; i++) {
                 const m = moduleContent[`module${i}`];
                 if (m) {
@@ -786,19 +659,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         html += `</div>`;
-        
-        // --- ÁREA DE CONQUISTAS MODERNA ---
         html += `<div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                     <h3 class="text-xl font-semibold mb-6 text-gray-800 dark:text-white flex items-center"><i class="fas fa-medal mr-2 text-yellow-500"></i> Conquistas por Área</h3>
                     <div id="achievements-grid" class="grid grid-cols-2 gap-4">`;
-        
         for (const key in moduleCategories) {
             const cat = moduleCategories[key];
-            html += `
-                <div id="ach-cat-${key}" class="achievement-card" title="Conclua a área para ganhar: ${cat.achievementTitle}">
-                    <div class="achievement-icon"><i class="${cat.icon}"></i></div>
-                    <p class="achievement-title">${cat.achievementTitle}</p>
-                </div>`;
+            html += `<div id="ach-cat-${key}" class="achievement-card" title="Conclua a área para ganhar: ${cat.achievementTitle}"><div class="achievement-icon"><i class="${cat.icon}"></i></div><p class="achievement-title">${cat.achievementTitle}</p></div>`;
         }
         html += `</div></div>`;
         return html;
@@ -806,18 +672,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateProgress() {
         const p = (completedModules.length / totalModules) * 100;
-        
-        const progressTextEl = document.getElementById('progress-text');
-        if (progressTextEl) progressTextEl.textContent = `${p.toFixed(0)}%`;
-        
-        const completedCountEl = document.getElementById('completed-modules-count');
-        if (completedCountEl) completedCountEl.textContent = completedModules.length;
-        
-        const progressBarMinimal = document.getElementById('progress-bar-minimal');
-        if (progressBarMinimal) {
-            progressBarMinimal.style.width = `${p}%`;
+        document.getElementById('progress-text').textContent = `${p.toFixed(0)}%`;
+        document.getElementById('completed-modules-count').textContent = completedModules.length;
+        if (document.getElementById('progress-bar-minimal')) {
+            document.getElementById('progress-bar-minimal').style.width = `${p}%`;
         }
-        
         updateModuleListStyles();
         checkAchievements();
         if (totalModules > 0 && completedModules.length === totalModules) showCongratulations();
@@ -826,17 +685,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function showCongratulations() {
         document.getElementById('congratulations-modal')?.classList.add('show');
         document.getElementById('modal-overlay')?.classList.add('show');
-        if(typeof confetti === 'function') {
-            confetti({particleCount:150, spread:90, origin:{y:0.6},zIndex:200});
-        }
+        if(typeof confetti === 'function') confetti({particleCount:150, spread:90, origin:{y:0.6},zIndex:200});
     }
     function showAchievementToast(title) {
         const toast = document.createElement('div');
         toast.className = 'toast';
         toast.innerHTML = `<i class="fas fa-trophy"></i><div><p class="font-bold">Módulo Concluído!</p><p class="text-sm">${title}</p></div>`;
-        if (toastContainer) {
-            toastContainer.appendChild(toast);
-        }
+        if (toastContainer) toastContainer.appendChild(toast);
         setTimeout(() => toast.remove(), 4500);
     }
     function updateModuleListStyles() {
@@ -852,33 +707,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     allComplete = false; break;
                 }
             }
-            
             if (allComplete && !notifiedAchievements.includes(key)) {
                 showAchievementModal(cat.achievementTitle, cat.icon);
                 notifiedAchievements.push(key);
                 newNotification = true;
             }
-            
-            // Atualiza visual dos cards de conquista
             document.querySelectorAll(`#ach-cat-${key}`).forEach(el => el.classList.toggle('unlocked', allComplete));
         }
-        if (newNotification) {
-            localStorage.setItem('gateBombeiroNotifiedAchievements_v3', JSON.stringify(notifiedAchievements));
-        }
+        if (newNotification) localStorage.setItem('gateBombeiroNotifiedAchievements_v3', JSON.stringify(notifiedAchievements));
     }
     function showAchievementModal(title, iconClass) {
         const iconContainer = document.getElementById('ach-modal-icon-container');
         const titleEl = document.getElementById('ach-modal-title');
         if (!achievementModal || !achievementOverlay || !iconContainer || !titleEl) return;
-
         iconContainer.innerHTML = `<i class="${iconClass}"></i>`;
         titleEl.textContent = `Conquista: ${title}`;
         achievementModal.classList.add('show');
         achievementOverlay.classList.add('show');
-        
-        if(typeof confetti === 'function') {
-            confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 }, zIndex: 103 });
-        }
+        if(typeof confetti === 'function') confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 }, zIndex: 103 });
     }
     function hideAchievementModal() {
         achievementModal?.classList.remove('show');
@@ -888,20 +734,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function toggleFocusMode() {
         const isEnteringFocusMode = !document.body.classList.contains('focus-mode');
         document.body.classList.toggle('focus-mode');
-        
-        if (!isEnteringFocusMode) {
-            closeSidebar();
-        }
+        if (!isEnteringFocusMode) closeSidebar();
     }
 
     function setupConcludeButtonListener() {
         if (!currentModuleId) return;
         const b = document.querySelector(`.conclude-button[data-module="${currentModuleId}"]`);
         if(b) {
-            if (concludeButtonClickListener) {
-                b.removeEventListener('click', concludeButtonClickListener);
-            }
-
+            if (concludeButtonClickListener) b.removeEventListener('click', concludeButtonClickListener);
             if(completedModules.includes(currentModuleId)){
                 b.disabled=true;
                 b.innerHTML='<i class="fas fa-check-circle mr-2"></i> Concluído';
@@ -923,18 +763,13 @@ document.addEventListener('DOMContentLoaded', () => {
             b.disabled = true;
             b.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Concluído';
             showAchievementToast(moduleContent[id].title);
-            if(typeof confetti === 'function') {
-                confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 }, zIndex: 2000 });
-            }
-
+            if(typeof confetti === 'function') confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 }, zIndex: 2000 });
             setTimeout(() => {
                 const navContainer = document.getElementById('module-nav');
                 const nextButton = document.getElementById('next-module');
                 if (navContainer) {
                     navContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    if (nextButton && !nextButton.disabled) {
-                        nextButton.classList.add('blinking-button');
-                    }
+                    if (nextButton && !nextButton.disabled) nextButton.classList.add('blinking-button');
                 }
             }, 700);
         }
@@ -946,7 +781,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const prevModule = document.getElementById('prev-module');
         const nextModule = document.getElementById('next-module');
         if (!prevModule || !nextModule) return;
-
         if (!currentModuleId) {
              prevModule.disabled = true;
              nextModule.disabled = true;
@@ -960,171 +794,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.quiz-option').forEach(o => o.addEventListener('click', handleQuizOptionClick));
     }
 
-    function addEventListeners() {
-        const nextButton = document.getElementById('next-module');
-        const prevButton = document.getElementById('prev-module');
-        const homeButtonDesktop = document.getElementById('home-button-desktop');
-        const homeButtonBottom = document.getElementById('bottom-nav-home');
-        
-        document.body.addEventListener('click', e => {
-            const moduleItem = e.target.closest('.module-list-item');
-            if (moduleItem) {
-                loadModuleContent(moduleItem.dataset.module);
-                nextButton?.classList.remove('blinking-button');
-            }
-            if (e.target.closest('.accordion-button')) {
-                const b = e.target.closest('.accordion-button');
-                const p = b.nextElementSibling;
-                if (!p) return;
-                const isActive = b.classList.contains('active');
-                const allPanels = b.closest('.module-accordion-container, .sidebar, #mobile-module-container').querySelectorAll('.accordion-panel');
-                allPanels.forEach(op => {
-                    if (op !== p && op.previousElementSibling) {
-                         op.style.maxHeight = null;
-                         op.previousElementSibling.classList.remove('active');
-                    }
-                });
-                if (!isActive) {
-                    b.classList.add('active');
-                    p.style.maxHeight = p.scrollHeight + "px";
-                } else {
-                    b.classList.remove('active');
-                    p.style.maxHeight = null;
-                }
-            }
-        });
-        
-        prevButton?.addEventListener('click', () => {
-            if (!currentModuleId) return;
-            const n = parseInt(currentModuleId.replace('module',''));
-            if(n > 1) loadModuleContent(`module${n-1}`);
-            nextButton?.classList.remove('blinking-button');
-        });
-        nextButton?.addEventListener('click', () => {
-            if (!currentModuleId) return;
-            const n = parseInt(currentModuleId.replace('module',''));
-            if(n < totalModules) loadModuleContent(`module${n+1}`);
-            nextButton?.classList.remove('blinking-button');
-        });
-        
-        document.getElementById('mobile-menu-button')?.addEventListener('click', openSidebar);
-        document.getElementById('close-sidebar-button')?.addEventListener('click', closeSidebar);
-        sidebarOverlay?.addEventListener('click', closeSidebar);
-        
-        homeButtonDesktop?.addEventListener('click', goToHomePage);
-        homeButtonBottom?.addEventListener('click', goToHomePage);
-        
-        document.getElementById('bottom-nav-modules')?.addEventListener('click', openSidebar);
-        document.getElementById('bottom-nav-theme')?.addEventListener('click', toggleTheme);
-        document.getElementById('dark-mode-toggle-desktop')?.addEventListener('click', toggleTheme);
-        
-        document.getElementById('focus-mode-toggle')?.addEventListener('click', toggleFocusMode);
-        document.getElementById('bottom-nav-focus')?.addEventListener('click', toggleFocusMode);
-        document.getElementById('focus-menu-modules')?.addEventListener('click', openSidebar);
-        document.getElementById('focus-menu-exit')?.addEventListener('click', toggleFocusMode);
-        document.getElementById('focus-nav-modules')?.addEventListener('click', openSidebar);
-        document.getElementById('focus-nav-exit')?.addEventListener('click', toggleFocusMode);
-
-        const congratsModal = document.getElementById('congratulations-modal');
-        const modalOverlay = document.getElementById('modal-overlay');
-        
-        document.getElementById('close-congrats')?.addEventListener('click', () => {
-            if (congratsModal) congratsModal.classList.remove('show');
-            if (modalOverlay) modalOverlay.classList.remove('show');
-        });
-        modalOverlay?.addEventListener('click', () => {
-            if (congratsModal) congratsModal.classList.remove('show');
-            if (modalOverlay) modalOverlay.classList.remove('show');
-        });
-        
-        closeAchButton?.addEventListener('click', hideAchievementModal);
-        achievementOverlay?.addEventListener('click', hideAchievementModal);
-
-        // --- FUNÇÃO DE PESQUISA CORRIGIDA (PEDIDO 4) ---
-        document.body.addEventListener('input', e => {
-            if(e.target.matches('.module-search')) {
-                const s = e.target.value.toLowerCase();
-                // Busca o container da lista (o div "module-accordion-container" é irmão do pai do input)
-                const container = e.target.closest('div.relative');
-                if (container) {
-                    const accordionContainer = container.nextElementSibling;
-                    if (accordionContainer) {
-                         // Itera sobre todos os itens de módulo
-                         accordionContainer.querySelectorAll('.module-list-item').forEach(i => {
-                            const text = i.textContent.toLowerCase();
-                            const match = text.includes(s);
-                            i.style.display = match ? 'flex' : 'none';
-                            
-                            // Se tiver texto e der match, abre o acordeão automaticamente
-                            if(match && s.length > 0) {
-                                const panel = i.closest('.accordion-panel');
-                                const btn = panel.previousElementSibling;
-                                if(!btn.classList.contains('active')) {
-                                    btn.classList.add('active');
-                                    panel.style.maxHeight = panel.scrollHeight + "px";
-                                }
-                            }
-                        });
-                        
-                        // Se a busca estiver vazia, fecha tudo para limpar a visão
-                        if(s.length === 0) {
-                            accordionContainer.querySelectorAll('.accordion-button').forEach(btn => {
-                                btn.classList.remove('active');
-                                btn.nextElementSibling.style.maxHeight = null;
-                            });
-                        }
-                    }
-                }
-            }
-        });
-
-        const resetButton = document.getElementById('reset-progress');
-        resetButton?.addEventListener('click', () => {
-             resetModal?.classList.add('show');
-             resetOverlay?.classList.add('show');
-        });
-        
-        cancelResetButton?.addEventListener('click', () => {
-            resetModal?.classList.remove('show');
-            resetOverlay?.classList.remove('show');
-        });
-
-        confirmResetButton?.addEventListener('click', () => {
-            localStorage.removeItem('gateBombeiroCompletedModules_v3');
-            localStorage.removeItem('gateBombeiroNotifiedAchievements_v3');
-            
-            Object.keys(localStorage).forEach(key => {
-                if (key.startsWith('note-')) {
-                    localStorage.removeItem(key);
-                }
-            });
-            
-            alert('Progresso local resetado.');
-            window.location.reload();
-        });
-        
-        const backToTopButton = document.getElementById('back-to-top');
-        if (backToTopButton) {
-            window.addEventListener('scroll', () => {
-                if (window.scrollY > 300) {
-                    backToTopButton.style.display = 'flex';
-                    setTimeout(() => {
-                        backToTopButton.style.opacity = '1';
-                        backToTopButton.style.transform = 'translateY(0)';
-                    }, 10);
-                } else {
-                    backToTopButton.style.opacity = '0';
-                    backToTopButton.style.transform = 'translateY(20px)';
-                    setTimeout(() => {
-                        backToTopButton.style.display = 'none';
-                    }, 300);
-                }
-            });
-
-            backToTopButton.addEventListener('click', () => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-        }
+    function triggerSuccessParticles(clickEvent, element) {
+        if (typeof confetti === 'function') confetti({ particleCount: 28, spread: 70, origin: { x: clickEvent ? clickEvent.clientX/window.innerWidth : 0.5, y: clickEvent ? clickEvent.clientY/window.innerHeight : 0.5 } });
     }
 
     function setupHeaderScroll() {
@@ -1139,11 +810,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setupRippleEffects() {
         document.addEventListener('click', function (e) {
-            const btn = e.target.closest('.action-button');
+            const btn = e.target.closest('.action-button') || e.target.closest('.quiz-option');
             if (btn) {
                 const oldRipple = btn.querySelector('.ripple');
                 if (oldRipple) oldRipple.remove();
-
                 const ripple = document.createElement('span');
                 ripple.classList.add('ripple');
                 const rect = btn.getBoundingClientRect();
@@ -1151,29 +821,102 @@ document.addEventListener('DOMContentLoaded', () => {
                 ripple.style.width = ripple.style.height = size + 'px';
                 ripple.style.left = e.clientX - rect.left - size / 2 + 'px';
                 ripple.style.top = e.clientY - rect.top - size / 2 + 'px';
-
                 btn.appendChild(ripple);
-                setTimeout(() => ripple.remove(), 600);
-            }
-
-            const option = e.target.closest('.quiz-option');
-            if (option) {
-                const oldRipple = option.querySelector('.ripple');
-                if (oldRipple) oldRipple.remove();
-
-                const ripple = document.createElement('span');
-                ripple.classList.add('ripple');
-                const rect = option.getBoundingClientRect();
-                const size = Math.max(rect.width, rect.height);
-                ripple.style.width = ripple.style.height = size + 'px';
-                ripple.style.left = e.clientX - rect.left - size / 2 + 'px';
-                ripple.style.top = e.clientY - rect.top - size / 2 + 'px';
-
-                option.appendChild(ripple);
                 setTimeout(() => ripple.remove(), 600);
             }
         });
     }
+
+    document.body.addEventListener('input', e => {
+        if(e.target.matches('.module-search')) {
+            const s = e.target.value.toLowerCase();
+            const container = e.target.closest('div.relative');
+            if (container) {
+                const accordionContainer = container.nextElementSibling;
+                if (accordionContainer) {
+                        accordionContainer.querySelectorAll('.module-list-item').forEach(i => {
+                        const text = i.textContent.toLowerCase();
+                        const match = text.includes(s);
+                        i.style.display = match ? 'flex' : 'none';
+                        if(match && s.length > 0) {
+                            const panel = i.closest('.accordion-panel');
+                            const btn = panel.previousElementSibling;
+                            if(!btn.classList.contains('active')) {
+                                btn.classList.add('active');
+                                panel.style.maxHeight = panel.scrollHeight + "px";
+                            }
+                        }
+                    });
+                    if(s.length === 0) {
+                        accordionContainer.querySelectorAll('.accordion-button').forEach(btn => {
+                            btn.classList.remove('active');
+                            btn.nextElementSibling.style.maxHeight = null;
+                        });
+                    }
+                }
+            }
+        }
+    });
+
+    document.getElementById('reset-progress')?.addEventListener('click', () => { document.getElementById('reset-modal')?.classList.add('show'); document.getElementById('reset-modal-overlay')?.classList.add('show'); });
+    document.getElementById('cancel-reset-button')?.addEventListener('click', () => { document.getElementById('reset-modal')?.classList.remove('show'); document.getElementById('reset-modal-overlay')?.classList.remove('show'); });
+    document.getElementById('confirm-reset-button')?.addEventListener('click', () => {
+        localStorage.removeItem('gateBombeiroCompletedModules_v3');
+        localStorage.removeItem('gateBombeiroNotifiedAchievements_v3');
+        Object.keys(localStorage).forEach(key => { if (key.startsWith('note-')) localStorage.removeItem(key); });
+        alert('Progresso local resetado.');
+        window.location.reload();
+    });
+    
+    document.getElementById('back-to-top')?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    window.addEventListener('scroll', () => {
+        const btn = document.getElementById('back-to-top');
+        if(btn) {
+            if (window.scrollY > 300) { btn.style.display = 'flex'; setTimeout(() => { btn.style.opacity = '1'; btn.style.transform = 'translateY(0)'; }, 10); } 
+            else { btn.style.opacity = '0'; btn.style.transform = 'translateY(20px)'; setTimeout(() => btn.style.display = 'none', 300); }
+        }
+    });
+
+    document.body.addEventListener('click', e => {
+        if (e.target.closest('.accordion-button')) {
+            const b = e.target.closest('.accordion-button');
+            const p = b.nextElementSibling;
+            if (!p) return;
+            const isActive = b.classList.contains('active');
+            const allPanels = b.closest('.module-accordion-container, .sidebar, #mobile-module-container').querySelectorAll('.accordion-panel');
+            allPanels.forEach(op => {
+                if (op !== p && op.previousElementSibling) {
+                        op.style.maxHeight = null;
+                        op.previousElementSibling.classList.remove('active');
+                }
+            });
+            if (!isActive) {
+                b.classList.add('active');
+                p.style.maxHeight = p.scrollHeight + "px";
+            } else {
+                b.classList.remove('active');
+                p.style.maxHeight = null;
+            }
+        }
+    });
+
+    document.getElementById('mobile-menu-button')?.addEventListener('click', openSidebar);
+    document.getElementById('close-sidebar-button')?.addEventListener('click', closeSidebar);
+    sidebarOverlay?.addEventListener('click', closeSidebar);
+    document.getElementById('home-button-desktop')?.addEventListener('click', goToHomePage);
+    document.getElementById('bottom-nav-home')?.addEventListener('click', goToHomePage);
+    document.getElementById('bottom-nav-modules')?.addEventListener('click', openSidebar);
+    document.getElementById('bottom-nav-theme')?.addEventListener('click', toggleTheme);
+    document.getElementById('dark-mode-toggle-desktop')?.addEventListener('click', toggleTheme);
+    document.getElementById('focus-mode-toggle')?.addEventListener('click', toggleFocusMode);
+    document.getElementById('bottom-nav-focus')?.addEventListener('click', toggleFocusMode);
+    document.getElementById('focus-menu-modules')?.addEventListener('click', openSidebar);
+    document.getElementById('focus-menu-exit')?.addEventListener('click', toggleFocusMode);
+    document.getElementById('focus-nav-modules')?.addEventListener('click', openSidebar);
+    document.getElementById('focus-nav-exit')?.addEventListener('click', toggleFocusMode);
+    document.getElementById('close-congrats')?.addEventListener('click', () => { document.getElementById('congratulations-modal').classList.remove('show'); document.getElementById('modal-overlay').classList.remove('show'); });
+    closeAchButton?.addEventListener('click', hideAchievementModal);
+    achievementOverlay?.addEventListener('click', hideAchievementModal);
 
     init();
 });
