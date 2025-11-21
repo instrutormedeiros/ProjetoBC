@@ -1646,6 +1646,11 @@ const moduleContent = {
         driveLink: "SEU_LINK_DO_DRIVE_AQUI",
         content: `<h4>Técnicas de Resgate Simples, Complexo e Auto-Resgate</h4><p>Este módulo aborda as técnicas de resgate em alturas, divididas em três categorias, cada uma com equipamentos e procedimentos específicos:</p><h5>Resgate Simples:</h5><p>Para vítimas com lesões leves, realizado por um bombeiro. Equipamentos mínimos incluem:</p><ul><li><strong>Individuais:</strong> Cinto paraquedista, capacete, 4 mosquetões de aço, 2 de alumínio (com e sem trava), blocantes, freio oito, cordeletes, luvas, óculos e cantil.</li><li><strong>Coletivos:</strong> Cabos solteiros, lanternas, coletes refletivos, fitas zebradas, cones, binóculos, croque, maca flexível, kit de primeiros socorros, cordas estáticas, triângulo de evacuação, descensores (Rack, Stop) e roldanas.</li></ul><h5>Resgate Complexo:</h5><p>Para vítimas com lesões graves (fraturas, hemorragias, traumatismos), exigindo equipe de pelo menos quatro bombeiros. Inclui:</p><ul><li><strong>Técnicas de içamento:</strong> Usam sistemas 3:1 com roldanas e blocantes para reduzir o peso da vítima a um terço, facilitando o içamento.</li><li><strong>Técnicas de descensão:</strong> Com macas (duas cordas: principal e de segurança) ou triângulos de evacuação. Socorristas podem acompanhar a maca em terrenos acidentados, ou usar cabo-guia para evitar obstáculos.</li></ul><h5>Auto-Resgate:</h5><p>Técnicas realizadas por um socorrista sem apoio, como:</p><ul><li><strong>Corte no cabo da vítima:</strong> Socorrista na ancoragem ou descendo até a vítima, usando novo cabo de resgate e nós blocantes (prússico, machard).</li><li><strong>Preservando o cabo da vítima:</strong> Usando valdotan ou blocantes, acessando por cima ou por baixo, com procedimentos como clipagem de longes e uso de estribos.</li><li><strong>Transposição de nó:</strong> Para subir ou descer em cabos emendados, usando blocantes e longes para passar pelo nó.</li></ul>` 
     },
+    'module53': { id: "module900", title: "Simulado Geral 1", iconClass: "fas fa-edit", content: "<h3>Simulado Geral 1</h3><p>Em breve disponível.</p>" },
+    'module54': { id: "module901", title: "Simulado Geral 2", iconClass: "fas fa-edit", content: "<h3>Simulado Geral 2</h3><p>Em breve disponível.</p>" },
+    'module55': { id: "module990", title: "Material Bônus", iconClass: "fas fa-star", content: "<h3>Conteúdo Exclusivo</h3><p>Materiais extras para assinantes.</p>" 
+    },
+    
 };
 
 /* === MAPA DAS CATEGORIAS (Foco na Navegação Aprimorada) === */
@@ -1656,7 +1661,9 @@ const moduleCategories = {
     pci: { id: "pci", title: "Prevenção e Combate a Incêndio", achievementTitle: "Mestre das Chamas", range: [16, 25], icon: "fas fa-fire-extinguisher" }, 
     aph_novo: { id: "aph_novo", title: "Atendimento Pré Hospitalar", achievementTitle: "Protetor da Vida", range: [26, 40], icon: "fas fa-briefcase-medical" }, 
     nr33: { id: "nr33", title: "NR 33 - Espaço Confinado", achievementTitle: "Perito Confinado", range: [41, 42], icon: "fas fa-person-booth" }, 
-    nr35: { id: "nr35", title: "NR 35 - Trabalho em Altura", achievementTitle: "Mestre do Ar", range: [43, 52], icon: "fas fa-hard-hat" } 
+    nr35: { id: "nr35", title: "NR 35 - Trabalho em Altura", achievementTitle: "Mestre do Ar", range: [43, 52], icon: "fas fa-hard-hat" },
+    simulados: { id: "simulados", title: "Simulados Gerais", achievementTitle: "Mestre dos Testes", range: [53, 54], icon: "fas fa-clipboard-check" },
+    bonus: { id: "bonus", title: "Bônus Exclusivos", achievementTitle: "Caçador de Recompensas", range: [54, 55], icon: "fas fa-star" }
 };
 /* === NOVO: FONTE DE DADOS PARA LAZY LOADING === */
 
@@ -1687,3 +1694,4 @@ if (typeof window !== 'undefined') {
   window.moduleContent = moduleContent;
   window.moduleCategories = moduleCategories;
 }
+
