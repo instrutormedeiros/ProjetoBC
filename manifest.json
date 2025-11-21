@@ -7,12 +7,12 @@
   "theme_color": "#b30000",
   "icons": [
     {
-      "src": "./assets/icons/icon-192.png",
+      "src": "https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/LOGO%20SEM%20FUNDO.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "./assets/icons/icon-512.png",
+      "src": "https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/LOGO%20SEM%20FUNDO.png",
       "sizes": "512x512",
       "type": "image/png"
     }
