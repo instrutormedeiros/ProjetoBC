@@ -1,4 +1,4 @@
-/* === ARQUIVO app_final.js (VERSÃO FINAL - CORREÇÃO MÓDULOS PREMIUM VISÍVEIS) === */
+/* === ARQUIVO app_final.js (VERSÃO FINAL - BOTÕES NAVEGAÇÃO CORRIGIDOS) === */
 
 // ESPERA O HTML ESTAR 100% CARREGADO ANTES DE EXECUTAR QUALQUER COISA
 document.addEventListener('DOMContentLoaded', () => {
@@ -337,7 +337,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // LÓGICA DE BLOQUEIO
         const isPremiumContent = moduleCategory && moduleCategory.isPremium;
         const userIsNotPremium = !currentUserData || currentUserData.status !== 'premium';
 
@@ -630,14 +629,13 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('mobile-module-container').innerHTML = getModuleListHTML();
     }
 
-    // --- CORREÇÃO: EXIBIÇÃO DE MÓDULOS E BLOQUEIO VISUAL ---
     function getModuleListHTML() {
         let html = `<h2 class="text-2xl font-semibold mb-5 flex items-center text-blue-900 dark:text-white"><i class="fas fa-list-ul mr-3 text-orange-500"></i> Conteúdo do Curso</h2>
                         <div class="mb-4 relative"><input type="text" class="module-search w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700" placeholder="Buscar módulo..."><i class="fas fa-search absolute right-3 top-3.5 text-gray-400"></i></div>
                         <div class="module-accordion-container space-y-2">`;
 
         for (const k in moduleCategories) {
-            // FILTRO REMOVIDO PARA EXIBIR TUDO
+            // FILTRO EXPLÍCITO REMOVIDO - TUDO APARECE AGORA
             
             const cat = moduleCategories[k];
             // MOSTRA CADEADO SE FOR PREMIUM E O USUÁRIO NÃO FOR PREMIUM
@@ -831,6 +829,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function addEventListeners() {
+        // 1. Listeners para os botões de navegação PRÓXIMO e ANTERIOR (INSERIDOS AGORA)
+        const nextButton = document.getElementById('next-module');
+        const prevButton = document.getElementById('prev-module');
+
+        prevButton?.addEventListener('click', () => {
+            if (!currentModuleId) return;
+            const n = parseInt(currentModuleId.replace('module',''));
+            if(n > 1) loadModuleContent(`module${n-1}`);
+            nextButton?.classList.remove('blinking-button');
+        });
+        nextButton?.addEventListener('click', () => {
+            if (!currentModuleId) return;
+            const n = parseInt(currentModuleId.replace('module',''));
+            if(n < totalModules) loadModuleContent(`module${n+1}`);
+            nextButton?.classList.remove('blinking-button');
+        });
+
+        // 2. Busca
         document.body.addEventListener('input', e => {
             if(e.target.matches('.module-search')) {
                 const s = e.target.value.toLowerCase();
@@ -862,6 +878,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // 3. Resetar Progresso
         document.getElementById('reset-progress')?.addEventListener('click', () => { document.getElementById('reset-modal')?.classList.add('show'); document.getElementById('reset-modal-overlay')?.classList.add('show'); });
         document.getElementById('cancel-reset-button')?.addEventListener('click', () => { document.getElementById('reset-modal')?.classList.remove('show'); document.getElementById('reset-modal-overlay')?.classList.remove('show'); });
         document.getElementById('confirm-reset-button')?.addEventListener('click', () => {
@@ -872,6 +889,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.reload();
         });
         
+        // 4. Back to Top
         document.getElementById('back-to-top')?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
         window.addEventListener('scroll', () => {
             const btn = document.getElementById('back-to-top');
@@ -881,6 +899,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // 5. Cliques
         document.body.addEventListener('click', e => {
             const moduleItem = e.target.closest('.module-list-item');
             if (moduleItem) {
