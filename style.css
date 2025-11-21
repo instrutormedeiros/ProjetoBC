@@ -249,7 +249,7 @@ h1, h2, h3 { font-family: 'Lora', serif; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 .module-nav { background-color: var(--panel-bg); border-top: 1px solid var(--border-color); transition: background-color 0.3s, border-color 0.3s; padding: 1rem; box-shadow: 0 -2px 15px rgba(0,0,0,0.1); z-index: 35; border-radius: 0 0 1rem 1rem; }
 
-/* --- NOVAS CONQUISTAS MODERNAS (PEDIDO 2) --- */
+/* --- NOVAS CONQUISTAS MODERNAS --- */
 .achievement-card {
     background: var(--panel-bg);
     border-radius: 1rem;
@@ -287,10 +287,10 @@ h1, h2, h3 { font-family: 'Lora', serif; }
 
 /* Ícone Grande e Moderno */
 .achievement-icon {
-    font-size: 3.5rem; /* Aumentado conforme pedido */
+    font-size: 3.5rem; 
     margin-bottom: 1rem;
     transition: all 0.5s ease;
-    color: #d1d5db; /* Cinza quando bloqueado */
+    color: #d1d5db; 
     display: inline-block;
 }
 
@@ -332,7 +332,7 @@ h1, h2, h3 { font-family: 'Lora', serif; }
     pointer-events: none;
 }
 
-/* --- SEPARADOR DE QUIZ (PEDIDO 3) --- */
+/* === SEPARADOR DE QUIZ (CORRIGIDO PARA MOBILE) === */
 .quiz-section-separator {
     margin-top: 4rem;
     padding-top: 2rem;
@@ -343,7 +343,7 @@ h1, h2, h3 { font-family: 'Lora', serif; }
 .quiz-section-separator::before {
     content: 'PRATIQUE AGORA';
     position: absolute;
-    top: -14px;
+    top: -14px; /* Ajuste para centralizar na linha */
     left: 50%;
     transform: translateX(-50%);
     background-color: var(--panel-bg);
@@ -354,14 +354,28 @@ h1, h2, h3 { font-family: 'Lora', serif; }
     letter-spacing: 1px;
     border-radius: 1rem;
     border: 1px solid var(--border-color);
+    z-index: 1;
+    
+    /* CORREÇÃO DEFINITIVA PARA NÃO QUEBRAR LINHA */
+    white-space: nowrap !important; 
 }
+
+/* AJUSTE ESPECÍFICO PARA TELAS PEQUENAS (MOBILE) */
+@media (max-width: 640px) {
+    .quiz-section-separator::before {
+        padding: 0 1rem;       /* Menos padding lateral */
+        font-size: 0.7rem;     /* Fonte menor para caber */
+        letter-spacing: 0.5px; /* Letras mais juntas */
+        top: -10px;            /* Ajuste vertical */
+    }
+}
+
 .dark .quiz-section-separator::before {
     color: var(--accent);
-    background-color: #1f2937; /* Ajuste para dark mode */
+    background-color: #1f2937; 
 }
 
 /* --- MODAIS --- */
-/* Correção de z-index para garantir que sobreponham tudo */
 .modal { 
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9); 
     z-index: 20000 !important; 
@@ -370,11 +384,21 @@ h1, h2, h3 { font-family: 'Lora', serif; }
     max-width: 32rem; width: 90%; 
     opacity: 0; pointer-events: none; 
     transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); 
+    max-height: 90vh; 
+    display: flex;
+    flex-direction: column;
 }
 
 #name-prompt-modal, #expired-modal {
     z-index: 20000 !important;
+    padding: 0; 
+    overflow: hidden; 
 }
+
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: #111827; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #f97316; }
 
 .modal.show { opacity: 1 !important; transform: translate(-50%, -50%) scale(1) !important; pointer-events: auto !important; }
 
