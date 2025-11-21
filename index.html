@@ -94,6 +94,12 @@
                     </div>
 
                     <div class="hidden lg:flex items-center space-x-4">
+                        
+                        <!-- BOTÃO ADMIN (SÓ APARECE PARA O ADMIN) -->
+                        <button id="admin-panel-btn" class="hidden bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-3 rounded-full shadow-md transition-all" title="Painel Administrativo">
+                            <i class="fas fa-crown"></i>
+                        </button>
+
                         <!-- Botão Instalar Desktop -->
                         <button id="install-app-btn" class="hidden bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-full text-sm font-bold shadow-md transition-all flex items-center">
                             <i class="fas fa-download mr-2"></i> Instalar App
@@ -216,10 +222,8 @@
     
     <button id="back-to-top" class="action-button fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full hidden justify-center items-center shadow-lg text-2xl"><i class="fas fa-arrow-up"></i></button>
     
-    <!-- MODAL DE LOGIN (MOBILE E DESKTOP AJUSTADOS) -->
-    <!-- CORREÇÃO: Aumentei para max-w-lg e ajuste de w-11/12 para mobile. Fontes maiores -->
+    <!-- MODAL DE LOGIN (MOBILE AJUSTADO) -->
     <div id="name-prompt-modal" class="modal premium-login-modal w-11/12 max-w-lg mx-auto overflow-hidden flex flex-col max-h-[90vh]" style="background: #0f172a; border: 1px solid #334155;">
-        <!-- Header Fixo -->
         <div class="relative bg-gradient-to-b from-orange-600 to-gray-900 p-5 text-center overflow-hidden flex-shrink-0">
             <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
             <div class="relative z-10 flex flex-col items-center">
@@ -232,7 +236,6 @@
             </div>
         </div>
 
-        <!-- Corpo com Scroll -->
         <div class="p-6 bg-gray-900 overflow-y-auto custom-scrollbar">
             <div class="space-y-4 text-left">
                 <div id="name-field-container" class="hidden transition-all duration-300">
@@ -356,6 +359,39 @@
             </div>
         </div>
     </div>
+
+    <!-- MODAL DE ADMINISTRAÇÃO (NOVO) -->
+    <div id="admin-modal" class="modal w-[95%] max-w-6xl mx-auto overflow-hidden flex flex-col max-h-[90vh]" style="background: #f8f9fa; border: 1px solid #e2e8f0; color: #1a202c; z-index: 20002 !important;">
+        <div class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
+            <h2 class="text-xl font-bold text-white flex items-center">
+                <i class="fas fa-users-cog mr-2 text-yellow-500"></i> Painel Administrativo
+            </h2>
+            <button id="close-admin-modal" class="text-gray-400 hover:text-white text-2xl"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <div class="p-4 bg-gray-100 overflow-y-auto flex-grow">
+            <!-- Tabela de Usuários -->
+            <div class="overflow-x-auto bg-white rounded-lg shadow">
+                <table class="min-w-full divide-y divide-gray-200" id="admin-users-table">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email / CPF</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vencimento</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200 text-sm" id="admin-table-body">
+                        <!-- Linhas serão inseridas via JS -->
+                        <tr><td colspan="5" class="p-4 text-center text-gray-500">Carregando usuários...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- Overlay para Admin (Z-Index maior) -->
+    <div id="admin-modal-overlay" class="modal-overlay bg-black/90 backdrop-blur-sm" style="z-index: 20001 !important;"></div>
 
     <!-- MODAL INSTRUÇÕES IOS -->
     <div id="ios-install-modal" class="modal">
