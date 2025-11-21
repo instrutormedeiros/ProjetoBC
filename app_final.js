@@ -1,4 +1,4 @@
-/* === ARQUIVO app_final.js (VERSÃO FINAL - BOTÕES NAVEGAÇÃO CORRIGIDOS) === */
+/* === ARQUIVO app_final.js (VERSÃO FINAL - ADMIN E DRIVE LOCK) === */
 
 // ESPERA O HTML ESTAR 100% CARREGADO ANTES DE EXECUTAR QUALQUER COISA
 document.addEventListener('DOMContentLoaded', () => {
@@ -27,6 +27,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetOverlay = document.getElementById('reset-modal-overlay');
     const confirmResetButton = document.getElementById('confirm-reset-button');
     const cancelResetButton = document.getElementById('cancel-reset-button');
+
+    const adminBtn = document.getElementById('admin-panel-btn');
+    const adminModal = document.getElementById('admin-modal');
+    const adminOverlay = document.getElementById('admin-modal-overlay');
+    const closeAdminBtn = document.getElementById('close-admin-modal');
 
     // --- PWA INSTALLATION LOGIC ---
     let deferredPrompt;
@@ -146,6 +151,11 @@ document.addEventListener('DOMContentLoaded', () => {
             printWatermark.textContent = `Licenciado para ${userData.name} (CPF: ${userData.cpf || '...'}) - Proibida a Cópia`;
         }
 
+        // --- Lógica do Botão Admin ---
+        if (userData.isAdmin === true) {
+            if(adminBtn) adminBtn.classList.remove('hidden');
+        }
+
         checkTrialStatus(userData.acesso_ate);
 
         document.getElementById('total-modules').textContent = totalModules;
@@ -156,6 +166,80 @@ document.addEventListener('DOMContentLoaded', () => {
         addEventListeners(); 
         handleInitialLoad();
     }
+
+    // --- PAINEL ADMINISTRATIVO ---
+    window.openAdminPanel = async function() {
+        if (!currentUserData || !currentUserData.isAdmin) return;
+        
+        adminModal.classList.add('show');
+        adminOverlay.classList.add('show');
+        
+        const tbody = document.getElementById('admin-table-body');
+        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center">Carregando...</td></tr>';
+
+        try {
+            const snapshot = await window.__fbDB.collection('users').get();
+            tbody.innerHTML = '';
+            
+            snapshot.forEach(doc => {
+                const u = doc.data();
+                const uid = doc.id;
+                const isPremium = u.status === 'premium';
+                const validade = u.acesso_ate ? new Date(u.acesso_ate).toLocaleDateString('pt-BR') : '-';
+                
+                const row = `
+                    <tr class="border-b">
+                        <td class="p-3 font-bold">${u.name}</td>
+                        <td class="p-3 text-gray-600">${u.email}<br><span class="text-xs text-gray-400">CPF: ${u.cpf}</span></td>
+                        <td class="p-3">
+                            <span class="px-2 py-1 rounded text-xs font-bold ${isPremium ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                ${u.status || 'trial'}
+                            </span>
+                        </td>
+                        <td class="p-3 text-sm">${validade}</td>
+                        <td class="p-3 flex gap-2">
+                            <button onclick="toggleUserStatus('${uid}', '${u.status}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs" title="Mudar Status">
+                                <i class="fas fa-sync"></i>
+                            </button>
+                            <button onclick="sendResetEmail('${u.email}')" class="bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-xs" title="Resetar Senha">
+                                <i class="fas fa-key"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500">Erro ao carregar: ${err.message}</td></tr>`;
+        }
+    };
+
+    window.toggleUserStatus = async function(uid, currentStatus) {
+        const newStatus = currentStatus === 'premium' ? 'trial' : 'premium';
+        // Se virar premium, damos + 365 dias. Se virar trial, mantemos a data ou reduzimos (lógica simplificada aqui)
+        const newDate = new Date();
+        newDate.setDate(newDate.getDate() + (newStatus === 'premium' ? 365 : 30));
+        
+        if(confirm(`Mudar status para ${newStatus.toUpperCase()}?`)) {
+            await window.__fbDB.collection('users').doc(uid).update({
+                status: newStatus,
+                acesso_ate: newDate.toISOString()
+            });
+            alert('Status atualizado!');
+            openAdminPanel(); // Recarrega tabela
+        }
+    };
+
+    window.sendResetEmail = async function(email) {
+        if(confirm(`Enviar e-mail de redefinição de senha para ${email}?`)) {
+            try {
+                await window.__fbAuth.sendPasswordResetEmail(email);
+                alert('E-mail enviado com sucesso!');
+            } catch(err) {
+                alert('Erro: ' + err.message);
+            }
+        }
+    };
 
     function checkTrialStatus(expiryDateString) {
         const expiryDate = new Date(expiryDateString);
@@ -324,6 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return questions;
     }
 
+    // --- FUNÇÃO DE ABERTURA DE CONTEÚDO (DRIVE E PREMIUM CORRIGIDO) ---
     async function loadModuleContent(id) {
         if (!id || !moduleContent[id]) return;
         
@@ -340,29 +425,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const isPremiumContent = moduleCategory && moduleCategory.isPremium;
         const userIsNotPremium = !currentUserData || currentUserData.status !== 'premium';
 
+        // BLOQUEIO 1: Se o módulo for da categoria PREMIUM (Bônus/Simulado)
         if (isPremiumContent && userIsNotPremium) {
-            contentArea.innerHTML = `
-                <div class="text-center py-12 px-6">
-                    <div class="inline-block p-6 bg-yellow-100 dark:bg-yellow-900/30 rounded-full mb-6">
-                        <i class="fas fa-lock text-5xl text-yellow-600 dark:text-yellow-500"></i>
-                    </div>
-                    <h2 class="text-3xl font-bold mb-4 text-gray-800 dark:text-white">Conteúdo Exclusivo</h2>
-                    <p class="text-lg text-gray-600 dark:text-gray-300 max-w-md mx-auto mb-8">
-                        O módulo <strong>${moduleContent[id].title}</strong> faz parte do nosso pacote avançado. Assine agora para desbloquear Simulados, Bônus e muito mais.
-                    </p>
-                    <button id="premium-lock-btn" class="action-button pulse-button text-lg px-8 py-4">
-                        <i class="fas fa-crown mr-2"></i> DESBLOQUEAR TUDO AGORA
-                    </button>
-                </div>
-            `;
-            
-            document.getElementById('premium-lock-btn').addEventListener('click', () => {
-                document.getElementById('expired-modal').classList.add('show');
-                document.getElementById('name-modal-overlay').classList.add('show');
-            });
-            
-            updateActiveModuleInList();
-            updateNavigationButtons();
+            renderPremiumLockScreen(moduleContent[id].title);
             return;
         }
 
@@ -391,8 +456,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div>${d.content}</div>
             `;
 
+            // --- BLOQUEIO 2: BOTÃO DRIVE (FOTOS E VÍDEOS) ---
             if (d.driveLink) {
-                html += `<div class="mt-10 mb-8"><a href="${d.driveLink}" target="_blank" class="drive-button"><i class="fab fa-google-drive"></i>VER FOTOS E VÍDEOS DESTA MATÉRIA</a></div>`;
+                if (userIsNotPremium) {
+                    // Botão Bloqueado
+                    html += `
+                    <div class="mt-10 mb-8">
+                        <button onclick="document.getElementById('expired-modal').classList.add('show'); document.getElementById('name-modal-overlay').classList.add('show');" class="drive-button opacity-75 hover:opacity-100 relative overflow-hidden">
+                            <div class="absolute inset-0 bg-black/30 flex items-center justify-center z-10">
+                                <i class="fas fa-lock text-2xl mr-2"></i>
+                            </div>
+                            <span class="blur-[2px] flex items-center">
+                                <i class="fab fa-google-drive mr-3"></i> VER FOTOS E VÍDEOS (PREMIUM)
+                            </span>
+                        </button>
+                        <p class="text-xs text-center mt-2 text-gray-500"><i class="fas fa-lock text-yellow-500"></i> Recurso exclusivo para assinantes</p>
+                    </div>
+                    `;
+                } else {
+                    // Botão Liberado
+                    html += `
+                    <div class="mt-10 mb-8">
+                        <a href="${d.driveLink}" target="_blank" class="drive-button">
+                            <i class="fab fa-google-drive"></i>
+                            VER FOTOS E VÍDEOS DESTA MATÉRIA
+                        </a>
+                    </div>
+                    `;
+                }
             }
 
             if (allQuestions && allQuestions.length > 0) {
@@ -454,6 +545,31 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('next-module')?.classList.remove('blinking-button');
 
         }, 300);
+    }
+
+    function renderPremiumLockScreen(title) {
+        contentArea.innerHTML = `
+            <div class="text-center py-12 px-6">
+                <div class="inline-block p-6 bg-yellow-100 dark:bg-yellow-900/30 rounded-full mb-6">
+                    <i class="fas fa-lock text-5xl text-yellow-600 dark:text-yellow-500"></i>
+                </div>
+                <h2 class="text-3xl font-bold mb-4 text-gray-800 dark:text-white">Conteúdo Exclusivo</h2>
+                <p class="text-lg text-gray-600 dark:text-gray-300 max-w-md mx-auto mb-8">
+                    O módulo <strong>${title}</strong> faz parte do nosso pacote avançado. Assine agora para desbloquear Simulados, Bônus e muito mais.
+                </p>
+                <button id="premium-lock-btn" class="action-button pulse-button text-lg px-8 py-4">
+                    <i class="fas fa-crown mr-2"></i> DESBLOQUEAR TUDO AGORA
+                </button>
+            </div>
+        `;
+        
+        document.getElementById('premium-lock-btn').addEventListener('click', () => {
+            document.getElementById('expired-modal').classList.add('show');
+            document.getElementById('name-modal-overlay').classList.add('show');
+        });
+        
+        updateActiveModuleInList();
+        updateNavigationButtons();
     }
 
     function handleQuizOptionClick(e) {
@@ -635,10 +751,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="module-accordion-container space-y-2">`;
 
         for (const k in moduleCategories) {
-            // FILTRO EXPLÍCITO REMOVIDO - TUDO APARECE AGORA
-            
             const cat = moduleCategories[k];
-            // MOSTRA CADEADO SE FOR PREMIUM E O USUÁRIO NÃO FOR PREMIUM
             const isLocked = cat.isPremium && (!currentUserData || currentUserData.status !== 'premium');
             const lockIcon = isLocked ? '<i class="fas fa-lock text-xs ml-2 text-yellow-500"></i>' : '';
             
@@ -647,7 +760,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const m = moduleContent[`module${i}`];
                 if (m) {
                     const isDone = Array.isArray(completedModules) && completedModules.includes(m.id);
-                    // Adiciona cadeado pequeno também no item se estiver bloqueado
                     const itemLock = isLocked ? '<i class="fas fa-lock text-xs text-gray-400 ml-2"></i>' : '';
                     html += `<div class="module-list-item${isDone ? ' completed' : ''}" data-module="${m.id}">
                                 <i class="${m.iconClass} module-icon"></i>
@@ -829,7 +941,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function addEventListeners() {
-        // 1. Listeners para os botões de navegação PRÓXIMO e ANTERIOR (INSERIDOS AGORA)
+        // 1. Botões de Navegação
         const nextButton = document.getElementById('next-module');
         const prevButton = document.getElementById('prev-module');
 
@@ -878,7 +990,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 3. Resetar Progresso
+        // 3. Admin Panel
+        adminBtn?.addEventListener('click', window.openAdminPanel);
+        closeAdminBtn?.addEventListener('click', () => {
+            adminModal.classList.remove('show');
+            adminOverlay.classList.remove('show');
+        });
+        adminOverlay?.addEventListener('click', () => {
+            adminModal.classList.remove('show');
+            adminOverlay.classList.remove('show');
+        });
+
+        // 4. Reset
         document.getElementById('reset-progress')?.addEventListener('click', () => { document.getElementById('reset-modal')?.classList.add('show'); document.getElementById('reset-modal-overlay')?.classList.add('show'); });
         document.getElementById('cancel-reset-button')?.addEventListener('click', () => { document.getElementById('reset-modal')?.classList.remove('show'); document.getElementById('reset-modal-overlay')?.classList.remove('show'); });
         document.getElementById('confirm-reset-button')?.addEventListener('click', () => {
@@ -889,7 +1012,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.reload();
         });
         
-        // 4. Back to Top
+        // 5. Back to Top
         document.getElementById('back-to-top')?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
         window.addEventListener('scroll', () => {
             const btn = document.getElementById('back-to-top');
@@ -899,7 +1022,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 5. Cliques
+        // 6. Cliques
         document.body.addEventListener('click', e => {
             const moduleItem = e.target.closest('.module-list-item');
             if (moduleItem) {
