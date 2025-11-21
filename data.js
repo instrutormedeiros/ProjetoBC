@@ -1662,8 +1662,8 @@ const moduleCategories = {
     aph_novo: { id: "aph_novo", title: "Atendimento Pré Hospitalar", achievementTitle: "Protetor da Vida", range: [26, 40], icon: "fas fa-briefcase-medical" }, 
     nr33: { id: "nr33", title: "NR 33 - Espaço Confinado", achievementTitle: "Perito Confinado", range: [41, 42], icon: "fas fa-person-booth" }, 
     nr35: { id: "nr35", title: "NR 35 - Trabalho em Altura", achievementTitle: "Mestre do Ar", range: [43, 52], icon: "fas fa-hard-hat" },
-    simulados: { id: "simulados", title: "Simulados Gerais", achievementTitle: "Mestre dos Testes", range: [53, 54], icon: "fas fa-clipboard-check" },
-    bonus: { id: "bonus", title: "Bônus Exclusivos", achievementTitle: "Caçador de Recompensas", range: [54, 55], icon: "fas fa-star" }
+    simulados: { id: "simulados", title: "Simulados Gerais", achievementTitle: "Doutorado em Testes", range: [53], icon: "fas fa-clipboard-check", isPremium: true  },
+    bonus: { id: "bonus", title: "Bônus Exclusivos", achievementTitle: "Caçador de Recompensas", range: [54, 55], icon: "fas fa-star", isPremium: true  }
 };
 /* === NOVO: FONTE DE DADOS PARA LAZY LOADING === */
 
@@ -1694,4 +1694,5 @@ if (typeof window !== 'undefined') {
   window.moduleContent = moduleContent;
   window.moduleCategories = moduleCategories;
 }
+
 
