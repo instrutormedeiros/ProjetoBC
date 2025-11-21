@@ -1,4 +1,4 @@
-/* === ARQUIVO app_final.js (VERSÃO FINAL - ADMINISTRAÇÃO TOTAL) === */
+/* === ARQUIVO app_final.js (VERSÃO FINAL - ADMIN POWER 2.0) === */
 
 // ESPERA O HTML ESTAR 100% CARREGADO ANTES DE EXECUTAR QUALQUER COISA
 document.addEventListener('DOMContentLoaded', () => {
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
         handleInitialLoad();
     }
 
-    // --- PAINEL ADMINISTRATIVO AVANÇADO ---
+    // --- PAINEL ADMINISTRATIVO AVANÇADO (ATUALIZADO) ---
     window.openAdminPanel = async function() {
         if (!currentUserData || !currentUserData.isAdmin) return;
         
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
         adminOverlay.classList.add('show');
         
         const tbody = document.getElementById('admin-table-body');
-        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center">Carregando...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center">Carregando...</td></tr>';
 
         try {
             const snapshot = await window.__fbDB.collection('users').orderBy('name').get();
@@ -187,15 +187,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isPremium = u.status === 'premium';
                 const validade = u.acesso_ate ? new Date(u.acesso_ate).toLocaleDateString('pt-BR') : '-';
                 const cpf = u.cpf || 'Sem CPF';
+                const planoTipo = u.planType || (isPremium ? 'Indefinido' : 'Trial');
+                
+                // Ícone de nota muda de cor se tiver observação
+                const noteIconColor = u.adminNote ? 'text-yellow-500' : 'text-gray-400';
                 
                 const row = `
                     <tr class="border-b hover:bg-gray-50 transition-colors">
                         <td class="p-3 font-bold text-gray-800">${u.name}</td>
                         <td class="p-3 text-gray-600 text-sm">${u.email}<br><span class="text-xs text-gray-500">CPF: ${cpf}</span></td>
                         <td class="p-3">
-                            <span class="px-2 py-1 rounded text-xs font-bold uppercase ${isPremium ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
-                                ${u.status || 'trial'}
-                            </span>
+                            <div class="flex flex-col items-start">
+                                <span class="px-2 py-1 rounded text-xs font-bold uppercase ${isPremium ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                    ${u.status || 'trial'}
+                                </span>
+                                <span class="text-xs text-gray-500 mt-1">${planoTipo}</span>
+                            </div>
                         </td>
                         <td class="p-3 text-sm font-medium">${validade}</td>
                         <td class="p-3 flex flex-wrap gap-2">
@@ -203,10 +210,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             <button onclick="editUserData('${uid}', '${u.name}', '${cpf}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Editar Dados">
                                 <i class="fas fa-pen"></i>
                             </button>
-                            <button onclick="extendUserAccess('${uid}', '${u.acesso_ate}')" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Renovar Acesso">
-                                <i class="fas fa-calendar-plus"></i>
+                            <button onclick="editUserNote('${uid}', '${(u.adminNote || '').replace(/'/g, "\\'")}')" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 px-2 py-1.5 rounded text-xs shadow" title="Observações">
+                                <i class="fas fa-sticky-note ${noteIconColor}"></i>
                             </button>
-                            <button onclick="sendResetEmail('${u.email}')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Resetar Senha (E-mail)">
+                            <button onclick="manageUserAccess('${uid}', '${u.acesso_ate}')" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Gerenciar Acesso e Plano">
+                                <i class="fas fa-calendar-alt"></i>
+                            </button>
+                            <button onclick="sendResetEmail('${u.email}')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Enviar E-mail de Reset de Senha">
                                 <i class="fas fa-key"></i>
                             </button>
                             <button onclick="deleteUser('${uid}', '${u.name}', '${cpf}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Excluir Usuário">
@@ -218,80 +228,70 @@ document.addEventListener('DOMContentLoaded', () => {
                 tbody.innerHTML += row;
             });
         } catch (err) {
-            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500">Erro ao carregar: ${err.message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Erro ao carregar: ${err.message}</td></tr>`;
         }
     };
 
-    // 1. Editar Dados (Nome e CPF)
+    // 1. Editar Dados Básicos
     window.editUserData = async function(uid, oldName, oldCpf) {
         const newName = prompt("Novo nome do aluno:", oldName);
         if (newName === null) return;
-        
         const newCpfRaw = prompt("Novo CPF (apenas números):", oldCpf === 'Sem CPF' ? '' : oldCpf);
         if (newCpfRaw === null) return;
+        const newCpf = newCpfRaw.replace(/\D/g, ''); 
         
-        const newCpf = newCpfRaw.replace(/\D/g, ''); // Limpa CPF
-        
-        if (!newName || !newCpf) {
-            alert("Nome e CPF são obrigatórios.");
-            return;
-        }
+        if (!newName || !newCpf) { alert("Nome e CPF são obrigatórios."); return; }
 
         try {
             const batch = window.__fbDB.batch();
-            
-            // Atualiza dados do usuário
             const userRef = window.__fbDB.collection('users').doc(uid);
             batch.update(userRef, { name: newName, cpf: newCpf });
 
-            // Se o CPF mudou, precisa atualizar a coleção de segurança 'cpfs'
             if (oldCpf !== 'Sem CPF' && oldCpf !== newCpf) {
-                // Deleta CPF antigo
-                const oldCpfRef = window.__fbDB.collection('cpfs').doc(oldCpf);
-                batch.delete(oldCpfRef);
-                // Cria CPF novo
-                const newCpfRef = window.__fbDB.collection('cpfs').doc(newCpf);
-                batch.set(newCpfRef, { uid: uid });
+                batch.delete(window.__fbDB.collection('cpfs').doc(oldCpf));
+                batch.set(window.__fbDB.collection('cpfs').doc(newCpf), { uid: uid });
             } else if (oldCpf === 'Sem CPF') {
-                 // Apenas cria o novo se não tinha
-                const newCpfRef = window.__fbDB.collection('cpfs').doc(newCpf);
-                batch.set(newCpfRef, { uid: uid });
+                batch.set(window.__fbDB.collection('cpfs').doc(newCpf), { uid: uid });
             }
 
             await batch.commit();
-            alert("Dados atualizados com sucesso!");
+            alert("Dados atualizados!");
             openAdminPanel();
-        } catch (err) {
-            alert("Erro ao atualizar: " + err.message);
-        }
+        } catch (err) { alert("Erro: " + err.message); }
     };
 
-    // 2. Renovar Acesso (1 mês, 6 meses, 1 ano)
-    window.extendUserAccess = async function(uid, currentExpiryStr) {
+    // 2. Gerenciar Acesso (Renomeado de extendUserAccess)
+    window.manageUserAccess = async function(uid, currentExpiryStr) {
         const opcao = prompt(
-            "Escolha o novo período de acesso:\n\n" +
-            "1 - Mensal (+30 dias)\n" +
-            "2 - Semestral (+180 dias)\n" +
-            "3 - Anual (+365 dias)\n" +
-            "4 - Liberar Premium Permanente (10 anos)\n\n" +
+            "Gerenciar Plano e Validade:\n\n" +
+            "1 - MENSAL (+30 dias)\n" +
+            "2 - SEMESTRAL (+180 dias)\n" +
+            "3 - ANUAL (+365 dias)\n" +
+            "4 - PERMANENTE (10 anos)\n" +
+            "5 - PERSONALIZADO (Adicionar/Remover dias)\n\n" +
             "Digite o número da opção:"
         );
 
         if (!opcao) return;
 
         let diasToAdd = 0;
-        if (opcao === '1') diasToAdd = 30;
-        else if (opcao === '2') diasToAdd = 180;
-        else if (opcao === '3') diasToAdd = 365;
-        else if (opcao === '4') diasToAdd = 3650;
+        let novoPlano = '';
+
+        if (opcao === '1') { diasToAdd = 30; novoPlano = 'Mensal'; }
+        else if (opcao === '2') { diasToAdd = 180; novoPlano = 'Semestral'; }
+        else if (opcao === '3') { diasToAdd = 365; novoPlano = 'Anual'; }
+        else if (opcao === '4') { diasToAdd = 3650; novoPlano = 'Vitalício'; }
+        else if (opcao === '5') {
+            const diasInput = prompt("Digite a quantidade de dias para adicionar (ex: 15) ou remover (ex: -5):");
+            if(!diasInput) return;
+            diasToAdd = parseInt(diasInput);
+            novoPlano = 'Personalizado';
+        }
         else { alert("Opção inválida"); return; }
 
-        // Calcula nova data
-        // Se já expirou, soma a partir de HOJE. Se ainda vale, soma a partir do VENCIMENTO.
         const hoje = new Date();
         let baseDate = new Date(currentExpiryStr);
-        
-        // Se data inválida ou já expirada, usa hoje como base
+        // Se já venceu, soma a partir de hoje. Se não, soma do vencimento atual.
         if (isNaN(baseDate.getTime()) || baseDate < hoje) {
             baseDate = hoje;
         }
@@ -301,37 +301,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             await window.__fbDB.collection('users').doc(uid).update({
-                status: 'premium', // Força status premium ao renovar
-                acesso_ate: newExpiryISO
+                status: 'premium',
+                acesso_ate: newExpiryISO,
+                planType: novoPlano // Salva o tipo do plano para mostrar na tabela
             });
-            alert("Acesso renovado com sucesso!");
+            alert("Acesso atualizado com sucesso!");
             openAdminPanel();
         } catch (err) {
-            alert("Erro ao renovar: " + err.message);
+            alert("Erro ao atualizar: " + err.message);
         }
     };
 
-    // 3. Excluir Usuário
+    // 3. Editar Observação (NOVO)
+    window.editUserNote = async function(uid, currentNote) {
+        const newNote = prompt("Observações sobre este aluno (ex: Pagou via PIX, Pendência, etc):", currentNote);
+        if (newNote === null) return; // Cancelou
+
+        try {
+            await window.__fbDB.collection('users').doc(uid).update({
+                adminNote: newNote
+            });
+            alert("Observação salva.");
+            openAdminPanel();
+        } catch (err) {
+            alert("Erro ao salvar nota: " + err.message);
+        }
+    };
+
+    // 4. Excluir Usuário
     window.deleteUser = async function(uid, name, cpf) {
-        if(confirm(`TEM CERTEZA que deseja excluir o aluno ${name}?\n\nEssa ação não pode ser desfeita e o aluno perderá o acesso imediatamente.`)) {
+        if(confirm(`TEM CERTEZA que deseja excluir o aluno ${name}?\n\nEssa ação não pode ser desfeita.`)) {
             const userConfirm = prompt("Para confirmar, digite DELETAR:");
             if (userConfirm !== "DELETAR") return;
 
             try {
                 const batch = window.__fbDB.batch();
-                
-                // Deleta documento do usuário
-                const userRef = window.__fbDB.collection('users').doc(uid);
-                batch.delete(userRef);
-
-                // Deleta registro do CPF se existir
+                batch.delete(window.__fbDB.collection('users').doc(uid));
                 if (cpf && cpf !== 'Sem CPF' && cpf !== 'undefined') {
-                    const cpfRef = window.__fbDB.collection('cpfs').doc(cpf);
-                    batch.delete(cpfRef);
+                    batch.delete(window.__fbDB.collection('cpfs').doc(cpf));
                 }
-
                 await batch.commit();
-                alert("Usuário excluído do banco de dados.");
+                alert("Usuário excluído.");
                 openAdminPanel();
             } catch (err) {
                 alert("Erro ao excluir: " + err.message);
@@ -339,12 +349,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // 4. Resetar Senha (Mantido)
+    // 5. Resetar Senha
     window.sendResetEmail = async function(email) {
-        if(confirm(`Enviar e-mail de redefinição de senha para ${email}?`)) {
+        if(confirm(`Enviar e-mail de redefinição de senha para ${email}?\n\n(Por segurança, não é possível visualizar a senha atual, apenas resetá-la).`)) {
             try {
                 await window.__fbAuth.sendPasswordResetEmail(email);
-                alert('E-mail enviado com sucesso!');
+                alert('E-mail de redefinição enviado!');
             } catch(err) {
                 alert('Erro: ' + err.message);
             }
