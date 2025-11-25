@@ -622,7 +622,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 contentArea.innerHTML = d.content;
                 renderDigitalID();
             }
-
+// === NOVA FUNÇÃO: GERENCIAR UPLOAD DE FOTO ===
+    window.updateProfilePic = function(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Atualiza a imagem na tela
+                document.getElementById('id-card-photo').src = e.target.result;
+                // Salva no navegador do aluno (localStorage)
+                localStorage.setItem('user_profile_pic', e.target.result);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    };
             // 6. MODO AULA NORMAL (TEXTO + AUDIO)
             else {
                 let html = `
@@ -830,14 +842,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // === LÓGICA: CARTEIRINHA DIGITAL ===
+    // === LÓGICA ATUALIZADA: CARTEIRINHA DIGITAL COM FOTO ===
     function renderDigitalID() {
         if (!currentUserData) return;
         
         const container = document.getElementById('id-card-container');
         if (!container) return;
 
+        // Lógica da Foto: Tenta pegar do LocalStorage, senão usa um avatar padrão
+        const savedPhoto = localStorage.getItem('user_profile_pic');
+        const defaultPhoto = "https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png"; // Pode trocar por uma silhueta de usuário se preferir
+        const currentPhoto = savedPhoto || defaultPhoto;
+
         // Formatação de datas
-        const admissionDate = currentUserData.createdAt ? new Date(currentUserData.createdAt.seconds * 1000).toLocaleDateString('pt-BR') : 'N/A';
         const validUntil = new Date(currentUserData.acesso_ate).toLocaleDateString('pt-BR');
         const statusColor = currentUserData.status === 'premium' ? 'text-yellow-400' : 'text-gray-400';
         
@@ -859,13 +876,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
 
                 <div class="p-6 relative z-10">
+                    
                     <div class="flex justify-between items-start mb-6">
-                        <div>
-                            <p class="text-xs text-gray-400 uppercase mb-1">Nome do Aluno</p>
-                            <h2 class="text-xl font-bold text-white tracking-wide">${currentUserData.name}</h2>
+                        <div class="flex items-center gap-4">
+                            
+                            <div class="relative group cursor-pointer" onclick="document.getElementById('profile-pic-input').click()" title="Clique para alterar a foto">
+                                <div class="w-20 h-20 rounded-lg border-2 border-white/30 overflow-hidden bg-gray-800">
+                                    <img id="id-card-photo" src="${currentPhoto}" class="w-full h-full object-cover">
+                                </div>
+                                <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <i class="fas fa-camera text-white"></i>
+                                </div>
+                                <input type="file" id="profile-pic-input" class="hidden" accept="image/*" onchange="window.updateProfilePic(this)">
+                            </div>
+
+                            <div>
+                                <p class="text-xs text-gray-400 uppercase mb-1">Nome do Aluno</p>
+                                <h2 class="text-lg font-bold text-white tracking-wide leading-tight max-w-[150px] break-words">${currentUserData.name}</h2>
+                            </div>
                         </div>
+
                         <div class="bg-white p-1 rounded">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${currentUserData.email}" class="w-16 h-16">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${currentUserData.email}" class="w-14 h-14">
                         </div>
                     </div>
 
@@ -892,7 +924,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
 
                 <div class="bg-black/30 p-3 text-center border-t border-white/10">
-                    <p class="text-[9px] text-gray-500">Este cartão é de uso pessoal e intransferível. Acesso à plataforma digital.</p>
+                    <p class="text-[9px] text-gray-500">Uso pessoal e intransferível. Toque na foto para alterar.</p>
                 </div>
             </div>
             <div class="text-center mt-6">
