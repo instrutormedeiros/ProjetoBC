@@ -1,36 +1,24 @@
-/* === ARQUIVO app_final.js (VERSÃO FINAL INTEGRADA V13 - COMPLETA) === */
+/* === ARQUIVO app_final.js (VERSÃO FINAL CORRIGIDA V7) === */
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // ==========================================================================
-    // 1. VARIÁVEIS GLOBAIS & ESTADO
-    // ==========================================================================
+    // --- VARIÁVEIS GLOBAIS DO APP ---
     const contentArea = document.getElementById('content-area');
-    // Garante a leitura de todos os módulos definidos no data.js
     const totalModules = Object.keys(window.moduleContent || {}).length; 
-    
     let completedModules = JSON.parse(localStorage.getItem('gateBombeiroCompletedModules_v3')) || [];
     let notifiedAchievements = JSON.parse(localStorage.getItem('gateBombeiroNotifiedAchievements_v3')) || [];
     let currentModuleId = null;
     let cachedQuestionBanks = {}; 
     let currentUserData = null; 
 
-    // --- Variáveis: Simulado ---
+    // --- VARIÁVEIS PARA O SIMULADO ---
     let simuladoTimerInterval = null;
     let simuladoTimeLeft = 0;
     let activeSimuladoQuestions = [];
     let userAnswers = {};
     let currentSimuladoQuestionIndex = 0; 
-    
-    // --- Variáveis: Modo Sobrevivência ---
-    let survivalLives = 3;
-    let survivalScore = 0;
-    let survivalQuestions = [];
-    let survivalIndex = 0;
 
-    // ==========================================================================
-    // 2. SELETORES DO DOM
-    // ==========================================================================
+    // --- SELETORES DO DOM ---
     const toastContainer = document.getElementById('toast-container');
     const sidebar = document.getElementById('off-canvas-sidebar');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
@@ -40,35 +28,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeAchButton = document.getElementById('close-ach-modal');
     const breadcrumbContainer = document.getElementById('breadcrumb-container');
     const loadingSpinner = document.getElementById('loading-spinner');
-    
-    // Modais Gerais
-    const resetModal = document.getElementById('reset-modal');
-    const resetOverlay = document.getElementById('reset-modal-overlay');
-    const confirmResetButton = document.getElementById('confirm-reset-button');
-    const cancelResetButton = document.getElementById('cancel-reset-button');
-
-    // Admin & Pagamento
     const adminBtn = document.getElementById('admin-panel-btn');
     const mobileAdminBtn = document.getElementById('mobile-admin-btn');
     const adminModal = document.getElementById('admin-modal');
     const adminOverlay = document.getElementById('admin-modal-overlay');
     const closeAdminBtn = document.getElementById('close-admin-modal');
-    const expiredModal = document.getElementById('expired-modal');
-    const closePayModal = document.getElementById('close-payment-modal-btn');
-    const loginModalOverlay = document.getElementById('name-modal-overlay');
-    const loginModal = document.getElementById('name-prompt-modal');
 
-    // ==========================================================================
-    // 3. ACESSIBILIDADE & UTILITÁRIOS
-    // ==========================================================================
-    
+    // --- ACESSIBILIDADE ---
     const fab = document.getElementById('accessibility-fab');
     const menu = document.getElementById('accessibility-menu');
     let fontSizeScale = 1;
 
-    if (fab) {
-        fab.addEventListener('click', () => menu.classList.toggle('show'));
-    }
+    fab?.addEventListener('click', () => menu.classList.toggle('show'));
     
     document.getElementById('acc-font-plus')?.addEventListener('click', () => {
         fontSizeScale += 0.1;
@@ -85,52 +56,45 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.toggle('high-spacing');
     });
 
-    // --- AUDIOBOOK (Text-to-Speech) ---
+    // --- AUDIOBOOK ---
     window.speakContent = function() {
         if (!currentModuleId || !moduleContent[currentModuleId]) return;
         
         if (window.speechSynthesis.speaking) {
             window.speechSynthesis.cancel();
-            const icon = document.getElementById('audio-btn-icon');
-            const text = document.getElementById('audio-btn-text');
-            const btn = document.getElementById('audio-btn');
-            if(icon) { icon.classList.remove('fa-stop'); icon.classList.add('fa-headphones'); }
-            if(text) text.textContent = 'Ouvir Aula';
-            if(btn) btn.classList.remove('audio-playing');
+            document.getElementById('audio-btn-icon')?.classList.remove('fa-stop');
+            document.getElementById('audio-btn-icon')?.classList.add('fa-headphones');
+            document.getElementById('audio-btn-text').textContent = 'Ouvir Aula';
+            document.getElementById('audio-btn').classList.remove('audio-playing');
             return;
         }
 
-        // Extrai apenas texto limpo do HTML do conteúdo
         const div = document.createElement('div');
         div.innerHTML = moduleContent[currentModuleId].content;
         const cleanText = div.textContent || div.innerText || "";
 
         const utterance = new SpeechSynthesisUtterance(cleanText);
         utterance.lang = 'pt-BR';
-        utterance.rate = 0.9; // Velocidade levemente ajustada para naturalidade
+        utterance.rate = 0.8; 
 
         utterance.onstart = () => {
-            const icon = document.getElementById('audio-btn-icon');
-            const text = document.getElementById('audio-btn-text');
-            const btn = document.getElementById('audio-btn');
-            if(icon) { icon.classList.remove('fa-headphones'); icon.classList.add('fa-stop'); }
-            if(text) text.textContent = 'Parar Áudio';
-            if(btn) btn.classList.add('audio-playing');
+            document.getElementById('audio-btn-icon')?.classList.remove('fa-headphones');
+            document.getElementById('audio-btn-icon')?.classList.add('fa-stop');
+            document.getElementById('audio-btn-text').textContent = 'Parar Áudio';
+            document.getElementById('audio-btn').classList.add('audio-playing');
         };
         
         utterance.onend = () => {
-            const icon = document.getElementById('audio-btn-icon');
-            const text = document.getElementById('audio-btn-text');
-            const btn = document.getElementById('audio-btn');
-            if(icon) { icon.classList.remove('fa-stop'); icon.classList.add('fa-headphones'); }
-            if(text) text.textContent = 'Ouvir Aula';
-            if(btn) btn.classList.remove('audio-playing');
+            document.getElementById('audio-btn-icon')?.classList.remove('fa-stop');
+            document.getElementById('audio-btn-icon')?.classList.add('fa-headphones');
+            document.getElementById('audio-btn-text').textContent = 'Ouvir Aula';
+            document.getElementById('audio-btn').classList.remove('audio-playing');
         };
 
         window.speechSynthesis.speak(utterance);
     };
 
-    // --- PWA INSTALL LOGIC ---
+    // --- INSTALL PWA ---
     let deferredPrompt;
     const installBtn = document.getElementById('install-app-btn');
     const installBtnMobile = document.getElementById('install-app-btn-mobile');
@@ -161,14 +125,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (iosModal && iosOverlay) {
                 iosModal.classList.add('show');
                 iosOverlay.classList.add('show');
+                
                 document.getElementById('close-ios-modal')?.addEventListener('click', () => {
-                    iosModal.classList.remove('show'); iosOverlay.classList.remove('show');
+                    iosModal.classList.remove('show');
+                    iosOverlay.classList.remove('show');
                 });
                 iosOverlay.addEventListener('click', () => {
-                    iosModal.classList.remove('show'); iosOverlay.classList.remove('show');
+                    iosModal.classList.remove('show');
+                    iosOverlay.classList.remove('show');
                 });
             } else {
-                alert("Para instalar no iPhone:\n1. Toque em Compartilhar (quadrado com seta).\n2. Toque em 'Adicionar à Tela de Início'.");
+                alert("Para instalar no iPhone:\nToque em Compartilhar (quadrado com seta).\nToque em 'Adicionar à Tela de Início'.");
             }
         } else if (deferredPrompt) {
             deferredPrompt.prompt();
@@ -179,23 +146,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             deferredPrompt = null;
         } else {
-            alert("Para instalar: Procure o ícone de (+) ou 'Instalar' na barra de endereço do seu navegador.");
+            alert("Para instalar:\nProcure o ícone de instalação na barra de endereço ou menu.");
         }
     }
+
     if(installBtn) installBtn.addEventListener('click', triggerInstall);
     if(installBtnMobile) installBtnMobile.addEventListener('click', triggerInstall);
 
-    // ==========================================================================
-    // 4. INICIALIZAÇÃO E AUTENTICAÇÃO (FIREBASE)
-    // ==========================================================================
     if (typeof moduleContent === 'undefined' || typeof moduleCategories === 'undefined') {
-        // Fallback de segurança se data.js não carregar
         document.getElementById('main-header')?.classList.add('hidden');
         document.querySelector('footer')?.classList.add('hidden');
-        const contentAreaError = document.getElementById('content-area');
-        if (contentAreaError) {
-            contentAreaError.innerHTML = `<div class="text-center py-10 px-6"><h2 class="text-3xl font-bold text-red-700">Erro Crítico</h2><p class="mt-2 text-gray-600">O banco de dados de conteúdo (data.js) não foi carregado corretamente.</p><button onclick="location.reload()" class="action-button mt-6">Tentar Recarregar</button></div>`;
-        }
         return; 
     }
 
@@ -236,7 +196,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.body.getAttribute('data-app-ready') === 'true') return;
         document.body.setAttribute('data-app-ready', 'true');
         
-        // Fecha modais de login
         document.getElementById('name-prompt-modal')?.classList.remove('show');
         document.getElementById('name-modal-overlay')?.classList.remove('show');
         document.getElementById('expired-modal')?.classList.remove('show');
@@ -248,7 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
             printWatermark.textContent = `Licenciado para ${userData.name} (CPF: ${userData.cpf || '...'}) - Proibida a Cópia`;
         }
 
-        // Verifica se é Admin
         if (userData.isAdmin === true) {
             if(adminBtn) adminBtn.classList.remove('hidden');
             if(mobileAdminBtn) mobileAdminBtn.classList.remove('hidden');
@@ -265,21 +223,15 @@ document.addEventListener('DOMContentLoaded', () => {
         handleInitialLoad();
     }
 
-    // ==========================================================================
-    // 5. PAINEL ADMINISTRATIVO
-    // ==========================================================================
     window.openAdminPanel = async function() {
         if (!currentUserData || !currentUserData.isAdmin) return;
         adminModal.classList.add('show');
         adminOverlay.classList.add('show');
-        
         const tbody = document.getElementById('admin-table-body');
-        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center">Carregando usuários...</td></tr>';
-
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center">Carregando...</td></tr>';
         try {
             const snapshot = await window.__fbDB.collection('users').orderBy('name').get();
             tbody.innerHTML = '';
-            
             snapshot.forEach(doc => {
                 const u = doc.data();
                 const uid = doc.id;
@@ -289,23 +241,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 const planoTipo = u.planType || (isPremium ? 'Indefinido' : 'Trial');
                 const deviceInfo = u.last_device || 'Desconhecido';
                 const noteIconColor = u.adminNote ? 'text-yellow-500' : 'text-gray-400';
-                
                 const row = `
                     <tr class="border-b hover:bg-gray-50 transition-colors">
                         <td class="p-3 font-bold text-gray-800">${u.name}</td>
                         <td class="p-3 text-gray-600 text-sm">${u.email}<br><span class="text-xs text-gray-500">CPF: ${cpf}</span></td>
                         <td class="p-3 text-xs text-gray-500 max-w-[150px] truncate" title="${deviceInfo}">${deviceInfo}</td>
                         <td class="p-3">
-                            <span class="px-2 py-1 rounded text-xs font-bold uppercase ${isPremium ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
-                                ${u.status || 'trial'}
-                            </span>
-                            <span class="text-xs text-gray-500 mt-1">${planoTipo}</span>
+                            <div class="flex flex-col items-start">
+                                <span class="px-2 py-1 rounded text-xs font-bold uppercase ${isPremium ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                    ${u.status || 'trial'}
+                                </span>
+                                <span class="text-xs text-gray-500 mt-1">${planoTipo}</span>
+                            </div>
                         </td>
                         <td class="p-3 text-sm font-medium">${validade}</td>
                         <td class="p-3 flex flex-wrap gap-2">
                             <button onclick="editUserData('${uid}', '${u.name}', '${cpf}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Editar Dados"><i class="fas fa-pen"></i></button>
-                            <button onclick="editUserNote('${uid}', '${(u.adminNote || '').replace(/'/g, "\\'")}')" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 px-2 py-1.5 rounded text-xs shadow" title="Notas"><i class="fas fa-sticky-note ${noteIconColor}"></i></button>
-                            <button onclick="manageUserAccess('${uid}', '${u.acesso_ate}')" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Renovar"><i class="fas fa-calendar-alt"></i></button>
+                            <button onclick="editUserNote('${uid}', '${(u.adminNote || '').replace(/'/g, "\\'")}')" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 px-2 py-1.5 rounded text-xs shadow" title="Observações"><i class="fas fa-sticky-note ${noteIconColor}"></i></button>
+                            <button onclick="manageUserAccess('${uid}', '${u.acesso_ate}')" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Gerenciar Acesso"><i class="fas fa-calendar-alt"></i></button>
+                            <button onclick="sendResetEmail('${u.email}')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Resetar Senha"><i class="fas fa-key"></i></button>
                             <button onclick="deleteUser('${uid}', '${u.name}', '${cpf}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Excluir"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>
@@ -316,7 +270,30 @@ document.addEventListener('DOMContentLoaded', () => {
             tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Erro ao carregar: ${err.message}</td></tr>`;
         }
     };
-    
+
+    window.editUserData = async function(uid, oldName, oldCpf) {
+        const newName = prompt("Novo nome do aluno:", oldName);
+        if (newName === null) return;
+        const newCpfRaw = prompt("Novo CPF (apenas números):", oldCpf === 'Sem CPF' ? '' : oldCpf);
+        if (newCpfRaw === null) return;
+        const newCpf = newCpfRaw.replace(/\D/g, ''); 
+        if (!newName || !newCpf) { alert("Nome e CPF são obrigatórios."); return; }
+        try {
+            const batch = window.__fbDB.batch();
+            const userRef = window.__fbDB.collection('users').doc(uid);
+            batch.update(userRef, { name: newName, cpf: newCpf });
+            if (oldCpf !== 'Sem CPF' && oldCpf !== newCpf) {
+                batch.delete(window.__fbDB.collection('cpfs').doc(oldCpf));
+                batch.set(window.__fbDB.collection('cpfs').doc(newCpf), { uid: uid });
+            } else if (oldCpf === 'Sem CPF') {
+                batch.set(window.__fbDB.collection('cpfs').doc(newCpf), { uid: uid });
+            }
+            await batch.commit();
+            alert("Dados atualizados!");
+            openAdminPanel();
+        } catch (err) { alert("Erro: " + err.message); }
+    };
+
     window.manageUserAccess = async function(uid, currentExpiryStr) {
         const opcao = prompt("Gerenciar Plano e Validade:\n\n1 - MENSAL (+30 dias)\n2 - SEMESTRAL (+180 dias)\n3 - ANUAL (+365 dias)\n4 - PERMANENTE (10 anos)\n5 - PERSONALIZADO (Adicionar/Remover dias)\n\nDigite o número da opção:");
         if (!opcao) return;
@@ -347,29 +324,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) { alert("Erro ao atualizar: " + err.message); }
     };
 
-    window.editUserData = async function(uid, oldName, oldCpf) {
-        const newName = prompt("Novo nome do aluno:", oldName);
-        if (newName === null) return;
-        const newCpfRaw = prompt("Novo CPF (apenas números):", oldCpf === 'Sem CPF' ? '' : oldCpf);
-        if (newCpfRaw === null) return;
-        const newCpf = newCpfRaw.replace(/\D/g, ''); 
-        if (!newName || !newCpf) { alert("Nome e CPF são obrigatórios."); return; }
-        try {
-            const batch = window.__fbDB.batch();
-            const userRef = window.__fbDB.collection('users').doc(uid);
-            batch.update(userRef, { name: newName, cpf: newCpf });
-            if (oldCpf !== 'Sem CPF' && oldCpf !== newCpf) {
-                batch.delete(window.__fbDB.collection('cpfs').doc(oldCpf));
-                batch.set(window.__fbDB.collection('cpfs').doc(newCpf), { uid: uid });
-            } else if (oldCpf === 'Sem CPF') {
-                batch.set(window.__fbDB.collection('cpfs').doc(newCpf), { uid: uid });
-            }
-            await batch.commit();
-            alert("Dados atualizados!");
-            openAdminPanel();
-        } catch (err) { alert("Erro: " + err.message); }
-    };
-    
     window.editUserNote = async function(uid, currentNote) {
         const newNote = prompt("Observações sobre este aluno:", currentNote);
         if (newNote === null) return; 
@@ -534,9 +488,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ==========================================================================
-    // 6. CARREGAMENTO DE CONTEÚDO E MÓDULOS
-    // ==========================================================================
     function handleInitialLoad() {
         const lastModule = localStorage.getItem('gateBombeiroLastModule');
         if (lastModule) loadModuleContent(lastModule); else goToHomePage();
@@ -551,13 +502,35 @@ document.addEventListener('DOMContentLoaded', () => {
         return questions;
     }
 
-    // --- FUNÇÃO PRINCIPAL DE CARREGAMENTO DE MÓDULO ---
+    async function generateSimuladoQuestions(config) {
+        const allQuestions = [];
+        const questionsByCategory = {};
+        
+        for (const catKey in moduleCategories) {
+            questionsByCategory[catKey] = [];
+            const cat = moduleCategories[catKey];
+            for (let i = cat.range[0]; i <= cat.range[1]; i++) {
+                const modId = `module${i}`;
+                if (typeof QUIZ_DATA !== 'undefined' && QUIZ_DATA[modId]) {
+                    questionsByCategory[catKey].push(...QUIZ_DATA[modId]);
+                }
+            }
+        }
+
+        for (const [catKey, qty] of Object.entries(config.distribution)) {
+            if (questionsByCategory[catKey]) {
+                const shuffled = shuffleArray(questionsByCategory[catKey]);
+                allQuestions.push(...shuffled.slice(0, qty));
+            }
+        }
+        
+        return shuffleArray(allQuestions);
+    }
+
     async function loadModuleContent(id) {
         if (!id || !moduleContent[id]) return;
         const d = moduleContent[id];
         const num = parseInt(id.replace('module', ''));
-        
-        // Lógica de bloqueio Premium
         let moduleCategory = null;
         for (const key in moduleCategories) {
             const cat = moduleCategories[key];
@@ -565,10 +538,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const isPremiumContent = moduleCategory && moduleCategory.isPremium;
         const userIsNotPremium = !currentUserData || currentUserData.status !== 'premium';
-        if (isPremiumContent && userIsNotPremium) { renderPremiumLockScreen(d.title); return; }
+
+        if (isPremiumContent && userIsNotPremium) { renderPremiumLockScreen(moduleContent[id].title); return; }
 
         currentModuleId = id;
         localStorage.setItem('gateBombeiroLastModule', id);
+        
         if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
         if (simuladoTimerInterval) clearInterval(simuladoTimerInterval);
 
@@ -579,55 +554,44 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(async () => {
             loadingSpinner.classList.add('hidden');
             contentArea.classList.remove('hidden'); 
-            contentArea.innerHTML = '';
 
-            // --- CASO 1: SIMULADO PADRÃO ---
+            // --- MODO SIMULADO ---
             if (d.isSimulado) {
                 contentArea.innerHTML = `
-                    <div class="relative pt-4 pb-12">
-                         <!-- Timer Sticky corrigido -->
-                        <div id="simulado-timer-bar" class="simulado-header-sticky shadow-lg">
-                            <span class="simulado-timer flex items-center"><i class="fas fa-clock mr-2 text-lg"></i><span id="timer-display">00:00</span></span>
-                            <span class="simulado-progress text-sm bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">Questão <span id="q-current">1</span></span>
-                        </div>
-                        <div class="mt-10 mb-6 px-2 text-center"><h3 class="text-xl md:text-2xl font-bold text-gray-800 dark:text-white border-b pb-2 inline-block">${d.title}</h3></div>
-                        <div>${d.content}</div>
-                        <div class="text-center mt-8"><button id="start-simulado-btn" class="action-button pulse-button text-xl px-8 py-4"><i class="fas fa-play mr-2"></i> INICIAR SIMULADO</button></div>
+                    <h3 class="text-3xl mb-4 pb-4 border-b text-orange-600 dark:text-orange-500 flex items-center">
+                        <i class="${d.iconClass} mr-3"></i> ${d.title}
+                    </h3>
+                    <div>${d.content}</div>
+                    <div class="text-center mt-8">
+                        <button id="start-simulado-btn" class="action-button pulse-button text-xl px-8 py-4">
+                            <i class="fas fa-play mr-2"></i> INICIAR SIMULADO
+                        </button>
                     </div>
                 `;
                 document.getElementById('start-simulado-btn').addEventListener('click', () => startSimuladoMode(d));
             } 
-            // --- CASO 2: FERRAMENTAS (Módulo 59) ---
-            else if (id === 'module59') {
+            // --- MÓDULO FERRAMENTAS (ATUALIZADO PARA MODULE 59) ---
+            // AQUI ESTÁ A CORREÇÃO: Verifica explicitamente o module59
+            else if (id === 'module59') { 
                 contentArea.innerHTML = `
-                    <h3 class="text-3xl mb-4 pb-4 border-b text-blue-600 dark:text-blue-400 flex items-center"><i class="fas fa-tools mr-3"></i> Ferramentas Operacionais</h3>
+                    <h3 class="text-3xl mb-4 pb-4 border-b text-blue-600 dark:text-blue-400 flex items-center">
+                        <i class="fas fa-tools mr-3"></i> Ferramentas Operacionais
+                    </h3>
                     <div id="tools-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
                 `;
                 const grid = document.getElementById('tools-grid');
                 if (typeof ToolsApp !== 'undefined') {
-                    ToolsApp.renderPonto(grid); ToolsApp.renderEscala(grid);
-                    ToolsApp.renderPlanner(grid); ToolsApp.renderWater(grid);
-                    ToolsApp.renderNotes(grid); ToolsApp.renderHealth(grid);
+                    ToolsApp.renderPonto(grid);
+                    ToolsApp.renderEscala(grid);
+                    ToolsApp.renderPlanner(grid);
+                    ToolsApp.renderWater(grid);
+                    ToolsApp.renderNotes(grid);
+                    ToolsApp.renderHealth(grid);
+                } else {
+                    grid.innerHTML = '<p class="text-red-500">Erro: Script de Ferramentas não carregado.</p>';
                 }
             }
-            // --- CASO 3: MODO SOBREVIVÊNCIA ---
-            else if (d.isSurvival) {
-                contentArea.innerHTML = d.content;
-                document.getElementById('start-survival-btn').addEventListener('click', startSurvivalMode);
-                const last = localStorage.getItem('survival_highscore');
-                if(last) document.getElementById('survival-last-score').textContent = `Recorde Atual: ${last} pontos`;
-            }
-            // --- CASO 4: RPG ---
-            else if (d.isRPG) {
-                contentArea.innerHTML = d.content;
-                document.getElementById('start-rpg-btn').addEventListener('click', window.startRPG);
-            }
-            // --- CASO 5: CARTEIRINHA ---
-            else if (d.isIDCard) {
-                contentArea.innerHTML = d.content;
-                renderDigitalID(document.getElementById('id-card-container'));
-            }
-            // --- CASO 6: AULA NORMAL (TEXTO + VÍDEO + QUIZ) ---
+            // --- MODO AULA NORMAL ---
             else {
                 let html = `
                     <h3 class="flex items-center text-3xl mb-6 pb-4 border-b"><i class="${d.iconClass} mr-4 ${getCategoryColor(id)} fa-fw"></i>${d.title}</h3>
@@ -640,7 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div>${d.content}</div>
                 `;
 
-                const isSpecialModule = ['module53', 'module54', 'module55', 'module56', 'module57', 'module58', 'module59', 'module60', 'module61', 'module62'].includes(id);
+                const isSpecialModule = ['module53', 'module54', 'module55', 'module56', 'module57', 'module58', 'module59'].includes(id);
 
                 if (d.driveLink) {
                     if (userIsNotPremium) {
@@ -696,31 +660,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 300);
     }
 
-    /* ==================================================================
-       7. LÓGICA DE SIMULADO E QUIZ (COM FEEDBACK COMPLETO)
-       ================================================================== */
-    
-    // Gera questões aleatórias baseadas na configuração do módulo
-    async function generateSimuladoQuestions(config) {
-        const allQuestions = [];
-        const questionsByCategory = {};
-        for (const catKey in moduleCategories) {
-            questionsByCategory[catKey] = [];
-            const cat = moduleCategories[catKey];
-            for (let i = cat.range[0]; i <= cat.range[1]; i++) {
-                const modId = `module${i}`;
-                if (typeof QUIZ_DATA !== 'undefined' && QUIZ_DATA[modId]) questionsByCategory[catKey].push(...QUIZ_DATA[modId]);
-            }
-        }
-        for (const [catKey, qty] of Object.entries(config.distribution)) {
-            if (questionsByCategory[catKey]) allQuestions.push(...shuffleArray(questionsByCategory[catKey]).slice(0, qty));
-        }
-        return shuffleArray(allQuestions);
-    }
-
     async function startSimuladoMode(moduleData) {
         loadingSpinner.classList.remove('hidden');
         contentArea.classList.add('hidden');
+
         activeSimuladoQuestions = await generateSimuladoQuestions(moduleData.simuladoConfig);
         userAnswers = {};
         simuladoTimeLeft = moduleData.simuladoConfig.timeLimit * 60; 
@@ -729,22 +672,30 @@ document.addEventListener('DOMContentLoaded', () => {
         contentArea.innerHTML = `
             <div class="relative pt-4 pb-12">
                 <div id="simulado-timer-bar" class="simulado-header-sticky shadow-lg">
-                    <span class="simulado-timer flex items-center"><i class="fas fa-clock mr-2 text-lg"></i><span id="timer-display">00:00</span></span>
+                    <span class="simulado-timer flex items-center"><i class="fas fa-clock mr-2 text-lg"></i><span id="timer-display">60:00</span></span>
                     <span class="simulado-progress text-sm bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">Questão <span id="q-current">1</span> / ${activeSimuladoQuestions.length}</span>
                 </div>
-                <div class="mt-10 mb-6 px-2 text-center"><h3 class="text-xl md:text-2xl font-bold text-gray-800 dark:text-white border-b pb-2 inline-block">${moduleData.title}</h3></div>
+                
+                <div class="mt-10 mb-6 px-2 text-center">
+                     <h3 class="text-xl md:text-2xl font-bold text-gray-800 dark:text-white border-b pb-2 inline-block">${moduleData.title}</h3>
+                </div>
+
                 <div id="question-display-area" class="simulado-question-container"></div>
+                
                 <div class="mt-8 flex justify-between items-center">
                     <button id="sim-prev-btn" class="sim-nav-btn sim-btn-prev shadow" style="visibility: hidden;"><i class="fas fa-arrow-left mr-2"></i> Anterior</button>
                     <button id="sim-next-btn" class="sim-nav-btn sim-btn-next shadow">Próxima <i class="fas fa-arrow-right ml-2"></i></button>
                 </div>
             </div>
         `;
+        
         contentArea.classList.remove('hidden');
         loadingSpinner.classList.add('hidden');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+
         showSimuladoQuestion(currentSimuladoQuestionIndex);
         startTimer(moduleData.id);
+
         document.getElementById('sim-next-btn').addEventListener('click', () => navigateSimulado(1, moduleData.id));
         document.getElementById('sim-prev-btn').addEventListener('click', () => navigateSimulado(-1, moduleData.id));
     }
@@ -754,16 +705,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('question-display-area');
         const savedAnswer = userAnswers[q.id] || null;
         
-        let html = `<div class="bg-white dark:bg-gray-900 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700 animate-slide-in"><p class="font-bold text-lg mb-6 text-gray-800 dark:text-white">${index+1}. ${q.question}</p><div class="space-y-3">`;
+        let html = `
+            <div class="bg-white dark:bg-gray-900 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700 animate-slide-in">
+                <p class="font-bold text-lg mb-6 text-gray-800 dark:text-white">${index+1}. ${q.question}</p>
+                <div class="space-y-3">
+        `;
         for (const key in q.options) {
             const isChecked = savedAnswer === key ? 'checked' : '';
-            html += `<label class="flex items-center p-4 rounded border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"><input type="radio" name="q-curr" value="${key}" class="mr-4 w-5 h-5 text-orange-600" ${isChecked} onchange="registerSimuladoAnswer('${q.id}', '${key}')"><span class="text-base text-gray-700 dark:text-gray-300"><strong class="mr-2 text-orange-500">${key.toUpperCase()})</strong> ${q.options[key]}</span></label>`;
+            html += `
+                <label class="flex items-center p-4 rounded border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <input type="radio" name="q-curr" value="${key}" class="mr-4 w-5 h-5 text-orange-600 focus:ring-orange-500" ${isChecked} onchange="registerSimuladoAnswer('${q.id}', '${key}')">
+                    <span class="text-base text-gray-700 dark:text-gray-300"><strong class="mr-2 text-orange-500">${key.toUpperCase()})</strong> ${q.options[key]}</span>
+                </label>
+            `;
         }
         html += `</div></div>`;
         container.innerHTML = html;
+
         document.getElementById('q-current').innerText = index + 1;
+        
         const prevBtn = document.getElementById('sim-prev-btn');
         const nextBtn = document.getElementById('sim-next-btn');
+        
         prevBtn.style.visibility = index === 0 ? 'hidden' : 'visible';
         if (index === activeSimuladoQuestions.length - 1) {
             nextBtn.innerHTML = '<i class="fas fa-check-double mr-2"></i> ENTREGAR';
@@ -798,6 +761,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const m = Math.floor(simuladoTimeLeft / 60);
             const s = simuladoTimeLeft % 60;
             display.textContent = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+            
             if (simuladoTimeLeft <= 0) {
                 clearInterval(simuladoTimerInterval);
                 alert("Tempo esgotado! O simulado será encerrado.");
@@ -806,7 +770,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     }
 
-    // --- RESULTADO DO SIMULADO COM FEEDBACK COMPLETO ---
     function finishSimulado(moduleId) {
         clearInterval(simuladoTimerInterval);
         let correctCount = 0;
@@ -868,22 +831,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- QUIZ IMEDIATO (FEEDBACK AO VIVO) ---
+    function renderPremiumLockScreen(title) {
+        contentArea.innerHTML = `<div class="text-center py-12 px-6"><div class="inline-block p-6 bg-yellow-100 dark:bg-yellow-900/30 rounded-full mb-6"><i class="fas fa-lock text-5xl text-yellow-600 dark:text-yellow-500"></i></div><h2 class="text-3xl font-bold mb-4 text-gray-800 dark:text-white">Conteúdo Exclusivo</h2><p class="text-lg text-gray-600 dark:text-gray-300 max-w-md mx-auto mb-8">O módulo <strong>${title}</strong> faz parte do nosso pacote avançado. Assine agora para desbloquear Simulados, Bônus e muito mais.</p><button id="premium-lock-btn" class="action-button pulse-button text-lg px-8 py-4"><i class="fas fa-crown mr-2"></i> DESBLOQUEAR TUDO AGORA</button></div>`;
+        document.getElementById('premium-lock-btn').addEventListener('click', () => { document.getElementById('expired-modal').classList.add('show'); document.getElementById('name-modal-overlay').classList.add('show'); });
+        updateActiveModuleInList();
+        updateNavigationButtons();
+    }
+
     function handleQuizOptionClick(e) {
         const o = e.currentTarget;
         if (o.disabled) return;
         const moduleId = o.dataset.module;
         const questionId = o.dataset.questionId;
         const selectedAnswer = o.dataset.answer;
-        const qData = cachedQuestionBanks[moduleId]?.find(q => q.id === questionId);
-        if (!qData) return; 
+        const questionData = cachedQuestionBanks[moduleId]?.find(q => q.id === questionId);
+        if (!questionData) return; 
         
-        const correctAnswer = qData.answer;
-        const explanationText = qData.explanation || 'Nenhuma explicação disponível.';
-        const correctAnswerText = qData.options[correctAnswer];
+        const correctAnswer = questionData.answer;
+        const correctAnswerText = questionData.options[correctAnswer];
+        const explanationText = questionData.explanation || 'Nenhuma explicação disponível.';
+        
+        const optionsGroup = o.closest('.quiz-options-group');
         const feedbackArea = document.getElementById(`feedback-${questionId}`);
         
-        o.closest('.quiz-options-group').querySelectorAll(`.quiz-option[data-question-id="${questionId}"]`).forEach(opt => {
+        optionsGroup.querySelectorAll(`.quiz-option[data-question-id="${questionId}"]`).forEach(opt => {
             opt.disabled = true;
             if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
         });
@@ -918,189 +889,198 @@ document.addEventListener('DOMContentLoaded', () => {
             feedbackArea.classList.remove('hidden');
         }
     }
-
-    // ==========================================================================
-    // 8. MODO SOBREVIVÊNCIA, RPG E CARTEIRINHA
-    // ==========================================================================
     
-    // --- SOBREVIVÊNCIA ---
-    async function startSurvivalMode() {
-        if (!currentUserData || currentUserData.status !== 'premium') {
-            const lastPlayed = localStorage.getItem('survival_last_played');
-            const today = new Date().toLocaleDateString();
-            if (lastPlayed === today) { alert("⚠️ Modo Grátis: Você já jogou hoje!\n\nAssine o Premium para jogar ilimitado."); return; }
-            localStorage.setItem('survival_last_played', today);
-        }
-
-        loadingSpinner.classList.remove('hidden');
-        survivalLives = 3; survivalScore = 0; survivalIndex = 0;
-        let allQ = [];
-        for (let i = 1; i <= 52; i++) {
-            const q = await loadQuestionBank(`module${i}`);
-            if(q) allQ.push(...q);
-        }
-        survivalQuestions = shuffleArray(allQ);
-        loadingSpinner.classList.add('hidden');
-
-        if(survivalQuestions.length === 0) { alert("Erro no banco de questões."); return; }
-        renderSurvivalScreen();
-    }
-
-    function renderSurvivalScreen() {
-        if (survivalLives <= 0) { finishSurvival(); return; }
-        const q = survivalQuestions[survivalIndex];
-        if (!q) { finishSurvival(true); return; }
-
-        contentArea.innerHTML = `
-            <div class="max-w-2xl mx-auto pt-4">
-                <div class="flex justify-between items-center mb-6 bg-gray-800 text-white p-4 rounded-lg shadow-lg sticky top-24 z-30">
-                    <div class="flex items-center gap-2"><i class="fas fa-heart text-red-500 text-2xl animate-pulse"></i><span class="text-2xl font-bold">x ${survivalLives}</span></div>
-                    <div class="text-xl font-bold">Pontos: <span class="text-yellow-400">${survivalScore}</span></div>
-                </div>
-                <div class="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 animate-slide-in">
-                    <div class="mb-4"><span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded">Questão ${survivalScore + 1}</span></div>
-                    <p class="text-lg font-bold text-gray-800 dark:text-white mb-6">${q.question}</p>
-                    <div class="space-y-3" id="survival-options">
-                        ${Object.keys(q.options).map(key => `
-                            <button onclick="checkSurvivalAnswer('${key}', '${q.answer}', this)" 
-                                class="w-full text-left p-4 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all flex items-center group">
-                                <span class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3 font-bold group-hover:bg-blue-500 group-hover:text-white">${key.toUpperCase()}</span>
-                                <span class="flex-1 text-gray-700 dark:text-gray-200">${q.options[key]}</span>
-                            </button>
-                        `).join('')}
-                    </div>
-                </div>
-            </div>
-        `;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    window.checkSurvivalAnswer = function(selected, correct, btnElement) {
-        const optionsDiv = document.getElementById('survival-options');
-        optionsDiv.querySelectorAll('button').forEach(b => b.disabled = true);
-
-        if (selected === correct) {
-            btnElement.classList.add('bg-green-100', 'border-green-500', 'dark:bg-green-900');
-            btnElement.querySelector('span').classList.add('bg-green-500', 'text-white');
-            survivalScore++;
-            if(typeof confetti === 'function') confetti({particleCount: 30, spread: 60, origin: { y: 0.7 }});
-            setTimeout(() => { survivalIndex++; renderSurvivalScreen(); }, 1500);
+    function updateBreadcrumbs(moduleTitle = 'Início') {
+        const homeLink = `<a href="#" id="home-breadcrumb" class="text-blue-600 dark:text-blue-400 hover:text-orange-500 transition-colors"><i class="fas fa-home mr-1"></i> Início</a>`;
+        if (!currentModuleId) {
+            breadcrumbContainer.innerHTML = homeLink;
         } else {
-            btnElement.classList.add('bg-red-100', 'border-red-500', 'dark:bg-red-900');
-            btnElement.querySelector('span').classList.add('bg-red-500', 'text-white');
-            optionsDiv.querySelectorAll('button').forEach(b => {
-                if (b.innerText.includes(correct.toUpperCase())) b.classList.add('bg-green-50', 'border-green-500');
+            const category = Object.values(moduleCategories).find(cat => {
+                const moduleNum = parseInt(currentModuleId.replace('module', ''));
+                return moduleNum >= cat.range[0] && moduleNum <= cat.range[1];
             });
-            survivalLives--;
-            setTimeout(() => { 
-                if (survivalLives === 0) finishSurvival(); else { survivalIndex++; renderSurvivalScreen(); }
-            }, 2000);
+            if (category) {
+                const categoryLink = `<span class="mx-2 text-gray-400">/</span> <span class="font-bold text-gray-700 dark:text-gray-300">${category.title}</span>`;
+                const moduleSpan = `<span class="mx-2 text-gray-400">/</span> <span class="text-orange-500">${moduleTitle}</span>`;
+                breadcrumbContainer.innerHTML = `${homeLink} ${categoryLink} ${moduleSpan}`;
+            } else {
+                breadcrumbContainer.innerHTML = `${homeLink} <span class="mx-2 text-gray-400">/</span> ${moduleTitle}`;
+            }
         }
-    };
-
-    function finishSurvival(win = false) {
-        const currentHigh = localStorage.getItem('survival_highscore') || 0;
-        if (survivalScore > currentHigh) localStorage.setItem('survival_highscore', survivalScore);
-
-        contentArea.innerHTML = `
-            <div class="text-center py-10 animate-slide-in">
-                <div class="text-6xl mb-4">${win ? '🏆' : '☠️'}</div>
-                <h2 class="text-4xl font-bold mb-2 ${win ? 'text-yellow-500' : 'text-red-600'}">${win ? 'VOCÊ ZEROU!' : 'GAME OVER'}</h2>
-                <p>Você sobreviveu a <strong>${survivalScore}</strong> perguntas.</p>
-                <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl max-w-sm mx-auto mb-8"><p class="text-sm text-gray-500 font-bold">Seu Recorde</p><p class="text-3xl font-bold text-blue-600">${Math.max(survivalScore, currentHigh)}</p></div>
-                <button onclick="loadModuleContent('module60')" class="action-button"><i class="fas fa-redo mr-2"></i> Tentar Novamente</button>
-            </div>
-        `;
+        document.getElementById('home-breadcrumb')?.addEventListener('click', (e) => { e.preventDefault(); goToHomePage(); });
     }
-
-    // --- RPG (SIMULADOR DE DECISÕES) ---
-    window.startRPG = function() { const rpgData = moduleContent['module61'].rpgData; if (!rpgData) return; renderRPGScene(rpgData.start, rpgData); };
-    function renderRPGScene(sceneId, rpgData) {
-        if (sceneId === 'exit') { loadModuleContent('module61'); return; }
-        const scene = rpgData.scenes[sceneId];
-        let html = `<div class="max-w-3xl mx-auto pt-4 animate-fade-in"><div class="bg-gray-900 text-white p-6 rounded-t-xl border-b-4 ${scene.type === 'death' ? 'border-red-600' : (scene.type === 'win' ? 'border-green-600' : 'border-blue-500')}"><p class="text-lg font-serif">"${scene.text}"</p></div><div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-b-xl shadow-lg"><div class="grid gap-4">`;
-        scene.options.forEach(opt => { html += `<button onclick="window.rpgNext('${opt.next}')" class="text-left p-4 bg-white dark:bg-gray-700 rounded border-l-4 border-gray-400 hover:border-orange-500 shadow-sm"><span class="font-bold text-gray-800 dark:text-white"><i class="fas fa-chevron-right mr-2 text-orange-500"></i> ${opt.text}</span></button>`; });
-        html += `</div></div></div>`;
-        contentArea.innerHTML = html; window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    window.rpgNext = function(nextId) { renderRPGScene(nextId, moduleContent['module61'].rpgData); };
-
-    // --- CARTEIRINHA DIGITAL ---
-    function renderDigitalID(container) {
-        if (!currentUserData) { container.innerHTML = '<p class="text-red-500">Erro de dados.</p>'; return; }
-        const validade = currentUserData.acesso_ate ? new Date(currentUserData.acesso_ate).toLocaleDateString('pt-BR') : 'Indefinido';
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`BC|${currentUserData.name}|${currentUserData.cpf}|VALID:${validade}`)}`;
-        const isPremium = currentUserData.status === 'premium';
-        const cardColor = isPremium ? 'bg-gradient-to-r from-gray-900 to-black border-yellow-500' : 'bg-gradient-to-r from-red-700 to-red-900 border-white';
-        container.innerHTML = `
-            <div class="relative w-full max-w-md aspect-[1.58/1] ${cardColor} rounded-xl shadow-2xl overflow-hidden text-white p-6 border-2">
-                ${isPremium ? '<div class="absolute top-4 right-4 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded">PREMIUM</div>' : ''}
-                <div class="absolute inset-0 opacity-10 flex items-center justify-center pointer-events-none"><i class="fas fa-shield-alt text-9xl"></i></div>
-                <div class="relative z-10 flex flex-col h-full justify-between">
-                    <div class="flex items-center gap-4"><div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center border-2 border-white/50"><i class="fas fa-user text-3xl"></i></div><div><h3 class="font-bold text-lg leading-tight">BOMBEIRO CIVIL</h3><p class="text-xs opacity-80">Identidade Profissional Digital</p></div></div>
-                    <div class="space-y-1 mt-2"><div><p class="text-[10px] uppercase opacity-60">Nome</p><p class="font-bold text-lg truncate">${currentUserData.name}</p></div><div class="flex justify-between"><div><p class="text-[10px] uppercase opacity-60">CPF</p><p class="font-mono">${currentUserData.cpf || '---'}</p></div><div class="text-right"><p class="text-[10px] uppercase opacity-60">Validade</p><p class="font-mono text-yellow-400">${validade}</p></div></div></div>
-                    <div class="flex justify-between items-end mt-2"><div class="bg-white p-1 rounded"><img src="${qrUrl}" alt="QR Code" class="w-16 h-16"></div><div class="text-right"><p class="text-[8px] opacity-50">Projeto Bravo Charlie</p><p class="text-[8px] opacity-50">Lei 11.901/2009</p></div></div>
-                </div>
-            </div><div class="mt-6 text-center"><button onclick="window.print()" class="text-sm text-blue-500 hover:underline"><i class="fas fa-print"></i> Imprimir Carteirinha</button></div>`;
-    }
-
-    // ==========================================================================
-    // 9. HELPERS E LISTENERS FINAIS
-    // ==========================================================================
-    function renderPremiumLockScreen(title) { contentArea.innerHTML = `<div class="text-center py-12 px-6"><h2 class="text-3xl font-bold mb-4">Conteúdo Exclusivo</h2><p class="mb-8">O módulo <strong>${title}</strong> é exclusivo para assinantes.</p><button id="premium-lock-btn" class="action-button pulse-button text-lg px-8 py-4">DESBLOQUEAR AGORA</button></div>`; document.getElementById('premium-lock-btn').addEventListener('click', () => { document.getElementById('expired-modal').classList.add('show'); document.getElementById('name-modal-overlay').classList.add('show'); }); }
     
-    function getCategoryColor(id) { const n=parseInt(id.replace('module','')); for(const k in moduleCategories){ const c=moduleCategories[k]; if(n>=c.range[0]&&n<=c.range[1]) return (k==='salvamento'?'text-blue-500':(k==='pci'?'text-red-500':'text-orange-500')); } return 'text-gray-500'; }
-    function updateNavigationButtons() { const p=document.getElementById('prev-module'), n=document.getElementById('next-module'); if(!p||!n)return; if(!currentModuleId){p.disabled=true;n.disabled=true;return;} const num=parseInt(currentModuleId.replace('module','')); p.disabled=(num===1); n.disabled=(num===totalModules); }
-    function updateBreadcrumbs(t='Início') { const b=document.getElementById('breadcrumb-container'); if(!currentModuleId) b.innerHTML=`<a href="#" id="home-breadcrumb">Início</a>`; else b.innerHTML=`<a href="#" id="home-breadcrumb">Início</a> / <span>${t}</span>`; document.getElementById('home-breadcrumb').addEventListener('click', goToHomePage); }
-    function setupNotesListener(id) { const n=document.getElementById(`notes-module-${id}`); if(n) n.addEventListener('keyup', ()=>localStorage.setItem('note-'+id, n.value)); }
-    function goToHomePage() { localStorage.removeItem('gateBombeiroLastModule'); if(window.speechSynthesis.speaking)window.speechSynthesis.cancel(); contentArea.innerHTML=`<div class="text-center py-8"><h2>Bem-vindo</h2><button id="start-course" class="action-button">Iniciar</button></div>`; document.getElementById('module-nav')?.classList.add('hidden'); closeSidebar(); document.getElementById('start-course').addEventListener('click', ()=>loadModuleContent('module1')); }
-    function setupProtection() { document.addEventListener('contextmenu', e=>e.preventDefault()); }
-    function setupTheme() { const isDark = localStorage.getItem('theme') === 'dark'; document.documentElement.classList.toggle('dark', isDark); updateThemeIcons(); }
-    function toggleTheme() { document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); updateThemeIcons(); }
-    function updateThemeIcons() { const icon=document.documentElement.classList.contains('dark')?'fa-sun':'fa-moon'; document.querySelectorAll('#dark-mode-toggle-desktop i, #bottom-nav-theme i').forEach(i=>i.className=`fas ${icon} text-2xl`); }
-    function shuffleArray(a) { let n=[...a]; for(let i=n.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [n[i],n[j]]=[n[j],n[i]]; } return n; }
-    function closeSidebar() { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('show'); setTimeout(()=>sidebarOverlay.classList.add('hidden'), 300); }
-    function openSidebar() { sidebar.classList.add('open'); sidebarOverlay.classList.remove('hidden'); setTimeout(()=>sidebarOverlay.classList.add('show'), 10); }
-    function populateModuleLists() { document.getElementById('desktop-module-container').innerHTML=getModuleListHTML(); document.getElementById('mobile-module-container').innerHTML=getModuleListHTML(); }
-    function getModuleListHTML() { let h=''; for(const k in moduleCategories){ const c=moduleCategories[k]; h+=`<div><button class="accordion-button"><span><i class="${c.icon} mr-2"></i>${c.title}</span></button><div class="accordion-panel">`; for(let i=c.range[0]; i<=c.range[1]; i++){ const m=moduleContent[`module${i}`]; if(m) h+=`<div class="module-list-item ${completedModules.includes(m.id)?'completed':''}" data-module="${m.id}">${m.title}</div>`; } h+=`</div></div>`; } return h; }
-    function updateProgress() { const p=(completedModules.length/totalModules)*100; document.getElementById('progress-text').textContent=`${p.toFixed(0)}%`; if(document.getElementById('progress-bar-minimal')) document.getElementById('progress-bar-minimal').style.width=`${p}%`; document.querySelectorAll('.module-list-item').forEach(i=>i.classList.toggle('completed', completedModules.includes(i.dataset.module))); checkAchievements(); }
-    function setupQuizListeners() { document.querySelectorAll('.quiz-option').forEach(o=>o.addEventListener('click', handleQuizOptionClick)); }
-    function setupHeaderScroll() { window.addEventListener('scroll', ()=>{ const h=document.getElementById('main-header'); if(window.scrollY>50) h.classList.add('scrolled'); else h.classList.remove('scrolled'); }); }
-    function setupRippleEffects() { document.addEventListener('click', e=>{ const b=e.target.closest('.action-button,.quiz-option'); if(b){ const r=document.createElement('span'); r.classList.add('ripple'); const rect=b.getBoundingClientRect(); r.style.width=r.style.height=Math.max(rect.width,rect.height)+'px'; r.style.left=e.clientX-rect.left-Math.max(rect.width,rect.height)/2+'px'; r.style.top=e.clientY-rect.top-Math.max(rect.width,rect.height)/2+'px'; b.appendChild(r); setTimeout(()=>r.remove(),600); } }); }
-
-    function addEventListeners() {
-        document.getElementById('next-module')?.addEventListener('click', ()=>{ if(!currentModuleId)return; const n=parseInt(currentModuleId.replace('module','')); if(n<totalModules) loadModuleContent(`module${n+1}`); });
-        document.getElementById('prev-module')?.addEventListener('click', ()=>{ if(!currentModuleId)return; const n=parseInt(currentModuleId.replace('module','')); if(n>1) loadModuleContent(`module${n-1}`); });
-        document.body.addEventListener('click', e=>{ const m=e.target.closest('.module-list-item'); if(m) loadModuleContent(m.dataset.module); if(e.target.closest('.accordion-button')){ const b=e.target.closest('.accordion-button'), p=b.nextElementSibling; b.classList.toggle('active'); p.style.maxHeight=b.classList.contains('active')?p.scrollHeight+"px":null; } });
-        document.getElementById('mobile-menu-button')?.addEventListener('click', openSidebar);
-        document.getElementById('close-sidebar-button')?.addEventListener('click', closeSidebar);
-        sidebarOverlay?.addEventListener('click', closeSidebar);
-        document.getElementById('dark-mode-toggle-desktop')?.addEventListener('click', toggleTheme);
-        document.getElementById('reset-progress')?.addEventListener('click', () => { document.getElementById('reset-modal')?.classList.add('show'); document.getElementById('reset-modal-overlay')?.classList.add('show'); });
-        document.getElementById('cancel-reset-button')?.addEventListener('click', () => { document.getElementById('reset-modal')?.classList.remove('show'); document.getElementById('reset-modal-overlay')?.classList.remove('show'); });
-        document.getElementById('confirm-reset-button')?.addEventListener('click', () => { localStorage.removeItem('gateBombeiroCompletedModules_v3'); localStorage.removeItem('gateBombeiroNotifiedAchievements_v3'); Object.keys(localStorage).forEach(key => { if (key.startsWith('note-')) localStorage.removeItem(key); }); alert('Progresso local resetado.'); window.location.reload(); });
-        document.getElementById('close-congrats')?.addEventListener('click', () => { document.getElementById('congratulations-modal').classList.remove('show'); document.getElementById('modal-overlay').classList.remove('show'); });
-        closeAchButton?.addEventListener('click', hideAchievementModal);
-        achievementOverlay?.addEventListener('click', hideAchievementModal);
-        document.getElementById('admin-panel-btn')?.addEventListener('click', window.openAdminPanel);
-        document.getElementById('mobile-admin-btn')?.addEventListener('click', window.openAdminPanel);
-        document.getElementById('close-admin-modal')?.addEventListener('click', () => { adminModal.classList.remove('show'); adminOverlay.classList.remove('show'); });
+    function setupNotesListener(id) {
+        const notesTextarea = document.getElementById(`notes-module-${id}`);
+        if (notesTextarea) {
+            notesTextarea.addEventListener('keyup', () => {
+                localStorage.setItem('note-' + id, notesTextarea.value);
+            });
+        }
     }
 
-    function updateActiveModuleInList() { document.querySelectorAll('.module-list-item').forEach(i => i.classList.toggle('active', i.dataset.module === currentModuleId)); }
-    function showCongratulations() { document.getElementById('congratulations-modal')?.classList.add('show'); document.getElementById('modal-overlay')?.classList.add('show'); if(typeof confetti === 'function') confetti({particleCount:150, spread:90, origin:{y:0.6},zIndex:200}); }
-    function showAchievementToast(title) { const toast = document.createElement('div'); toast.className = 'toast'; toast.innerHTML = `<i class="fas fa-trophy"></i><div><p class="font-bold">Módulo Concluído!</p><p class="text-sm">${title}</p></div>`; if (toastContainer) toastContainer.appendChild(toast); setTimeout(() => toast.remove(), 4500); }
+    function goToHomePage() {
+        localStorage.removeItem('gateBombeiroLastModule'); 
+        
+        if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+
+        if (contentArea) contentArea.innerHTML = getWelcomeContent();
+        document.getElementById('module-nav')?.classList.add('hidden');
+        document.querySelectorAll('.module-list-item.active').forEach(i => i.classList.remove('active'));
+        currentModuleId = null;
+        closeSidebar();
+        const btn = document.getElementById('start-course');
+        if (btn) {
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            newBtn.addEventListener('click', () => { loadModuleContent('module1'); });
+        }
+        updateBreadcrumbs();
+    }
+
+    function getWelcomeContent() {
+        return `<div class="text-center py-8"><div class="floating inline-block p-5 bg-red-100 dark:bg-red-900/50 rounded-full mb-6"><i class="fas fa-fire-extinguisher text-6xl text-red-600"></i></div><h2 class="text-4xl font-bold mb-4 text-blue-900 dark:text-white">Torne-se um Profissional de Elite</h2><p class="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-8">Bem-vindo ao <strong class="font-bold text-orange-500 dark:text-orange-400">Curso de Formação para Bombeiro Civil e Brigadista</strong>.</p><button id="start-course" class="action-button pulse text-lg"><i class="fas fa-play-circle mr-2"></i> Iniciar Curso Agora</button></div>`;
+    }
+
+    function setupProtection() {
+        document.body.style.userSelect = 'none';
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => { if (e.ctrlKey || e.metaKey) { if (['c','a','x','v','s','p','u'].includes(e.key.toLowerCase())) e.preventDefault(); } if (e.key === 'F12') e.preventDefault(); });
+        document.querySelectorAll('img').forEach(img => { img.draggable = false; img.addEventListener('dragstart', e => e.preventDefault()); });
+    }
+
+    function setupTheme() {
+        const isDark = localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.classList.toggle('dark', isDark);
+        updateThemeIcons();
+    }
+    function toggleTheme() {
+        document.documentElement.classList.toggle('dark');
+        localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        updateThemeIcons();
+    }
+    function updateThemeIcons() {
+        const icon = document.documentElement.classList.contains('dark') ? 'fa-sun' : 'fa-moon';
+        document.querySelectorAll('#dark-mode-toggle-desktop i, #bottom-nav-theme i').forEach(i => i.className = `fas ${icon} text-2xl`);
+    }
+
+    function shuffleArray(array) {
+        let newArray = [...array]; 
+        for (let i = newArray.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        return newArray;
+    }
+    
+    function getCategoryColor(moduleId) {
+        if (!moduleId) return 'text-gray-500'; 
+        const num = parseInt(moduleId.replace('module', ''));
+        for (const key in moduleCategories) {
+            const cat = moduleCategories[key];
+            if (num >= cat.range[0] && num <= cat.range[1]) {
+                switch (key) {
+                    case 'rh': return 'text-orange-500'; 
+                    case 'legislacao': return 'text-orange-500'; 
+                    case 'salvamento': return 'text-blue-500'; 
+                    case 'pci': return 'text-red-500'; 
+                    case 'aph_novo': return 'text-green-500'; 
+                    case 'nr33': return 'text-teal-500';       
+                    case 'nr35': return 'text-indigo-500'; 
+                    default: return 'text-gray-500';
+                }
+            }
+        }
+        return 'text-gray-500';
+    }
+    
+    function closeSidebar() {
+        if (sidebar) sidebar.classList.remove('open');
+        if (sidebarOverlay) {
+            sidebarOverlay.classList.remove('show');
+            setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+        }
+    }
+    function openSidebar() {
+        if (sidebar) sidebar.classList.add('open');
+        if (sidebarOverlay) {
+            sidebarOverlay.classList.remove('hidden');
+            setTimeout(() => sidebarOverlay.classList.add('show'), 10);
+        }
+    }
+    function populateModuleLists() {
+        document.getElementById('desktop-module-container').innerHTML = getModuleListHTML();
+        document.getElementById('mobile-module-container').innerHTML = getModuleListHTML();
+    }
+
+    function getModuleListHTML() {
+        let html = `<h2 class="text-2xl font-semibold mb-5 flex items-center text-blue-900 dark:text-white"><i class="fas fa-list-ul mr-3 text-orange-500"></i> Conteúdo do Curso</h2><div class="mb-4 relative"><input type="text" class="module-search w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700" placeholder="Buscar módulo..."><i class="fas fa-search absolute right-3 top-3.5 text-gray-400"></i></div><div class="module-accordion-container space-y-2">`;
+        for (const k in moduleCategories) {
+            const cat = moduleCategories[k];
+            const isLocked = cat.isPremium && (!currentUserData || currentUserData.status !== 'premium');
+            const lockIcon = isLocked ? '<i class="fas fa-lock text-xs ml-2 text-yellow-500"></i>' : '';
+            html += `<div><button class="accordion-button"><span><i class="${cat.icon} w-6 mr-2 text-gray-500"></i>${cat.title} ${lockIcon}</span><i class="fas fa-chevron-down"></i></button><div class="accordion-panel">`;
+            for (let i = cat.range[0]; i <= cat.range[1]; i++) {
+                const m = moduleContent[`module${i}`];
+                if (m) {
+                    const isDone = Array.isArray(completedModules) && completedModules.includes(m.id);
+                    const itemLock = isLocked ? '<i class="fas fa-lock text-xs text-gray-400 ml-2"></i>' : '';
+                    html += `<div class="module-list-item${isDone ? ' completed' : ''}" data-module="${m.id}"><i class="${m.iconClass} module-icon"></i><span style="flex:1">${m.title} ${itemLock}</span>${isDone ? '<i class="fas fa-check-circle completion-icon" aria-hidden="true"></i>' : ''}</div>`;
+                }
+            }
+            html += `</div></div>`;
+        }
+        html += `</div>`;
+        html += `<div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700"><h3 class="text-xl font-semibold mb-6 text-gray-800 dark:text-white flex items-center"><i class="fas fa-medal mr-2 text-yellow-500"></i> Conquistas por Área</h3><div id="achievements-grid" class="grid grid-cols-2 gap-4">`;
+        for (const key in moduleCategories) {
+            const cat = moduleCategories[key];
+            html += `<div id="ach-cat-${key}" class="achievement-card" title="Conclua a área para ganhar: ${cat.achievementTitle}"><div class="achievement-icon"><i class="${cat.icon}"></i></div><p class="achievement-title">${cat.achievementTitle}</p></div>`;
+        }
+        html += `</div></div>`;
+        return html;
+    }
+
+    function updateProgress() {
+        const p = (completedModules.length / totalModules) * 100;
+        document.getElementById('progress-text').textContent = `${p.toFixed(0)}%`;
+        document.getElementById('completed-modules-count').textContent = completedModules.length;
+        if (document.getElementById('progress-bar-minimal')) {
+            document.getElementById('progress-bar-minimal').style.width = `${p}%`;
+        }
+        updateModuleListStyles();
+        checkAchievements();
+        if (totalModules > 0 && completedModules.length === totalModules) showCongratulations();
+    }
+
+    function showCongratulations() {
+        document.getElementById('congratulations-modal')?.classList.add('show');
+        document.getElementById('modal-overlay')?.classList.add('show');
+        if(typeof confetti === 'function') confetti({particleCount:150, spread:90, origin:{y:0.6},zIndex:200});
+    }
+    function showAchievementToast(title) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `<i class="fas fa-trophy"></i><div><p class="font-bold">Módulo Concluído!</p><p class="text-sm">${title}</p></div>`;
+        if (toastContainer) toastContainer.appendChild(toast);
+        setTimeout(() => toast.remove(), 4500);
+    }
+    function updateModuleListStyles() {
+        document.querySelectorAll('.module-list-item').forEach(i => i.classList.toggle('completed', completedModules.includes(i.dataset.module)));
+    }
     function checkAchievements() {
         let newNotification = false;
         for(const key in moduleCategories) {
             const cat = moduleCategories[key];
             let allComplete = true;
             for(let i = cat.range[0]; i <= cat.range[1]; i++) {
-                if (!moduleContent[`module${i}`] || !completedModules.includes(`module${i}`)) { allComplete = false; break; }
+                if (!moduleContent[`module${i}`] || !completedModules.includes(`module${i}`)) {
+                    allComplete = false; break;
+                }
             }
             if (allComplete && !notifiedAchievements.includes(key)) {
                 showAchievementModal(cat.achievementTitle, cat.icon);
-                notifiedAchievements.push(key); newNotification = true;
+                notifiedAchievements.push(key);
+                newNotification = true;
             }
             document.querySelectorAll(`#ach-cat-${key}`).forEach(el => el.classList.toggle('unlocked', allComplete));
         }
@@ -1112,12 +1092,244 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!achievementModal || !achievementOverlay || !iconContainer || !titleEl) return;
         iconContainer.innerHTML = `<i class="${iconClass}"></i>`;
         titleEl.textContent = `Conquista: ${title}`;
-        achievementModal.classList.add('show'); achievementOverlay.classList.add('show');
+        achievementModal.classList.add('show');
+        achievementOverlay.classList.add('show');
         if(typeof confetti === 'function') confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 }, zIndex: 103 });
     }
-    function hideAchievementModal() { achievementModal?.classList.remove('show'); achievementOverlay?.classList.remove('show'); }
+    function hideAchievementModal() {
+        achievementModal?.classList.remove('show');
+        achievementOverlay?.classList.remove('show');
+    }
 
-    function triggerSuccessParticles(clickEvent, element) { if (typeof confetti === 'function') confetti({ particleCount: 28, spread: 70, origin: { x: clickEvent ? clickEvent.clientX/window.innerWidth : 0.5, y: clickEvent ? clickEvent.clientY/window.innerHeight : 0.5 } }); }
+    function toggleFocusMode() {
+        const isEnteringFocusMode = !document.body.classList.contains('focus-mode');
+        document.body.classList.toggle('focus-mode');
+        if (!isEnteringFocusMode) closeSidebar();
+    }
+
+    function setupConcludeButtonListener() {
+        if (!currentModuleId) return;
+        const b = document.querySelector(`.conclude-button[data-module="${currentModuleId}"]`);
+        if(b) {
+            if (concludeButtonClickListener) b.removeEventListener('click', concludeButtonClickListener);
+            if(completedModules.includes(currentModuleId)){
+                b.disabled=true;
+                b.innerHTML='<i class="fas fa-check-circle mr-2"></i> Concluído';
+            } else {
+                b.disabled = false;
+                b.innerHTML = 'Concluir Módulo';
+                concludeButtonClickListener = () => handleConcludeButtonClick(b);
+                b.addEventListener('click', concludeButtonClickListener);
+            }
+        }
+    }
+    let concludeButtonClickListener = null;
+    function handleConcludeButtonClick(b) {
+        const id = b.dataset.module;
+        if (id && !completedModules.includes(id)) {
+            completedModules.push(id);
+            localStorage.setItem('gateBombeiroCompletedModules_v3', JSON.stringify(completedModules));
+            updateProgress();
+            b.disabled = true;
+            b.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Concluído';
+            showAchievementToast(moduleContent[id].title);
+            if(typeof confetti === 'function') confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 }, zIndex: 2000 });
+            setTimeout(() => {
+                const navContainer = document.getElementById('module-nav');
+                const nextButton = document.getElementById('next-module');
+                if (navContainer) {
+                    navContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    if (nextButton && !nextButton.disabled) nextButton.classList.add('blinking-button');
+                }
+            }, 700);
+        }
+    }
+    function updateActiveModuleInList() {
+        document.querySelectorAll('.module-list-item').forEach(i => i.classList.toggle('active', i.dataset.module === currentModuleId));
+    }
+    function updateNavigationButtons() {
+        const prevModule = document.getElementById('prev-module');
+        const nextModule = document.getElementById('next-module');
+        if (!prevModule || !nextModule) return;
+        if (!currentModuleId) {
+             prevModule.disabled = true;
+             nextModule.disabled = true;
+             return;
+        }
+        const n = parseInt(currentModuleId.replace('module',''));
+        prevModule.disabled = (n === 1);
+        nextModule.disabled = (n === totalModules); // Agora totalModules inclui até o 59
+    }
+    function setupQuizListeners() {
+        document.querySelectorAll('.quiz-option').forEach(o => o.addEventListener('click', handleQuizOptionClick));
+    }
+
+    function triggerSuccessParticles(clickEvent, element) {
+        if (typeof confetti === 'function') confetti({ particleCount: 28, spread: 70, origin: { x: clickEvent ? clickEvent.clientX/window.innerWidth : 0.5, y: clickEvent ? clickEvent.clientY/window.innerHeight : 0.5 } });
+    }
+
+    function setupHeaderScroll() {
+        const header = document.getElementById('main-header');
+        if (header) {
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) header.classList.add('scrolled');
+                else header.classList.remove('scrolled');
+            });
+        }
+    }
+
+    function setupRippleEffects() {
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.action-button') || e.target.closest('.quiz-option');
+            if (btn) {
+                const oldRipple = btn.querySelector('.ripple');
+                if (oldRipple) oldRipple.remove();
+                const ripple = document.createElement('span');
+                ripple.classList.add('ripple');
+                const rect = btn.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = e.clientX - rect.left - size / 2 + 'px';
+                ripple.style.top = e.clientY - rect.top - size / 2 + 'px';
+                btn.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 600);
+            }
+        });
+    }
+
+    function addEventListeners() {
+        // 1. Botões de Navegação
+        const nextButton = document.getElementById('next-module');
+        const prevButton = document.getElementById('prev-module');
+
+        prevButton?.addEventListener('click', () => {
+            if (!currentModuleId) return;
+            const n = parseInt(currentModuleId.replace('module',''));
+            if(n > 1) loadModuleContent(`module${n-1}`);
+            nextButton?.classList.remove('blinking-button');
+        });
+        nextButton?.addEventListener('click', () => {
+            if (!currentModuleId) return;
+            const n = parseInt(currentModuleId.replace('module',''));
+            if(n < totalModules) loadModuleContent(`module${n+1}`);
+            nextButton?.classList.remove('blinking-button');
+        });
+
+        // 2. Busca
+        document.body.addEventListener('input', e => {
+            if(e.target.matches('.module-search')) {
+                const s = e.target.value.toLowerCase();
+                const container = e.target.closest('div.relative');
+                if (container) {
+                    const accordionContainer = container.nextElementSibling;
+                    if (accordionContainer) {
+                            accordionContainer.querySelectorAll('.module-list-item').forEach(i => {
+                            const text = i.textContent.toLowerCase();
+                            const match = text.includes(s);
+                            i.style.display = match ? 'flex' : 'none';
+                            if(match && s.length > 0) {
+                                const panel = i.closest('.accordion-panel');
+                                const btn = panel.previousElementSibling;
+                                if(!btn.classList.contains('active')) {
+                                    btn.classList.add('active');
+                                    panel.style.maxHeight = panel.scrollHeight + "px";
+                                }
+                            }
+                        });
+                        if(s.length === 0) {
+                            accordionContainer.querySelectorAll('.accordion-button').forEach(btn => {
+                                btn.classList.remove('active');
+                                btn.nextElementSibling.style.maxHeight = null;
+                            });
+                        }
+                    }
+                }
+            }
+        });
+
+        // 3. Admin Panel (Correção Mobile)
+        adminBtn?.addEventListener('click', window.openAdminPanel);
+        mobileAdminBtn?.addEventListener('click', window.openAdminPanel);
+
+        closeAdminBtn?.addEventListener('click', () => {
+            adminModal.classList.remove('show');
+            adminOverlay.classList.remove('show');
+        });
+        adminOverlay?.addEventListener('click', () => {
+            adminModal.classList.remove('show');
+            adminOverlay.classList.remove('show');
+        });
+
+        // 4. Reset
+        document.getElementById('reset-progress')?.addEventListener('click', () => { document.getElementById('reset-modal')?.classList.add('show'); document.getElementById('reset-modal-overlay')?.classList.add('show'); });
+        document.getElementById('cancel-reset-button')?.addEventListener('click', () => { document.getElementById('reset-modal')?.classList.remove('show'); document.getElementById('reset-modal-overlay')?.classList.remove('show'); });
+        document.getElementById('confirm-reset-button')?.addEventListener('click', () => {
+            localStorage.removeItem('gateBombeiroCompletedModules_v3');
+            localStorage.removeItem('gateBombeiroNotifiedAchievements_v3');
+            Object.keys(localStorage).forEach(key => { if (key.startsWith('note-')) localStorage.removeItem(key); });
+            alert('Progresso local resetado.');
+            window.location.reload();
+        });
+        
+        // 5. Back to Top
+        document.getElementById('back-to-top')?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        window.addEventListener('scroll', () => {
+            const btn = document.getElementById('back-to-top');
+            if(btn) {
+                if (window.scrollY > 300) { btn.style.display = 'flex'; setTimeout(() => { btn.style.opacity = '1'; btn.style.transform = 'translateY(0)'; }, 10); } 
+                else { btn.style.opacity = '0'; btn.style.transform = 'translateY(20px)'; setTimeout(() => btn.style.display = 'none', 300); }
+            }
+        });
+
+        // 6. Cliques
+        document.body.addEventListener('click', e => {
+            const moduleItem = e.target.closest('.module-list-item');
+            if (moduleItem) {
+                loadModuleContent(moduleItem.dataset.module);
+                const nextButton = document.getElementById('next-module');
+                if(nextButton) nextButton.classList.remove('blinking-button');
+            }
+
+            if (e.target.closest('.accordion-button')) {
+                const b = e.target.closest('.accordion-button');
+                const p = b.nextElementSibling;
+                if (!p) return;
+                const isActive = b.classList.contains('active');
+                const allPanels = b.closest('.module-accordion-container, .sidebar, #mobile-module-container').querySelectorAll('.accordion-panel');
+                allPanels.forEach(op => {
+                    if (op !== p && op.previousElementSibling) {
+                            op.style.maxHeight = null;
+                            op.previousElementSibling.classList.remove('active');
+                    }
+                });
+                if (!isActive) {
+                    b.classList.add('active');
+                    p.style.maxHeight = p.scrollHeight + "px";
+                } else {
+                    b.classList.remove('active');
+                    p.style.maxHeight = null;
+                }
+            }
+        });
+
+        document.getElementById('mobile-menu-button')?.addEventListener('click', openSidebar);
+        document.getElementById('close-sidebar-button')?.addEventListener('click', closeSidebar);
+        sidebarOverlay?.addEventListener('click', closeSidebar);
+        document.getElementById('home-button-desktop')?.addEventListener('click', goToHomePage);
+        document.getElementById('bottom-nav-home')?.addEventListener('click', goToHomePage);
+        document.getElementById('bottom-nav-modules')?.addEventListener('click', openSidebar);
+        document.getElementById('bottom-nav-theme')?.addEventListener('click', toggleTheme);
+        document.getElementById('dark-mode-toggle-desktop')?.addEventListener('click', toggleTheme);
+        document.getElementById('focus-mode-toggle')?.addEventListener('click', toggleFocusMode);
+        document.getElementById('bottom-nav-focus')?.addEventListener('click', toggleFocusMode);
+        document.getElementById('focus-menu-modules')?.addEventListener('click', openSidebar);
+        document.getElementById('focus-menu-exit')?.addEventListener('click', toggleFocusMode);
+        document.getElementById('focus-nav-modules')?.addEventListener('click', openSidebar);
+        document.getElementById('focus-nav-exit')?.addEventListener('click', toggleFocusMode);
+        document.getElementById('close-congrats')?.addEventListener('click', () => { document.getElementById('congratulations-modal').classList.remove('show'); document.getElementById('modal-overlay').classList.remove('show'); });
+        closeAchButton?.addEventListener('click', hideAchievementModal);
+        achievementOverlay?.addEventListener('click', hideAchievementModal);
+    }
 
     init();
 });
