@@ -1,4 +1,4 @@
-/* === ARQUIVO app_final.js (VERSÃO CORRIGIDA V8 - COM RPG, SURVIVAL E CARTEIRINHA) === */
+/* === ARQUIVO app_final.js (VERSÃO FINAL V9 - COMPLETA COM FOTO NA CARTEIRINHA) === */
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -622,19 +622,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 contentArea.innerHTML = d.content;
                 renderDigitalID();
             }
-// === NOVA FUNÇÃO: GERENCIAR UPLOAD DE FOTO ===
-    window.updateProfilePic = function(input) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                // Atualiza a imagem na tela
-                document.getElementById('id-card-photo').src = e.target.result;
-                // Salva no navegador do aluno (localStorage)
-                localStorage.setItem('user_profile_pic', e.target.result);
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-    };
+
             // 6. MODO AULA NORMAL (TEXTO + AUDIO)
             else {
                 let html = `
@@ -841,7 +829,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // === LÓGICA: CARTEIRINHA DIGITAL ===
     // === LÓGICA ATUALIZADA: CARTEIRINHA DIGITAL COM FOTO ===
     function renderDigitalID() {
         if (!currentUserData) return;
@@ -851,7 +838,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Lógica da Foto: Tenta pegar do LocalStorage, senão usa um avatar padrão
         const savedPhoto = localStorage.getItem('user_profile_pic');
-        const defaultPhoto = "https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png"; // Pode trocar por uma silhueta de usuário se preferir
+        const defaultPhoto = "https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png"; 
         const currentPhoto = savedPhoto || defaultPhoto;
 
         // Formatação de datas
@@ -932,6 +919,18 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
     }
+
+    // === FUNÇÃO GLOBAL PARA UPLOAD DE FOTO ===
+    window.updateProfilePic = function(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('id-card-photo').src = e.target.result;
+                localStorage.setItem('user_profile_pic', e.target.result);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    };
 
     // === FUNÇÕES PADRÃO DO APP ===
     async function startSimuladoMode(moduleData) {
