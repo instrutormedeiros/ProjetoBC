@@ -286,6 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isPremium = u.status === 'premium';
                 const validade = u.acesso_ate ? new Date(u.acesso_ate).toLocaleDateString('pt-BR') : '-';
                 const cpf = u.cpf || 'Sem CPF';
+                const planoTipo = u.planType || (isPremium ? 'Indefinido' : 'Trial');
                 const deviceInfo = u.last_device || 'Desconhecido';
                 const noteIconColor = u.adminNote ? 'text-yellow-500' : 'text-gray-400';
                 
@@ -298,10 +299,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span class="px-2 py-1 rounded text-xs font-bold uppercase ${isPremium ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
                                 ${u.status || 'trial'}
                             </span>
+                            <span class="text-xs text-gray-500 mt-1">${planoTipo}</span>
                         </td>
                         <td class="p-3 text-sm font-medium">${validade}</td>
                         <td class="p-3 flex flex-wrap gap-2">
-                            <button onclick="editUserData('${uid}', '${u.name}', '${cpf}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Editar"><i class="fas fa-pen"></i></button>
+                            <button onclick="editUserData('${uid}', '${u.name}', '${cpf}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Editar Dados"><i class="fas fa-pen"></i></button>
                             <button onclick="editUserNote('${uid}', '${(u.adminNote || '').replace(/'/g, "\\'")}')" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 px-2 py-1.5 rounded text-xs shadow" title="Notas"><i class="fas fa-sticky-note ${noteIconColor}"></i></button>
                             <button onclick="manageUserAccess('${uid}', '${u.acesso_ate}')" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Renovar"><i class="fas fa-calendar-alt"></i></button>
                             <button onclick="deleteUser('${uid}', '${u.name}', '${cpf}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Excluir"><i class="fas fa-trash"></i></button>
@@ -316,129 +318,219 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     window.manageUserAccess = async function(uid, currentExpiryStr) {
-        const diasToAdd = parseInt(prompt("Dias para adicionar ao acesso (ex: 30 para mensal, 365 para anual):", "30"));
-        if(!diasToAdd) return;
+        const opcao = prompt("Gerenciar Plano e Validade:\n\n1 - MENSAL (+30 dias)\n2 - SEMESTRAL (+180 dias)\n3 - ANUAL (+365 dias)\n4 - PERMANENTE (10 anos)\n5 - PERSONALIZADO (Adicionar/Remover dias)\n\nDigite o número da opção:");
+        if (!opcao) return;
+        let diasToAdd = 0;
+        let novoPlano = '';
+        if (opcao === '1') { diasToAdd = 30; novoPlano = 'Mensal'; }
+        else if (opcao === '2') { diasToAdd = 180; novoPlano = 'Semestral'; }
+        else if (opcao === '3') { diasToAdd = 365; novoPlano = 'Anual'; }
+        else if (opcao === '4') { diasToAdd = 3650; novoPlano = 'Vitalício'; }
+        else if (opcao === '5') {
+            const diasInput = prompt("Digite a quantidade de dias para adicionar (ex: 15) ou remover (ex: -5):");
+            if(!diasInput) return;
+            diasToAdd = parseInt(diasInput);
+            novoPlano = 'Personalizado';
+        }
+        else { alert("Opção inválida"); return; }
+
         const hoje = new Date();
         let baseDate = new Date(currentExpiryStr);
         if (isNaN(baseDate.getTime()) || baseDate < hoje) baseDate = hoje;
         baseDate.setDate(baseDate.getDate() + diasToAdd);
+        const newExpiryISO = baseDate.toISOString();
+
         try {
-            await window.__fbDB.collection('users').doc(uid).update({ status: 'premium', acesso_ate: baseDate.toISOString() });
-            alert("Acesso atualizado com sucesso!"); openAdminPanel();
-        } catch (err) { alert(err.message); }
+            await window.__fbDB.collection('users').doc(uid).update({ status: 'premium', acesso_ate: newExpiryISO, planType: novoPlano });
+            alert("Acesso atualizado com sucesso!");
+            openAdminPanel();
+        } catch (err) { alert("Erro ao atualizar: " + err.message); }
     };
 
     window.editUserData = async function(uid, oldName, oldCpf) {
-        const newName = prompt("Novo nome:", oldName); if(newName===null)return;
-        const newCpfRaw = prompt("Novo CPF:", oldCpf); if(newCpfRaw===null)return;
-        const newCpf = newCpfRaw.replace(/\D/g, '');
-        try { 
-            await window.__fbDB.collection('users').doc(uid).update({name: newName, cpf: newCpf}); 
-            alert("Dados salvos!"); openAdminPanel(); 
-        } catch(e){alert(e.message);}
+        const newName = prompt("Novo nome do aluno:", oldName);
+        if (newName === null) return;
+        const newCpfRaw = prompt("Novo CPF (apenas números):", oldCpf === 'Sem CPF' ? '' : oldCpf);
+        if (newCpfRaw === null) return;
+        const newCpf = newCpfRaw.replace(/\D/g, ''); 
+        if (!newName || !newCpf) { alert("Nome e CPF são obrigatórios."); return; }
+        try {
+            const batch = window.__fbDB.batch();
+            const userRef = window.__fbDB.collection('users').doc(uid);
+            batch.update(userRef, { name: newName, cpf: newCpf });
+            if (oldCpf !== 'Sem CPF' && oldCpf !== newCpf) {
+                batch.delete(window.__fbDB.collection('cpfs').doc(oldCpf));
+                batch.set(window.__fbDB.collection('cpfs').doc(newCpf), { uid: uid });
+            } else if (oldCpf === 'Sem CPF') {
+                batch.set(window.__fbDB.collection('cpfs').doc(newCpf), { uid: uid });
+            }
+            await batch.commit();
+            alert("Dados atualizados!");
+            openAdminPanel();
+        } catch (err) { alert("Erro: " + err.message); }
     };
     
     window.editUserNote = async function(uid, currentNote) {
-        const newNote = prompt("Observações do aluno:", currentNote);
-        if (newNote === null) return;
-        try { await window.__fbDB.collection('users').doc(uid).update({ adminNote: newNote }); alert("Nota salva."); openAdminPanel(); } catch(e){ alert(e.message); }
+        const newNote = prompt("Observações sobre este aluno:", currentNote);
+        if (newNote === null) return; 
+        try {
+            await window.__fbDB.collection('users').doc(uid).update({ adminNote: newNote });
+            alert("Observação salva.");
+            openAdminPanel();
+        } catch (err) { alert("Erro: " + err.message); }
     };
 
     window.deleteUser = async function(uid, name, cpf) {
         if(confirm(`TEM CERTEZA que deseja excluir o aluno ${name}?`)) {
-            try { 
-                await window.__fbDB.collection('users').doc(uid).delete(); 
-                if (cpf && cpf !== 'Sem CPF') await window.__fbDB.collection('cpfs').doc(cpf).delete();
-                alert("Usuário excluído."); openAdminPanel(); 
-            } catch(e) { alert(e.message); }
+            const userConfirm = prompt("Para confirmar, digite DELETAR:");
+            if (userConfirm !== "DELETAR") return;
+            try {
+                const batch = window.__fbDB.batch();
+                batch.delete(window.__fbDB.collection('users').doc(uid));
+                if (cpf && cpf !== 'Sem CPF' && cpf !== 'undefined') batch.delete(window.__fbDB.collection('cpfs').doc(cpf));
+                await batch.commit();
+                alert("Usuário excluído.");
+                openAdminPanel();
+            } catch (err) { alert("Erro ao excluir: " + err.message); }
         }
     };
 
     window.sendResetEmail = async function(email) {
         if(confirm(`Enviar e-mail de redefinição de senha para ${email}?`)) {
-            try { await window.__fbAuth.sendPasswordResetEmail(email); alert('E-mail enviado!'); } catch(err) { alert(err.message); }
+            try {
+                await window.__fbAuth.sendPasswordResetEmail(email);
+                alert('E-mail enviado!');
+            } catch(err) { alert('Erro: ' + err.message); }
         }
     };
 
     function checkTrialStatus(expiryDateString) {
         const expiryDate = new Date(expiryDateString);
         const today = new Date();
-        const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24)); 
+        const diffTime = expiryDate - today; 
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
         const trialToast = document.getElementById('trial-floating-notify');
+        const daysLeftSpan = document.getElementById('trial-days-left');
+        const trialBtn = document.getElementById('trial-subscribe-btn');
+        const closeTrialBtn = document.getElementById('close-trial-notify');
+        const trialTitle = document.getElementById('trial-title-text');
+
         if (trialToast && diffDays <= 30 && diffDays >= 0) {
             trialToast.classList.remove('hidden');
-            document.getElementById('trial-days-left').textContent = diffDays;
-            document.getElementById('close-trial-notify').addEventListener('click', () => trialToast.classList.add('hidden'));
-            document.getElementById('trial-subscribe-btn').addEventListener('click', () => {
+            if(daysLeftSpan) daysLeftSpan.textContent = diffDays;
+            if(trialTitle) trialTitle.textContent = "Período de Experiência";
+            trialBtn?.addEventListener('click', () => {
                 document.getElementById('expired-modal').classList.add('show');
                 document.getElementById('name-modal-overlay').classList.add('show');
             });
+            closeTrialBtn?.addEventListener('click', () => { trialToast.classList.add('hidden'); });
         }
     }
 
     function setupAuthEventListeners() {
+        const nameField = document.getElementById('name-field-container');
+        const cpfField = document.getElementById('cpf-field-container'); 
+        const nameInput = document.getElementById('name-input');
+        const cpfInput = document.getElementById('cpf-input'); 
+        const emailInput = document.getElementById('email-input');
+        const passwordInput = document.getElementById('password-input');
+        const feedback = document.getElementById('auth-feedback');
+        const loginGroup = document.getElementById('login-button-group');
+        const signupGroup = document.getElementById('signup-button-group');
+        const authTitle = document.getElementById('auth-title');
+        const authMsg = document.getElementById('auth-message');
+        const btnShowLogin = document.getElementById('show-login-button');
+        const btnShowSignup = document.getElementById('show-signup-button');
         const btnLogin = document.getElementById('login-button');
         const btnSignup = document.getElementById('signup-button');
-        
-        if(btnLogin) btnLogin.addEventListener('click', async () => {
-            const email = document.getElementById('email-input').value;
-            const pass = document.getElementById('password-input').value;
-            const feedback = document.getElementById('auth-feedback');
-            if(!email || !pass) { feedback.textContent = "Preencha todos os campos."; return; }
+        const btnOpenPayHeader = document.getElementById('header-subscribe-btn');
+        const btnOpenPayMobile = document.getElementById('mobile-subscribe-btn');
+        const btnOpenPayLogin = document.getElementById('open-payment-login-btn');
+        const expiredModal = document.getElementById('expired-modal');
+        const closePayModal = document.getElementById('close-payment-modal-btn');
+        const loginModalOverlay = document.getElementById('name-modal-overlay');
+        const loginModal = document.getElementById('name-prompt-modal');
+
+        function openPaymentModal() {
+            expiredModal.classList.add('show');
+            if (loginModalOverlay) loginModalOverlay.classList.add('show');
+            if (loginModal && loginModal.classList.contains('show')) {
+                loginModal.classList.remove('show');
+                loginModal.dataset.wasOpen = 'true'; 
+            }
+        }
+        btnOpenPayHeader?.addEventListener('click', openPaymentModal);
+        btnOpenPayMobile?.addEventListener('click', openPaymentModal);
+        btnOpenPayLogin?.addEventListener('click', openPaymentModal);
+        closePayModal?.addEventListener('click', () => {
+            expiredModal.classList.remove('show');
+            if (loginModal && loginModal.dataset.wasOpen === 'true') {
+                loginModal.classList.add('show');
+                loginModal.dataset.wasOpen = 'false';
+            } else {
+                if (document.body.getAttribute('data-app-ready') === 'true') {
+                     loginModalOverlay?.classList.remove('show');
+                } else {
+                    loginModal?.classList.add('show');
+                }
+            }
+        });
+        btnShowSignup?.addEventListener('click', () => {
+            loginGroup.classList.add('hidden');
+            signupGroup.classList.remove('hidden');
+            nameField.classList.remove('hidden');
+            cpfField.classList.remove('hidden'); 
+            authTitle.textContent = "Criar Nova Conta";
+            authMsg.textContent = "Cadastre-se para o Período de Experiência.";
+            feedback.textContent = "";
+        });
+        btnShowLogin?.addEventListener('click', () => {
+            loginGroup.classList.remove('hidden');
+            signupGroup.classList.add('hidden');
+            nameField.classList.add('hidden');
+            cpfField.classList.add('hidden'); 
+            authTitle.textContent = "Área do Aluno";
+            authMsg.textContent = "Acesso Restrito";
+            feedback.textContent = "";
+        });
+        btnLogin?.addEventListener('click', async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            if (!email || !password) {
+                feedback.textContent = "Preencha e-mail e senha.";
+                feedback.className = "text-center text-sm mt-4 font-semibold text-red-500";
+                return;
+            }
             feedback.textContent = "Entrando...";
             feedback.className = "text-center text-sm mt-4 text-blue-400 font-semibold";
             try {
                 localStorage.removeItem('my_session_id'); 
-                await FirebaseCourse.signInWithEmail(email, pass);
-            } catch (e) { 
-                feedback.textContent = "Erro no login. Verifique dados."; 
+                await FirebaseCourse.signInWithEmail(email, password);
+                feedback.textContent = "Verificando...";
+            } catch (error) {
                 feedback.className = "text-center text-sm mt-4 text-red-400 font-semibold";
+                feedback.textContent = "Erro ao entrar. Verifique seus dados.";
             }
         });
-        
-        if(btnSignup) btnSignup.addEventListener('click', async () => {
-            const name = document.getElementById('name-input').value;
-            const email = document.getElementById('email-input').value;
-            const pass = document.getElementById('password-input').value;
-            const cpf = document.getElementById('cpf-input').value;
-            const feedback = document.getElementById('auth-feedback');
-            if(!name || !email || !pass || !cpf) { feedback.textContent = "Todos os campos são obrigatórios."; return; }
+        btnSignup?.addEventListener('click', async () => {
+            const name = nameInput.value;
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            const cpf = cpfInput.value;
+            if (!name || !email || !password || !cpf) {
+                feedback.textContent = "Todos os campos são obrigatórios.";
+                feedback.className = "text-center text-sm mt-4 font-semibold text-red-500";
+                return;
+            }
             feedback.textContent = "Criando conta...";
+            feedback.className = "text-center text-sm mt-4 text-blue-400 font-semibold";
             try {
-                await FirebaseCourse.signUpWithEmail(name, email, pass, cpf);
-                feedback.textContent = "Sucesso! Redirecionando...";
-            } catch (e) { 
-                feedback.textContent = e.message; 
+                await FirebaseCourse.signUpWithEmail(name, email, password, cpf);
+                feedback.textContent = "Sucesso! Iniciando...";
+            } catch (error) {
                 feedback.className = "text-center text-sm mt-4 text-red-400 font-semibold";
+                feedback.textContent = error.message || "Erro ao criar conta.";
             }
-        });
-
-        // Alternar telas de login/cadastro
-        document.getElementById('show-signup-button')?.addEventListener('click', () => {
-            document.getElementById('login-button-group').classList.add('hidden');
-            document.getElementById('signup-button-group').classList.remove('hidden');
-            document.getElementById('name-field-container').classList.remove('hidden');
-            document.getElementById('cpf-field-container').classList.remove('hidden');
-            document.getElementById('auth-title').textContent = "Criar Nova Conta";
-        });
-        document.getElementById('show-login-button')?.addEventListener('click', () => {
-            document.getElementById('login-button-group').classList.remove('hidden');
-            document.getElementById('signup-button-group').classList.add('hidden');
-            document.getElementById('name-field-container').classList.add('hidden');
-            document.getElementById('cpf-field-container').classList.add('hidden');
-            document.getElementById('auth-title').textContent = "Área do Aluno";
-        });
-        
-        // Modais de Pagamento
-        const openPay = () => { document.getElementById('expired-modal').classList.add('show'); document.getElementById('name-modal-overlay').classList.add('show'); };
-        document.getElementById('header-subscribe-btn')?.addEventListener('click', openPay);
-        document.getElementById('mobile-subscribe-btn')?.addEventListener('click', openPay);
-        document.getElementById('open-payment-login-btn')?.addEventListener('click', openPay);
-        document.getElementById('close-payment-modal-btn')?.addEventListener('click', () => {
-             document.getElementById('expired-modal').classList.remove('show');
-             // Se não estiver logado, mantém overlay para login
-             if(document.getElementById('name-prompt-modal').classList.contains('show')) return;
-             document.getElementById('name-modal-overlay').classList.remove('show');
         });
     }
 
@@ -493,6 +585,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (d.isSimulado) {
                 contentArea.innerHTML = `
                     <div class="relative pt-4 pb-12">
+                         <!-- Timer Sticky corrigido -->
                         <div id="simulado-timer-bar" class="simulado-header-sticky shadow-lg">
                             <span class="simulado-timer flex items-center"><i class="fas fa-clock mr-2 text-lg"></i><span id="timer-display">00:00</span></span>
                             <span class="simulado-progress text-sm bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">Questão <span id="q-current">1</span></span>
@@ -538,29 +631,53 @@ document.addEventListener('DOMContentLoaded', () => {
             else {
                 let html = `
                     <h3 class="flex items-center text-3xl mb-6 pb-4 border-b"><i class="${d.iconClass} mr-4 ${getCategoryColor(id)} fa-fw"></i>${d.title}</h3>
-                    <div id="audio-btn" class="audio-controls mb-6" onclick="window.speakContent()"><i id="audio-btn-icon" class="fas fa-headphones text-lg mr-2"></i><span id="audio-btn-text">Ouvir Aula</span></div>
+                    
+                    <div id="audio-btn" class="audio-controls mb-6" onclick="window.speakContent()">
+                        <i id="audio-btn-icon" class="fas fa-headphones text-lg mr-2"></i>
+                        <span id="audio-btn-text">Ouvir Aula</span>
+                    </div>
+
                     <div>${d.content}</div>
                 `;
+
+                const isSpecialModule = ['module53', 'module54', 'module55', 'module56', 'module57', 'module58', 'module59', 'module60', 'module61', 'module62'].includes(id);
+
                 if (d.driveLink) {
-                    if (userIsNotPremium) html += `<div class="mt-10 mb-8"><button onclick="document.getElementById('expired-modal').classList.add('show'); document.getElementById('name-modal-overlay').classList.add('show');" class="drive-button opacity-75 hover:opacity-100"><div class="absolute inset-0 bg-black/30 flex items-center justify-center z-10"><i class="fas fa-lock text-2xl mr-2"></i></div><span><i class="fab fa-google-drive mr-3"></i> VER FOTOS (PREMIUM)</span></button></div>`;
-                    else html += `<div class="mt-10 mb-8"><a href="${d.driveLink}" target="_blank" class="drive-button"><i class="fab fa-google-drive"></i>VER FOTOS E VÍDEOS</a></div>`;
+                    if (userIsNotPremium) {
+                        html += `<div class="mt-10 mb-8"><button onclick="document.getElementById('expired-modal').classList.add('show'); document.getElementById('name-modal-overlay').classList.add('show');" class="drive-button opacity-75 hover:opacity-100 relative overflow-hidden"><div class="absolute inset-0 bg-black/30 flex items-center justify-center z-10"><i class="fas fa-lock text-2xl mr-2"></i></div><span class="blur-[2px] flex items-center"><i class="fab fa-google-drive mr-3"></i> VER FOTOS E VÍDEOS (PREMIUM)</span></button><p class="text-xs text-center mt-2 text-gray-500"><i class="fas fa-lock text-yellow-500"></i> Recurso exclusivo para assinantes</p></div>`;
+                    } else {
+                        html += `<div class="mt-10 mb-8"><a href="${d.driveLink}" target="_blank" class="drive-button"><i class="fab fa-google-drive"></i>VER FOTOS E VÍDEOS DESTA MATÉRIA</a></div>`;
+                    }
                 }
+
+                const savedNote = localStorage.getItem('note-' + id) || '';
+
                 let allQuestions = null;
-                try { allQuestions = await loadQuestionBank(id); } catch(e){}
+                try { allQuestions = await loadQuestionBank(id); } catch(error) { console.error(error); }
+
                 if (allQuestions && allQuestions.length > 0) {
-                    const selected = shuffleArray([...allQuestions]).slice(0, 4);
-                    html += `<div class="quiz-section-separator"></div><h3 class="text-xl font-semibold mb-4">Exercícios de Fixação</h3>`;
-                    selected.forEach((q, i) => {
-                        html += `<div class="quiz-block" data-question-id="${q.id}"><p class="font-semibold mt-4 mb-2">${i+1}. ${q.question}</p><div class="quiz-options-group space-y-2 mb-4">`;
-                        for (const k in q.options) {
-                            html += `<div class="quiz-option" data-module="${id}" data-question-id="${q.id}" data-answer="${k}"><span class="option-key">${k.toUpperCase()})</span> ${q.options[k]}<span class="ripple"></span></div>`;
+                    const count = Math.min(allQuestions.length, 4); 
+                    const shuffledQuestions = shuffleArray([...allQuestions]); 
+                    const selectedQuestions = shuffledQuestions.slice(0, count);
+                    
+                    let quizHtml = `<div class="quiz-section-separator"></div><h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Exercícios de Fixação</h3>`;
+                    selectedQuestions.forEach((q, index) => {
+                        const questionNumber = index + 1;
+                        quizHtml += `<div class="quiz-block" data-question-id="${q.id}"><p class="font-semibold mt-4 mb-2 text-gray-700 dark:text-gray-200">${questionNumber}. ${q.question}</p><div class="quiz-options-group space-y-2 mb-4">`;
+                        for (const key in q.options) {
+                            quizHtml += `<div class="quiz-option" data-module="${id}" data-question-id="${q.id}" data-answer="${key}"><span class="option-key">${key.toUpperCase()})</span> ${q.options[key]}<span class="ripple"></span></div>`;
                         }
-                        html += `</div><div id="feedback-${q.id}" class="feedback-area hidden"></div></div>`;
+                        quizHtml += `</div><div id="feedback-${q.id}" class="feedback-area hidden"></div></div>`;
                     });
+                    html += quizHtml;
+                } else {
+                    if (!d.id.startsWith('module9') && !isSpecialModule) {
+                        html += `<div class="warning-box mt-8"><p><strong><i class="fas fa-exclamation-triangle mr-2"></i> Exercícios não encontrados.</strong></p></div>`;
+                    }
                 }
-                html += `<div class="mt-8 pt-6 border-t text-right"><button class="action-button conclude-button" data-module="${id}">Concluir Módulo</button></div>
-                         <div class="mt-10 pt-6 border-t-2 border-dashed"><h4 class="text-xl font-bold mb-3"><i class="fas fa-pencil-alt mr-2"></i>Anotações</h4><textarea id="notes-module-${id}" class="notes-textarea">${localStorage.getItem('note-' + id) || ''}</textarea></div>`;
-                
+
+                html += `<div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 text-right"><button class="action-button conclude-button" data-module="${id}">Concluir Módulo</button></div><div class="mt-10 pt-6 border-t-2 border-dashed border-gray-200 dark:border-gray-700"><h4 class="text-xl font-bold mb-3 text-secondary dark:text-gray-200"><i class="fas fa-pencil-alt mr-2"></i>Anotações Pessoais</h4><p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Suas notas para este módulo. Elas são salvas automaticamente no seu navegador.</p><textarea id="notes-module-${id}" class="notes-textarea" placeholder="Digite suas anotações aqui...">${savedNote}</textarea></div>`;
+
                 contentArea.innerHTML = html;
                 setupQuizListeners();
                 setupConcludeButtonListener();
@@ -568,12 +685,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             contentArea.style.opacity = '1';
+            contentArea.style.transition = 'opacity 0.3s ease';
             window.scrollTo({ top: 0, behavior: 'smooth' });
             updateActiveModuleInList();
             updateNavigationButtons();
             updateBreadcrumbs(d.title);
             document.getElementById('module-nav').classList.remove('hidden');
             closeSidebar();
+            document.getElementById('next-module')?.classList.remove('blinking-button');
         }, 300);
     }
 
@@ -611,7 +730,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="relative pt-4 pb-12">
                 <div id="simulado-timer-bar" class="simulado-header-sticky shadow-lg">
                     <span class="simulado-timer flex items-center"><i class="fas fa-clock mr-2 text-lg"></i><span id="timer-display">00:00</span></span>
-                    <span class="simulado-progress text-sm bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">Questão <span id="q-current">1</span></span>
+                    <span class="simulado-progress text-sm bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">Questão <span id="q-current">1</span> / ${activeSimuladoQuestions.length}</span>
                 </div>
                 <div class="mt-10 mb-6 px-2 text-center"><h3 class="text-xl md:text-2xl font-bold text-gray-800 dark:text-white border-b pb-2 inline-block">${moduleData.title}</h3></div>
                 <div id="question-display-area" class="simulado-question-container"></div>
@@ -668,7 +787,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    window.registerSimuladoAnswer = function(qId, answer) { userAnswers[qId] = answer; };
+    window.registerSimuladoAnswer = function(qId, answer) {
+        userAnswers[qId] = answer;
+    };
 
     function startTimer(moduleId) {
         const display = document.getElementById('timer-display');
@@ -706,27 +827,51 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="p-4 rounded border-l-4 ${statusClass} mb-4">
                     <p class="font-bold text-gray-800 dark:text-gray-200 text-sm mb-3">${i+1}. ${q.question}</p>
                     <div class="grid grid-cols-1 gap-3 text-xs mb-3">
-                        <div class="p-2 rounded ${isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                            <span class="font-bold">Sua Resposta:</span> ${selected ? selected.toUpperCase() + ') ' + selectedAnswerText : 'Em branco'}
+                        <div class="p-2 rounded ${isCorrect ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}">
+                            <span class="font-bold block mb-1">Sua Resposta:</span> 
+                            ${selected ? selected.toUpperCase() + ') ' + selectedAnswerText : 'Em branco'}
                         </div>
-                        ${!isCorrect ? `<div class="p-2 rounded bg-green-50 text-green-800 border border-green-200"><span class="font-bold">Resposta Correta:</span> ${q.answer.toUpperCase()}) ${correctAnswerText}</div>` : ''}
+                        ${!isCorrect ? `
+                        <div class="p-2 rounded bg-green-50 text-green-800 dark:bg-green-900/50 dark:text-green-300 border border-green-200 dark:border-green-800">
+                            <span class="font-bold block mb-1">Resposta Correta:</span> 
+                            ${q.answer.toUpperCase()}) ${correctAnswerText}
+                        </div>
+                        ` : ''}
                     </div>
-                    <div class="bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 text-xs text-gray-600 dark:text-gray-400">
+                    <div class="bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400">
                         <strong><i class="fas fa-info-circle mr-1 text-blue-500"></i> Explicação:</strong><br> ${explanation}
                     </div>
                 </div>
             `;
         });
         feedbackHtml += '</div>';
+
         const score = (correctCount / total) * 10;
-        contentArea.innerHTML = `<div class="simulado-result-card mb-8 animate-slide-in"><h2 class="text-2xl font-bold mb-4">Resultado Final</h2><div class="simulado-score-circle">${score.toFixed(1)}</div><p>Acertou <strong>${correctCount}</strong> de <strong>${total}</strong>.</p></div><h4 class="text-xl font-bold mb-4 border-b pb-2">Gabarito & Explicações</h4>${feedbackHtml}<div class="text-center mt-8"><button onclick="location.reload()" class="action-button">Voltar ao Início</button></div>`;
+        const finalHtml = `
+            <div class="simulado-result-card mb-8 animate-slide-in">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Resultado Final</h2>
+                <div class="simulado-score-circle">${score.toFixed(1)}</div>
+                <p class="text-lg text-gray-600 dark:text-gray-300">Acertou <strong>${correctCount}</strong> de <strong>${total}</strong> questões.</p>
+            </div>
+            <h4 class="text-xl font-bold mb-4 text-gray-800 dark:text-white border-b pb-2">Gabarito & Explicações</h4>
+            ${feedbackHtml}
+            <div class="text-center mt-8"><button onclick="location.reload()" class="action-button">Voltar ao Início</button></div>
+        `;
+        
+        contentArea.innerHTML = finalHtml;
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        if (!completedModules.includes(moduleId)) { completedModules.push(moduleId); localStorage.setItem('gateBombeiroCompletedModules_v3', JSON.stringify(completedModules)); updateProgress(); }
+
+        if (!completedModules.includes(moduleId)) {
+            completedModules.push(moduleId);
+            localStorage.setItem('gateBombeiroCompletedModules_v3', JSON.stringify(completedModules));
+            updateProgress();
+        }
     }
 
     // --- QUIZ IMEDIATO (FEEDBACK AO VIVO) ---
     function handleQuizOptionClick(e) {
-        const o = e.currentTarget; if (o.disabled) return;
+        const o = e.currentTarget;
+        if (o.disabled) return;
         const moduleId = o.dataset.module;
         const questionId = o.dataset.questionId;
         const selectedAnswer = o.dataset.answer;
@@ -746,11 +891,26 @@ document.addEventListener('DOMContentLoaded', () => {
         let feedbackContent = '';
         if (selectedAnswer === correctAnswer) {
             o.classList.add('correct');
-            feedbackContent = `<div class="p-3 bg-green-50 border-l-4 border-green-500 rounded"><strong class="block text-green-700 mb-1"><i class="fas fa-check-circle mr-2"></i> Correto!</strong><div class="text-sm text-gray-600">${explanationText}</div></div>`;
+            feedbackContent = `
+                <div class="p-3 bg-green-50 dark:bg-green-900/30 border-l-4 border-green-500 rounded">
+                    <strong class="block text-green-700 dark:text-green-400 mb-1"><i class="fas fa-check-circle mr-2"></i> Correto!</strong> 
+                    <div class="text-sm text-gray-600 dark:text-gray-300">${explanationText}</div>
+                </div>
+            `;
             try { triggerSuccessParticles(e, o); } catch (err) {}
         } else {
             o.classList.add('incorrect');
-            feedbackContent = `<div class="p-3 bg-red-50 border-l-4 border-red-500 rounded"><div class="mb-2"><strong class="text-red-700"><i class="fas fa-times-circle mr-2"></i> Incorreto.</strong></div><div class="mb-2 text-sm text-gray-700">A resposta correta é: <span class="font-bold text-green-600 block mt-1 p-1 bg-white rounded border border-gray-200">${correctAnswer.toUpperCase()}) ${correctAnswerText}</span></div><div class="text-sm text-gray-600 border-t border-gray-200 pt-2 mt-2"><strong>Explicação:</strong> ${explanationText}</div></div>`;
+            feedbackContent = `
+                <div class="p-3 bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 rounded">
+                    <div class="mb-2"><strong class="text-red-700 dark:text-red-400"><i class="fas fa-times-circle mr-2"></i> Incorreto.</strong></div>
+                    <div class="mb-2 text-sm text-gray-700 dark:text-gray-200">
+                        A resposta correta é: <span class="font-bold text-green-600 dark:text-green-400 block mt-1 p-1 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">${correctAnswer.toUpperCase()}) ${correctAnswerText}</span>
+                    </div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
+                        <strong>Explicação:</strong> ${explanationText}
+                    </div>
+                </div>
+            `;
         }
         
         if (feedbackArea) {
