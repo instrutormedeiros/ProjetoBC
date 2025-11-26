@@ -1,4 +1,4 @@
-/* === ARQUIVO app_final.js (VERSÃO FINAL V9 - COMPLETA COM FOTO NA CARTEIRINHA) === */
+/* === ARQUIVO app_final.js (VERSÃO V10 - CARTEIRINHA BOMBEIRO CIVIL COMPLETA) === */
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -829,98 +829,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // === LÓGICA ATUALIZADA: CARTEIRINHA DIGITAL COM FOTO ===
-    function renderDigitalID() {
-        if (!currentUserData) return;
-        
-        const container = document.getElementById('id-card-container');
-        if (!container) return;
-
-        // Lógica da Foto: Tenta pegar do LocalStorage, senão usa um avatar padrão
-        const savedPhoto = localStorage.getItem('user_profile_pic');
-        const defaultPhoto = "https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png"; 
-        const currentPhoto = savedPhoto || defaultPhoto;
-
-        // Formatação de datas
-        const validUntil = new Date(currentUserData.acesso_ate).toLocaleDateString('pt-BR');
-        const statusColor = currentUserData.status === 'premium' ? 'text-yellow-400' : 'text-gray-400';
-        
-        container.innerHTML = `
-            <div class="relative w-full max-w-md bg-gradient-card rounded-xl overflow-hidden shadow-2xl text-white font-sans transform transition hover:scale-[1.01] duration-300">
-                <div class="card-shine"></div>
-                
-                <div class="bg-red-700 p-4 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="bg-white p-1 rounded-full">
-                            <img src="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png" class="w-10 h-10 object-cover">
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-sm uppercase tracking-wider">Bombeiro Civil</h3>
-                            <p class="text-[10px] text-red-200">Identificação de Aluno</p>
-                        </div>
-                    </div>
-                    <i class="fas fa-wifi text-white/50 rotate-90"></i>
-                </div>
-
-                <div class="p-6 relative z-10">
-                    
-                    <div class="flex justify-between items-start mb-6">
-                        <div class="flex items-center gap-4">
-                            
-                            <div class="relative group cursor-pointer" onclick="document.getElementById('profile-pic-input').click()" title="Clique para alterar a foto">
-                                <div class="w-20 h-20 rounded-lg border-2 border-white/30 overflow-hidden bg-gray-800">
-                                    <img id="id-card-photo" src="${currentPhoto}" class="w-full h-full object-cover">
-                                </div>
-                                <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <i class="fas fa-camera text-white"></i>
-                                </div>
-                                <input type="file" id="profile-pic-input" class="hidden" accept="image/*" onchange="window.updateProfilePic(this)">
-                            </div>
-
-                            <div>
-                                <p class="text-xs text-gray-400 uppercase mb-1">Nome do Aluno</p>
-                                <h2 class="text-lg font-bold text-white tracking-wide leading-tight max-w-[150px] break-words">${currentUserData.name}</h2>
-                            </div>
-                        </div>
-
-                        <div class="bg-white p-1 rounded">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${currentUserData.email}" class="w-14 h-14">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <p class="text-[10px] text-gray-400 uppercase">CPF</p>
-                            <p class="font-mono text-sm">${currentUserData.cpf || '000.000.000-00'}</p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] text-gray-400 uppercase">Matrícula</p>
-                            <p class="font-mono text-sm">BC-${Math.floor(Math.random()*10000)}</p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] text-gray-400 uppercase">Válido Até</p>
-                            <p class="font-bold text-green-400 text-sm">${validUntil}</p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] text-gray-400 uppercase">Status</p>
-                            <p class="font-bold text-sm uppercase flex items-center gap-1 ${statusColor}">
-                                <i class="fas fa-star text-xs"></i> ${currentUserData.status || 'Trial'}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-black/30 p-3 text-center border-t border-white/10">
-                    <p class="text-[9px] text-gray-500">Uso pessoal e intransferível. Toque na foto para alterar.</p>
-                </div>
-            </div>
-            <div class="text-center mt-6">
-                <button onclick="window.print()" class="text-sm text-blue-500 hover:underline"><i class="fas fa-print"></i> Imprimir Carteirinha</button>
-            </div>
-        `;
-    }
-
-    // === FUNÇÃO GLOBAL PARA UPLOAD DE FOTO ===
+    // === LÓGICA ATUALIZADA V10: CARTEIRINHA DIGITAL COM DADOS E VERSO ===
     window.updateProfilePic = function(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
@@ -931,6 +840,148 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.readAsDataURL(input.files[0]);
         }
     };
+
+    window.saveExtraData = function(field, value) {
+        if(!value) return;
+        localStorage.setItem('user_' + field, value);
+    };
+
+    function renderDigitalID() {
+        if (!currentUserData) return;
+        
+        const container = document.getElementById('id-card-container');
+        if (!container) return;
+
+        // 1. Foto
+        const savedPhoto = localStorage.getItem('user_profile_pic');
+        const defaultPhoto = "https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png"; 
+        const currentPhoto = savedPhoto || defaultPhoto;
+
+        // 2. Dados Persistidos
+        const savedRG = localStorage.getItem('user_rg') || '';
+        const savedDataNasc = localStorage.getItem('user_nasc') || '';
+
+        // 3. Matrícula Automática (Baseada no UID ou Data de Criação)
+        // Se não tiver createdAt, usa o UID
+        let matricula = 'BC-';
+        if (currentUserData.createdAt && currentUserData.createdAt.seconds) {
+            // Usa os últimos 6 dígitos do timestamp de criação para ser único e fixo
+            matricula += currentUserData.createdAt.seconds.toString().slice(-6);
+        } else {
+            // Fallback: cria um hash simples do UID
+            matricula += currentUserData.uid.substring(0, 6).toUpperCase();
+        }
+
+        // 4. Validade
+        const validUntil = new Date(currentUserData.acesso_ate).toLocaleDateString('pt-BR');
+        const statusColor = currentUserData.status === 'premium' ? 'text-yellow-400' : 'text-gray-400';
+        
+        container.innerHTML = `
+            <!-- ESTILOS DO EFEITO FLIP -->
+            <style>
+                .perspective-1000 { perspective: 1000px; }
+                .transform-style-3d { transform-style: preserve-3d; }
+                .backface-hidden { backface-visibility: hidden; }
+                .rotate-y-180 { transform: rotateY(180deg); }
+                .flip-card-inner { transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+                .flipped .flip-card-inner { transform: rotateY(180deg); }
+            </style>
+
+            <div class="perspective-1000 w-full max-w-md h-[260px] cursor-pointer group" onclick="this.classList.toggle('flipped')">
+                <div class="flip-card-inner relative w-full h-full transform-style-3d">
+                    
+                    <!-- FRENTE -->
+                    <div class="absolute w-full h-full backface-hidden bg-gradient-to-br from-[#003366] to-[#0056b3] rounded-xl overflow-hidden shadow-2xl text-white">
+                        
+                        <!-- Header Frente -->
+                        <div class="bg-black/20 p-3 flex items-center justify-between border-b border-white/10">
+                            <div class="flex items-center gap-2">
+                                <img src="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png" class="w-8 h-8 rounded-full bg-white p-0.5">
+                                <div>
+                                    <h3 class="font-bold text-xs uppercase tracking-wider">Curso de Formação</h3>
+                                    <p class="text-[9px] text-gray-300 uppercase">Bombeiro Civil e Brigadista</p>
+                                </div>
+                            </div>
+                            <i class="fas fa-id-card-clip text-white/50"></i>
+                        </div>
+
+                        <!-- Corpo Frente -->
+                        <div class="p-4 flex gap-4 h-full">
+                            <!-- Foto + Matrícula -->
+                            <div class="flex flex-col items-center w-24 shrink-0">
+                                <div class="w-20 h-24 bg-gray-300 rounded overflow-hidden border-2 border-white/30 relative group/photo mb-1" onclick="event.stopPropagation(); document.getElementById('profile-pic-input').click()">
+                                    <img id="id-card-photo" src="${currentPhoto}" class="w-full h-full object-cover">
+                                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/photo:opacity-100 transition-opacity">
+                                        <i class="fas fa-camera text-white"></i>
+                                    </div>
+                                </div>
+                                <input type="file" id="profile-pic-input" class="hidden" accept="image/*" onchange="window.updateProfilePic(this)">
+                                
+                                <p class="text-[8px] uppercase opacity-70">Matrícula</p>
+                                <p class="font-mono font-bold text-xs">${matricula}</p>
+                            </div>
+
+                            <!-- Dados -->
+                            <div class="flex-1 flex flex-col justify-between pb-8">
+                                <div>
+                                    <p class="text-[9px] text-gray-300 uppercase">Nome do Aluno</p>
+                                    <h2 class="font-bold text-sm uppercase leading-tight text-yellow-400 mb-2">${currentUserData.name}</h2>
+                                    
+                                    <div class="grid grid-cols-2 gap-1 mb-1">
+                                        <div>
+                                            <p class="text-[8px] text-gray-300 uppercase">CPF</p>
+                                            <p class="font-mono text-xs">${currentUserData.cpf || '---'}</p>
+                                        </div>
+                                        <div onclick="event.stopPropagation()">
+                                            <p class="text-[8px] text-gray-300 uppercase">RG</p>
+                                            <input type="text" value="${savedRG}" onchange="window.saveExtraData('rg', this.value)" class="w-full bg-transparent border-b border-white/20 text-xs text-white focus:outline-none font-mono p-0 h-4" placeholder="Digite...">
+                                        </div>
+                                    </div>
+                                    <div onclick="event.stopPropagation()">
+                                        <p class="text-[8px] text-gray-300 uppercase">Data de Nascimento</p>
+                                        <input type="text" value="${savedDataNasc}" onchange="window.saveExtraData('nasc', this.value)" class="w-full bg-transparent border-b border-white/20 text-xs text-white focus:outline-none font-mono p-0 h-4" placeholder="DD/MM/AAAA">
+                                    </div>
+                                </div>
+
+                                <!-- Footer Frente (Validade) -->
+                                <div class="flex justify-between items-end mt-auto pt-2 border-t border-white/10">
+                                    <div>
+                                        <p class="text-[8px] text-gray-400 uppercase">Válido Até</p>
+                                        <p class="font-bold text-xs text-green-400">${validUntil}</p>
+                                    </div>
+                                    <div class="bg-white p-0.5 rounded">
+                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${matricula}-${currentUserData.cpf}" class="w-10 h-10">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VERSO -->
+                    <div class="absolute w-full h-full backface-hidden bg-gradient-to-tl from-[#003366] to-[#0056b3] rounded-xl overflow-hidden shadow-2xl text-white rotate-y-180 flex flex-col items-center justify-center p-6 text-center border-2 border-white/10">
+                        <div class="border-2 border-dashed border-white/20 rounded-lg w-full h-full flex flex-col items-center justify-center p-4">
+                            <img src="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png" class="w-12 h-12 opacity-80 mb-3 grayscale">
+                            
+                            <h2 class="text-xl font-extrabold text-yellow-400 tracking-widest uppercase mb-1">BOMBEIRO CIVIL</h2>
+                            <p class="text-[10px] uppercase tracking-widest text-gray-300 mb-4">Identificação Profissional</p>
+                            
+                            <div class="text-[9px] leading-relaxed text-gray-200 opacity-90">
+                                <p class="mb-1">Certificação válida em todo Brasil de acordo com a Lei Federal 11.901/09.</p>
+                                <p>Classificação Brasileira de Ocupações CBO 5171-10.</p>
+                                <p class="mt-2 text-[8px] text-gray-400">Documento de uso pessoal e intransferível.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            
+            <div class="text-center mt-6 space-y-2">
+                <p class="text-xs text-gray-500 dark:text-gray-400"><i class="fas fa-hand-pointer animate-bounce"></i> Toque no cartão para ver o verso</p>
+                <button onclick="window.print()" class="text-sm text-blue-500 hover:underline font-bold"><i class="fas fa-print"></i> Imprimir Carteirinha</button>
+            </div>
+        `;
+    }
 
     // === FUNÇÕES PADRÃO DO APP ===
     async function startSimuladoMode(moduleData) {
