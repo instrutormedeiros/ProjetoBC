@@ -1,4 +1,4 @@
-/* === ARQUIVO app_final.js (VERSÃO V10 - CARTEIRINHA BOMBEIRO CIVIL COMPLETA) === */
+/* === ARQUIVO app_final.js (VERSÃO V11 - CARTEIRINHA PREMIUM AZUL FIXED) === */
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -829,7 +829,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // === LÓGICA ATUALIZADA V10: CARTEIRINHA DIGITAL COM DADOS E VERSO ===
+    // === LÓGICA ATUALIZADA V11: CARTEIRINHA DIGITAL COM DADOS E VERSO FIXED ===
     window.updateProfilePic = function(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
@@ -862,115 +862,261 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedDataNasc = localStorage.getItem('user_nasc') || '';
 
         // 3. Matrícula Automática (Baseada no UID ou Data de Criação)
-        // Se não tiver createdAt, usa o UID
         let matricula = 'BC-';
         if (currentUserData.createdAt && currentUserData.createdAt.seconds) {
-            // Usa os últimos 6 dígitos do timestamp de criação para ser único e fixo
             matricula += currentUserData.createdAt.seconds.toString().slice(-6);
         } else {
-            // Fallback: cria um hash simples do UID
             matricula += currentUserData.uid.substring(0, 6).toUpperCase();
         }
 
-        // 4. Validade
-        const validUntil = new Date(currentUserData.acesso_ate).toLocaleDateString('pt-BR');
-        const statusColor = currentUserData.status === 'premium' ? 'text-yellow-400' : 'text-gray-400';
+        // 4. Validade (Ano 2026 fixo conforme imagem ou dinâmico)
+        // A imagem mostra "2026" grande. Vamos seguir o padrão visual.
+        const validityYear = "2026"; // Pode ser dinâmico: new Date().getFullYear() + 1;
         
-        container.innerHTML = `
-            <!-- ESTILOS DO EFEITO FLIP -->
-            <style>
-                .perspective-1000 { perspective: 1000px; }
-                .transform-style-3d { transform-style: preserve-3d; }
-                .backface-hidden { backface-visibility: hidden; }
-                .rotate-y-180 { transform: rotateY(180deg); }
-                .flip-card-inner { transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-                .flipped .flip-card-inner { transform: rotateY(180deg); }
-            </style>
+        const validUntilFull = new Date(currentUserData.acesso_ate).toLocaleDateString('pt-BR');
 
-            <div class="perspective-1000 w-full max-w-md h-[260px] cursor-pointer group" onclick="this.classList.toggle('flipped')">
-                <div class="flip-card-inner relative w-full h-full transform-style-3d">
+        // INJEÇÃO DE CSS ESPECÍFICO PARA A CARTEIRINHA (Estilo "Credit Card")
+        const styleBlock = `
+            <style>
+                .id-card-wrapper {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    perspective: 1000px;
+                    width: 100%;
+                    max-width: 400px; /* Tamanho fixo para não deformar */
+                    height: 250px;    /* Proporção de cartão */
+                    margin: 0 auto;
+                    position: relative;
+                    cursor: pointer;
+                }
+                .id-card-inner {
+                    position: relative;
+                    width: 100%;
+                    height: 100%;
+                    text-align: center;
+                    transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    transform-style: preserve-3d;
+                }
+                .id-card-wrapper.flipped .id-card-inner {
+                    transform: rotateY(180deg);
+                }
+                .id-card-front, .id-card-back {
+                    position: absolute;
+                    width: 100%;
+                    height: 100%;
+                    -webkit-backface-visibility: hidden;
+                    backface-visibility: hidden;
+                    border-radius: 15px;
+                    overflow: hidden;
+                    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+                    color: white;
+                }
+                /* FRENTE: Azul degradê similar à imagem */
+                .id-card-front {
+                    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                    display: flex;
+                    flex-direction: row;
+                }
+                /* VERSO: Azul similar */
+                .id-card-back {
+                    background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+                    transform: rotateY(180deg);
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    padding: 20px;
+                    text-align: center;
+                }
+                /* Layout Frente */
+                .front-left {
+                    width: 35%;
+                    background-color: rgba(255,255,255,0.1);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 10px;
+                    border-right: 1px solid rgba(255,255,255,0.2);
+                }
+                .front-right {
+                    width: 65%;
+                    padding: 15px;
+                    display: flex;
+                    flex-direction: column;
+                    position: relative;
+                }
+                .photo-box {
+                    width: 80px;
+                    height: 100px;
+                    background: #fff;
+                    border: 3px solid white;
+                    overflow: hidden;
+                    margin-bottom: 10px;
+                    border-radius: 4px;
+                    position: relative;
+                }
+                .photo-box img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+                .qr-box {
+                    background: white;
+                    padding: 2px;
+                    border-radius: 4px;
+                }
+                .qr-box img {
+                    width: 65px;
+                    height: 65px;
+                    display: block;
+                }
+                .logo-top-right {
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                    width: 50px;
+                    height: 50px;
+                    background: white;
+                    border-radius: 50%;
+                    padding: 2px;
+                }
+                .student-name {
+                    font-weight: 800;
+                    font-size: 16px;
+                    line-height: 1.1;
+                    margin-top: 35px;
+                    margin-bottom: 4px;
+                    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                }
+                .institute-name {
+                    font-size: 10px;
+                    opacity: 0.9;
+                    margin-bottom: 10px;
+                    font-weight: 500;
+                }
+                .data-row {
+                    font-size: 11px;
+                    font-weight: 600;
+                    margin-bottom: 2px;
+                    display: flex;
+                    align-items: center;
+                }
+                .data-label {
+                    font-weight: 800;
+                    margin-right: 4px;
+                    color: #0b1220; /* Escuro para contraste */
+                }
+                .editable-input {
+                    background: transparent;
+                    border: none;
+                    border-bottom: 1px dashed rgba(255,255,255,0.5);
+                    color: white;
+                    font-size: 11px;
+                    font-weight: 600;
+                    width: 80px;
+                    outline: none;
+                }
+                .editable-input::placeholder { color: rgba(255,255,255,0.6); }
+                .big-year {
+                    position: absolute;
+                    bottom: 10px;
+                    right: 15px;
+                    font-size: 42px;
+                    font-weight: 900;
+                    opacity: 0.9;
+                    line-height: 1;
+                    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                }
+                /* Layout Verso */
+                .back-icon {
+                    font-size: 48px;
+                    color: #fbbf24; /* Amarelo */
+                    margin-bottom: 10px;
+                    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+                }
+                .legal-text {
+                    font-size: 9px;
+                    line-height: 1.3;
+                    margin-bottom: 10px;
+                    font-weight: 500;
+                }
+                .validity-box {
+                    background: rgba(0,0,0,0.2);
+                    padding: 4px 10px;
+                    border-radius: 4px;
+                    font-size: 10px;
+                    font-weight: 700;
+                    margin-bottom: 8px;
+                }
+                .course-title {
+                    font-size: 14px;
+                    font-weight: 900;
+                    text-transform: uppercase;
+                    background: white;
+                    color: #0056b3;
+                    padding: 2px 8px;
+                    border-radius: 4px;
+                }
+            </style>
+        `;
+        
+        container.innerHTML = styleBlock + `
+            <div class="id-card-wrapper" onclick="this.classList.toggle('flipped')">
+                <div class="id-card-inner">
                     
                     <!-- FRENTE -->
-                    <div class="absolute w-full h-full backface-hidden bg-gradient-to-br from-[#003366] to-[#0056b3] rounded-xl overflow-hidden shadow-2xl text-white">
-                        
-                        <!-- Header Frente -->
-                        <div class="bg-black/20 p-3 flex items-center justify-between border-b border-white/10">
-                            <div class="flex items-center gap-2">
-                                <img src="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png" class="w-8 h-8 rounded-full bg-white p-0.5">
-                                <div>
-                                    <h3 class="font-bold text-xs uppercase tracking-wider">Curso de Formação</h3>
-                                    <p class="text-[9px] text-gray-300 uppercase">Bombeiro Civil e Brigadista</p>
+                    <div class="id-card-front">
+                        <div class="front-left">
+                            <div class="photo-box cursor-pointer group" onclick="event.stopPropagation(); document.getElementById('profile-pic-input').click()" title="Alterar Foto">
+                                <img id="id-card-photo" src="${currentPhoto}">
+                                <div class="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center">
+                                    <i class="fas fa-camera text-white"></i>
                                 </div>
                             </div>
-                            <i class="fas fa-id-card-clip text-white/50"></i>
+                            <input type="file" id="profile-pic-input" class="hidden" accept="image/*" onchange="window.updateProfilePic(this)">
+                            
+                            <div class="qr-box">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Aluno:${currentUserData.name}|Matricula:${matricula}|CPF:${currentUserData.cpf}">
+                            </div>
                         </div>
 
-                        <!-- Corpo Frente -->
-                        <div class="p-4 flex gap-4 h-full">
-                            <!-- Foto + Matrícula -->
-                            <div class="flex flex-col items-center w-24 shrink-0">
-                                <div class="w-20 h-24 bg-gray-300 rounded overflow-hidden border-2 border-white/30 relative group/photo mb-1" onclick="event.stopPropagation(); document.getElementById('profile-pic-input').click()">
-                                    <img id="id-card-photo" src="${currentPhoto}" class="w-full h-full object-cover">
-                                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/photo:opacity-100 transition-opacity">
-                                        <i class="fas fa-camera text-white"></i>
-                                    </div>
-                                </div>
-                                <input type="file" id="profile-pic-input" class="hidden" accept="image/*" onchange="window.updateProfilePic(this)">
-                                
-                                <p class="text-[8px] uppercase opacity-70">Matrícula</p>
-                                <p class="font-mono font-bold text-xs">${matricula}</p>
+                        <div class="front-right text-left">
+                            <img src="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png" class="logo-top-right">
+                            
+                            <h2 class="student-name leading-tight">${currentUserData.name}</h2>
+                            <p class="institute-name">Curso de Formação Bombeiro Civil</p>
+                            
+                            <div class="data-row"><span class="data-label">CPF:</span> ${currentUserData.cpf || '---'}</div>
+                            
+                            <div class="data-row" onclick="event.stopPropagation()">
+                                <span class="data-label">RG:</span> 
+                                <input type="text" value="${savedRG}" onchange="window.saveExtraData('rg', this.value)" class="editable-input" placeholder="Digite...">
                             </div>
-
-                            <!-- Dados -->
-                            <div class="flex-1 flex flex-col justify-between pb-8">
-                                <div>
-                                    <p class="text-[9px] text-gray-300 uppercase">Nome do Aluno</p>
-                                    <h2 class="font-bold text-sm uppercase leading-tight text-yellow-400 mb-2">${currentUserData.name}</h2>
-                                    
-                                    <div class="grid grid-cols-2 gap-1 mb-1">
-                                        <div>
-                                            <p class="text-[8px] text-gray-300 uppercase">CPF</p>
-                                            <p class="font-mono text-xs">${currentUserData.cpf || '---'}</p>
-                                        </div>
-                                        <div onclick="event.stopPropagation()">
-                                            <p class="text-[8px] text-gray-300 uppercase">RG</p>
-                                            <input type="text" value="${savedRG}" onchange="window.saveExtraData('rg', this.value)" class="w-full bg-transparent border-b border-white/20 text-xs text-white focus:outline-none font-mono p-0 h-4" placeholder="Digite...">
-                                        </div>
-                                    </div>
-                                    <div onclick="event.stopPropagation()">
-                                        <p class="text-[8px] text-gray-300 uppercase">Data de Nascimento</p>
-                                        <input type="text" value="${savedDataNasc}" onchange="window.saveExtraData('nasc', this.value)" class="w-full bg-transparent border-b border-white/20 text-xs text-white focus:outline-none font-mono p-0 h-4" placeholder="DD/MM/AAAA">
-                                    </div>
-                                </div>
-
-                                <!-- Footer Frente (Validade) -->
-                                <div class="flex justify-between items-end mt-auto pt-2 border-t border-white/10">
-                                    <div>
-                                        <p class="text-[8px] text-gray-400 uppercase">Válido Até</p>
-                                        <p class="font-bold text-xs text-green-400">${validUntil}</p>
-                                    </div>
-                                    <div class="bg-white p-0.5 rounded">
-                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${matricula}-${currentUserData.cpf}" class="w-10 h-10">
-                                    </div>
-                                </div>
+                            
+                            <div class="data-row" onclick="event.stopPropagation()">
+                                <span class="data-label">Nasc:</span> 
+                                <input type="text" value="${savedDataNasc}" onchange="window.saveExtraData('nasc', this.value)" class="editable-input" placeholder="DD/MM/AAAA">
                             </div>
+                            
+                            <div class="data-row"><span class="data-label">Matrícula:</span> ${matricula}</div>
+
+                            <div class="big-year">${validityYear}</div>
                         </div>
                     </div>
 
                     <!-- VERSO -->
-                    <div class="absolute w-full h-full backface-hidden bg-gradient-to-tl from-[#003366] to-[#0056b3] rounded-xl overflow-hidden shadow-2xl text-white rotate-y-180 flex flex-col items-center justify-center p-6 text-center border-2 border-white/10">
-                        <div class="border-2 border-dashed border-white/20 rounded-lg w-full h-full flex flex-col items-center justify-center p-4">
-                            <img src="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png" class="w-12 h-12 opacity-80 mb-3 grayscale">
-                            
-                            <h2 class="text-xl font-extrabold text-yellow-400 tracking-widest uppercase mb-1">BOMBEIRO CIVIL</h2>
-                            <p class="text-[10px] uppercase tracking-widest text-gray-300 mb-4">Identificação Profissional</p>
-                            
-                            <div class="text-[9px] leading-relaxed text-gray-200 opacity-90">
-                                <p class="mb-1">Certificação válida em todo Brasil de acordo com a Lei Federal 11.901/09.</p>
-                                <p>Classificação Brasileira de Ocupações CBO 5171-10.</p>
-                                <p class="mt-2 text-[8px] text-gray-400">Documento de uso pessoal e intransferível.</p>
-                            </div>
+                    <div class="id-card-back">
+                        <div class="back-icon"><i class="fas fa-shield-alt"></i></div>
+                        
+                        <p class="legal-text">
+                            Certificação válida em todo Brasil de acordo com a Lei nº 9394/96, o Decreto nº 5.154/04 e a Deliberação CEE 14/97 (Indicação CEE 14/97), os cursos livres são uma modalidade de ensino legal e válida em todo o território nacional.
+                        </p>
+                        
+                        <div class="validity-box">
+                            Válido até: ${validUntilFull}
                         </div>
+                        
+                        <div class="course-title">Curso: Bombeiro Civil</div>
                     </div>
 
                 </div>
