@@ -513,11 +513,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return questions;
     }
 
-    async function generateSimuladoQuestions(config) {
+   async function generateSimuladoQuestions(config) {
         const allQuestions = [];
         const questionsByCategory = {};
-        const addedIds = new Set(); // Controle de duplicatas
+        const addedIds = new Set();
+        const addedTexts = new Set(); // Dupla verificação (Texto)
         
+        // 1. Coleta todas as questões disponíveis
         for (const catKey in moduleCategories) {
             questionsByCategory[catKey] = [];
             const cat = moduleCategories[catKey];
@@ -529,16 +531,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        // 2. Seleciona aleatoriamente sem repetir
         for (const [catKey, qty] of Object.entries(config.distribution)) {
             if (questionsByCategory[catKey]) {
                 const shuffled = shuffleArray(questionsByCategory[catKey]);
-                // Pega questões únicas
                 let addedCount = 0;
+                
                 for (const q of shuffled) {
                     if (addedCount >= qty) break;
-                    if (!addedIds.has(q.id)) {
+                    
+                    // Verifica ID e TEXTO (para garantir 100%)
+                    const qText = q.question.trim().toLowerCase();
+                    if (!addedIds.has(q.id) && !addedTexts.has(qText)) {
                         allQuestions.push(q);
                         addedIds.add(q.id);
+                        addedTexts.add(qText);
                         addedCount++;
                     }
                 }
@@ -976,27 +983,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-   // === FUNÇÕES SIMULADO (NOVO LAYOUT MODERNO) ===
+   // === FUNÇÕES SIMULADO (NORMAL - SEM MODO FOCO) ===
     async function startSimuladoMode(moduleData) {
-        // Pausar áudio se estiver tocando
+        // Pausar áudio se estiver tocando (Pedido 2 - parte A)
         if (window.speechSynthesis.speaking) {
             window.speechSynthesis.cancel();
         }
 
-        // Esconder distrações (Pedido 1)
-        document.body.classList.add('exam-mode');
-
         loadingSpinner.classList.remove('hidden');
         contentArea.classList.add('hidden');
 
+        // Gera questões sem repetição
         activeSimuladoQuestions = await generateSimuladoQuestions(moduleData.simuladoConfig);
         userAnswers = {};
         simuladoTimeLeft = moduleData.simuladoConfig.timeLimit * 60; 
         currentSimuladoQuestionIndex = 0;
 
-        // Novo Layout de Header Fixo (Pedido 2 - Removida sobreposição via CSS)
+        // Header do Simulado (Sem sobreposição)
         contentArea.innerHTML = `
-            <div class="relative pt-4 pb-12">
+            <div class="pt-2 pb-12">
                 <div id="simulado-timer-bar" class="simulado-header-modern">
                     <div class="sim-timer-box">
                         <i class="fas fa-clock"></i>
@@ -1007,15 +1012,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 
-                <div class="mt-4 mb-6 text-center">
-                     <h3 class="text-2xl font-bold text-orange-500 dark:text-orange-500">${moduleData.title}</h3>
+                <div class="mt-6 mb-8 text-center px-4">
+                     <h3 class="text-2xl font-bold text-blue-900 dark:text-white border-b-2 border-orange-500 inline-block pb-2">${moduleData.title}</h3>
                 </div>
 
                 <div id="question-display-area" class="simulado-question-container"></div>
                 
-                <div class="mt-8 flex justify-between items-center">
-                    <button id="sim-prev-btn" class="sim-nav-btn sim-btn-prev shadow" style="visibility: hidden;"><i class="fas fa-arrow-left mr-2"></i> Anterior</button>
-                    <button id="sim-next-btn" class="sim-nav-btn sim-btn-next shadow">Próxima <i class="fas fa-arrow-right ml-2"></i></button>
+                <div class="mt-8 flex justify-between items-center px-2">
+                    <button id="sim-prev-btn" class="action-button bg-gray-600" style="visibility: hidden;"><i class="fas fa-arrow-left mr-2"></i> Anterior</button>
+                    <button id="sim-next-btn" class="action-button">Próxima <i class="fas fa-arrow-right ml-2"></i></button>
                 </div>
             </div>
         `;
@@ -1122,9 +1127,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function finishSimulado(moduleId) {
         clearInterval(simuladoTimerInterval);
         
-        // Restaurar Menu e Sidebar (Sair do modo exame)
-        document.body.classList.remove('exam-mode');
-
         let correctCount = 0;
         const total = activeSimuladoQuestions.length;
         let feedbackHtml = '<div class="space-y-6 mt-8">';
@@ -1152,7 +1154,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 optionsHtml += `
-                    <div class="${rowClass} p-3 rounded mb-1 text-sm">
+                    <div class="${rowClass}">
                         <strong class="mr-2 uppercase">${key})</strong> ${q.options[key]} ${iconStatus}
                     </div>
                 `;
@@ -1182,24 +1184,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const finalHtml = `
             <div class="text-center animate-slide-in">
-                <h2 class="text-3xl font-serif font-bold mb-6 text-white">Resultado Final</h2>
+                <h2 class="text-3xl font-serif font-bold mb-6 text-blue-900 dark:text-white">Resultado Final</h2>
                 
                 <div class="circle-chart" style="--percentage: ${percentage}" data-score="${score.toFixed(1)}"></div>
                 
-                <p class="text-gray-400 mb-2">Você acertou <strong>${correctCount}</strong> de <strong>${total}</strong> questões (${percentage.toFixed(0)}%).</p>
+                <p class="text-gray-600 dark:text-gray-300 mb-2">Você acertou <strong>${correctCount}</strong> de <strong>${total}</strong> questões (${percentage.toFixed(0)}%).</p>
                 
-                <div class="w-full max-w-md mx-auto bg-gray-700 rounded-full h-3 mb-8 overflow-hidden">
-                    <div class="bg-blue-500 h-3 rounded-full" style="width: ${percentage}%"></div>
+                <div class="w-full max-w-md mx-auto bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-8 overflow-hidden">
+                    <div class="bg-blue-600 h-2 rounded-full" style="width: ${percentage}%"></div>
                 </div>
 
                 <div class="flex justify-center mb-8">
-                    <button onclick="location.reload()" class="bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform hover:scale-105">
+                    <button onclick="location.reload()" class="action-button">
                         <i class="fas fa-undo mr-2"></i> Voltar ao Início
                     </button>
                 </div>
 
                 <div class="text-left">
-                    <h3 class="text-xl font-bold text-blue-400 mb-4 border-b border-gray-700 pb-2"><i class="fas fa-clipboard-check mr-2"></i> Gabarito Detalhado</h3>
+                    <h3 class="text-xl font-bold text-blue-500 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2"><i class="fas fa-clipboard-check mr-2"></i> Gabarito Detalhado</h3>
                     ${feedbackHtml}
                 </div>
             </div>
