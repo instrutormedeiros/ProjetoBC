@@ -94,19 +94,36 @@ h1, h2, h3 { font-family: 'Lora', serif; }
 }
 .animate-gradient { animation: gradient-x 3s ease infinite; }
 
+/* ANIMAÇÃO DEGRADÊ - DESENVOLVEDOR (PEDIDO 4) */
+.developer-credit {
+    background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8f00ff);
+    background-size: 400% 400%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: rainbow-text 6s ease infinite;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+@keyframes rainbow-text { 
+    0% { background-position: 0% 50%; } 
+    50% { background-position: 100% 50%; } 
+    100% { background-position: 0% 50%; } 
+}
+
 /* ==========================================================================
    3. LAYOUT E HEADER
    ========================================================================== */
 #main-header { 
-    backdrop-filter: blur(12px); 
-    -webkit-backdrop-filter: blur(12px); 
+    backdrop-filter: blur(16px); 
+    -webkit-backdrop-filter: blur(16px); 
 }
 #main-header.scrolled { 
-    background-color: rgba(255, 255, 255, 0.85); 
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); 
+    background-color: rgba(255, 255, 255, 0.9); 
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08); 
 }
 .dark #main-header.scrolled { 
-    background-color: rgba(17, 24, 39, 0.85); 
+    background-color: rgba(17, 24, 39, 0.9); 
 }
 
 /* Barra de Progresso Sticky - Ajuste de Posição */
@@ -156,6 +173,20 @@ h1, h2, h3 { font-family: 'Lora', serif; }
     border: 1px solid var(--border-color); 
 }
 
+/* MODO EXAME/PROVA (PEDIDO 3) */
+/* Quando body tem class 'exam-mode', esconde elementos de distração */
+body.exam-mode #main-header,
+body.exam-mode #sticky-progress-wrapper,
+body.exam-mode footer,
+body.exam-mode #back-to-top,
+body.exam-mode #mobile-menu-button,
+body.exam-mode nav.md\:hidden {
+    display: none !important;
+}
+body.exam-mode .main-content-container {
+    padding-top: 2rem !important; /* Remove espaço do header */
+}
+
 /* ==========================================================================
    4. BOTÕES E UI ELEMENTS
    ========================================================================== */
@@ -164,12 +195,12 @@ h1, h2, h3 { font-family: 'Lora', serif; }
   background: linear-gradient(90deg, #c1121f, #f77f00);
   color: #fff; font-weight: 700; padding: 0.85rem 2rem;
   border-radius: 0.6rem; border: none; cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 10px rgba(193, 18, 31, 0.3);
   transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.5s ease;
 }
 .action-button:hover { 
     transform: translateY(-3px); 
-    box-shadow: 0 8px 20px rgba(0,0,0,0.2); 
+    box-shadow: 0 8px 20px rgba(247, 127, 0, 0.4); 
     background: linear-gradient(90deg, #f77f00, #c1121f); 
 }
 .action-button:active { transform: scale(0.98); }
@@ -187,13 +218,13 @@ h1, h2, h3 { font-family: 'Lora', serif; }
 
 .drive-button { 
     display: flex; align-items: center; justify-content: center; width: 100%; 
-    padding: 1rem; margin: 2rem 0; background: linear-gradient(135deg, #3b82f6, #2563eb); 
-    color: white; font-weight: bold; border-radius: 0.75rem; text-decoration: none; 
-    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3); transition: all 0.3s ease; 
-    border: 1px solid rgba(255,255,255,0.2); 
+    padding: 1.25rem; margin: 2rem 0; background: linear-gradient(135deg, #3b82f6, #2563eb); 
+    color: white; font-weight: bold; border-radius: 1rem; text-decoration: none; 
+    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2); transition: all 0.3s ease; 
+    border: 1px solid rgba(255,255,255,0.1); 
 }
 .drive-button:hover { 
-    transform: translateY(-3px); box-shadow: 0 8px 15px rgba(37, 99, 235, 0.4); 
+    transform: translateY(-3px); box-shadow: 0 15px 30px rgba(37, 99, 235, 0.4); 
     background: linear-gradient(135deg, #2563eb, #1d4ed8); 
 }
 .drive-button i { font-size: 1.5rem; margin-right: 0.75rem; }
@@ -203,22 +234,22 @@ h1, h2, h3 { font-family: 'Lora', serif; }
    ========================================================================== */
 #back-to-top.action-button {
     border-radius: 50% !important; 
-    width: 35px !important;       
-    height: 35px !important;       
+    width: 40px !important;       
+    height: 40px !important;       
     padding: 0 !important;         
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     bottom: 20px !important;       
     right: 20px !important;
-    font-size: 1rem !important;
+    font-size: 1.2rem !important;
     z-index: 48 !important;        
     background: var(--secondary);
-    opacity: 0.8;
+    opacity: 0.9;
 }
 #back-to-top.action-button:hover {
     opacity: 1;
-    transform: translateY(-3px);
+    transform: translateY(-5px);
 }
 
 #accessibility-fab {
@@ -242,7 +273,7 @@ h1, h2, h3 { font-family: 'Lora', serif; }
 body.dyslexic-font { font-family: 'Comic Sans MS', 'Verdana', sans-serif !important; }
 body.high-spacing { line-height: 2 !important; letter-spacing: 1px !important; }
 
-/* SIMULADO STICKY HEADER (OLD - MANTIDO POR COMPATIBILIDADE, MAS SERÁ SOBRESCRITO PELA VERSÃO MODERNA ABAIXO) */
+/* SIMULADO STICKY HEADER (OLD - MANTIDO POR COMPATIBILIDADE) */
 .simulado-header-sticky {
     position: sticky; top: 5.5rem; z-index: 38; background: var(--panel-bg); padding: 10px 1rem; border-bottom: 2px solid var(--primary); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 1.5rem; border-radius: 0 0 8px 8px;
 }
@@ -509,7 +540,7 @@ body.focus-mode #main-wrapper { padding-bottom: 2rem; }
 }
 .audio-speed-select option { background-color: #1f2937; }
 
-/* 7.2 Simulado Moderno (Sticky Header) */
+/* 7.2 Simulado Moderno (Sticky Header) - AJUSTE PEDIDO 3 */
 .simulado-header-modern {
     position: sticky;
     top: 5.5rem;
@@ -523,17 +554,19 @@ body.focus-mode #main-wrapper { padding-bottom: 2rem; }
     align-items: center;
     color: white;
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    gap: 1rem; /* Adicionado GAP para melhor espaçamento */
 }
 @media (max-width: 1024px) { 
     .simulado-header-modern { top: 110px; margin-left: -1rem; margin-right: -1rem; } 
 }
 
 .sim-timer-box {
-    display: flex; align-items: center; gap: 0.5rem;
+    display: flex; align-items: center; gap: 0.75rem; /* Aumentado espaçamento */
     font-family: 'Courier New', monospace;
     font-size: 1.1rem;
     font-weight: bold;
     color: #fb923c;
+    flex-shrink: 0;
 }
 .sim-count-badge {
     background-color: #374151;
@@ -541,6 +574,7 @@ body.focus-mode #main-wrapper { padding-bottom: 2rem; }
     border-radius: 999px;
     font-size: 0.85rem;
     color: #e5e7eb;
+    white-space: nowrap; /* Evita quebra de linha */
 }
 
 /* 7.3 Cartões de Resposta (Quiz Moderno) */
