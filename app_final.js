@@ -366,6 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <i class="${d.iconClass} mr-4 text-orange-500 fa-fw"></i>${d.title}
             </h3>
             
+            <!-- NOVO PLAYER DE ÁUDIO -->
             <div id="audio-player-container" class="flex flex-wrap items-center gap-3 mb-6 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 w-full md:w-auto shadow-sm transition-all duration-300">
                 
                 <button id="audio-play-btn" class="flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold shadow-sm transition-colors min-w-[120px]">
@@ -1544,7 +1545,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderRPGScene(sceneId, rpgData) {
         const scene = rpgData.scenes[sceneId]; if(!scene) return;
         let html = `<div class="max-w-3xl mx-auto animate-fade-in"><div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700">${scene.image ? `<img src="${scene.image}" class="w-full h-64 object-cover">` : ''}<div class="p-8"><p class="text-xl text-gray-800 dark:text-gray-200 mb-8 leading-relaxed font-serif">${scene.text}</p><div class="space-y-4">`;
-        scene.options.forEach(opt => { html += `<button class="rpg-choice-btn w-full text-left p-5 bg-gray-50 dark:bg-gray-800 border-l-4 border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all rounded shadow-sm mb-2 text-lg" data-next="${opt.next}"><i class="fas fa-chevron-right text-blue-500 mr-3"></i> ${opt.text}</button>`; });
+        scene.options.forEach(opt => { html += `<button class="rpg-choice-btn w-full text-left p-5 bg-gray-50 dark:bg-gray-800 border-l-4 border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all rounded shadow-sm mb-2 text-lg" data-next="${opt.next}"><i class="fas fa-chevron-right text-blue-500 mr-3\"></i> ${opt.text}</button>`; });
         html += `</div></div></div></div>`; contentArea.innerHTML = html;
         const card = contentArea.querySelector('.bg-white');
         if(scene.type === 'death') card.classList.add('border-red-500', 'border-4'); else if(scene.type === 'win') { card.classList.add('border-green-500', 'border-4'); if(typeof confetti === 'function') confetti(); }
