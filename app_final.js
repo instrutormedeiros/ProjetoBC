@@ -1,10 +1,13 @@
-/* === ARQUIVO app_final.js (VERSÃO FINAL V10 - DESIGN PREMIUM: SIMULADOS, AUDIO E RPG) === */
+/* === ARQUIVO app_final.js (VERSÃO FINAL V10.1 - CORREÇÃO TOTAL MODULES) === */
 
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- VARIÁVEIS GLOBAIS DO APP ---
     const contentArea = document.getElementById('content-area');
-    // totalModules será recalculado dinamicamente para precisão nos contadores
+    
+    // CORREÇÃO AQUI: Definindo a variável globalmente
+    let totalModules = 0; 
+    
     let completedModules = JSON.parse(localStorage.getItem('gateBombeiroCompletedModules_v3')) || [];
     let notifiedAchievements = JSON.parse(localStorage.getItem('gateBombeiroNotifiedAchievements_v3')) || [];
     let currentModuleId = null;
@@ -224,10 +227,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         checkTrialStatus(userData.acesso_ate);
 
-        // Calcula total de módulos reais
-        const total = Object.keys(window.moduleContent || {}).length;
-        document.getElementById('total-modules').textContent = total;
-        document.getElementById('course-modules-count').textContent = total;
+        // CORREÇÃO: Usando a variável global totalModules
+        totalModules = Object.keys(window.moduleContent || {}).length;
+        document.getElementById('total-modules').textContent = totalModules;
+        document.getElementById('course-modules-count').textContent = totalModules;
         
         populateModuleLists();
         updateProgress();
@@ -236,7 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- FUNÇÕES ADMIN (MANTIDAS) ---
-    // [O bloco de funções admin foi preservado integralmente para economizar espaço, pois não houve alteração lógica solicitada aqui]
     window.openAdminPanel=async function(){if(!currentUserData||!currentUserData.isAdmin)return;adminModal.classList.add('show');adminOverlay.classList.add('show');const tbody=document.getElementById('admin-table-body');tbody.innerHTML='<tr><td colspan="6" class="p-4 text-center">Carregando...</td></tr>';try{const snapshot=await window.__fbDB.collection('users').orderBy('name').get();tbody.innerHTML='';snapshot.forEach(doc=>{const u=doc.data();const uid=doc.id;const isPremium=u.status==='premium';const validade=u.acesso_ate?new Date(u.acesso_ate).toLocaleDateString('pt-BR'):'-';const cpf=u.cpf||'Sem CPF';const planoTipo=u.planType||(isPremium?'Indefinido':'Trial');const deviceInfo=u.last_device||'Desconhecido';const noteIconColor=u.adminNote?'text-yellow-500':'text-gray-400';const row=`<tr class="border-b hover:bg-gray-50 transition-colors"><td class="p-3 font-bold text-gray-800">${u.name}</td><td class="p-3 text-gray-600 text-sm">${u.email}<br><span class="text-xs text-gray-500">CPF: ${cpf}</span></td><td class="p-3 text-xs text-gray-500 max-w-[150px] truncate" title="${deviceInfo}">${deviceInfo}</td><td class="p-3"><div class="flex flex-col items-start"><span class="px-2 py-1 rounded text-xs font-bold uppercase ${isPremium?'bg-green-100 text-green-800':'bg-yellow-100 text-yellow-800'}">${u.status||'trial'}</span><span class="text-xs text-gray-500 mt-1">${planoTipo}</span></div></td><td class="p-3 text-sm font-medium">${validade}</td><td class="p-3 flex flex-wrap gap-2"><button onclick="editUserData('${uid}', '${u.name}', '${cpf}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1.5 rounded text-xs shadow"><i class="fas fa-pen"></i></button><button onclick="editUserNote('${uid}', '${(u.adminNote||'').replace(/'/g, "\\'")}')" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 px-2 py-1.5 rounded text-xs shadow"><i class="fas fa-sticky-note ${noteIconColor}"></i></button><button onclick="manageUserAccess('${uid}', '${u.acesso_ate}')" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1.5 rounded text-xs shadow"><i class="fas fa-calendar-alt"></i></button><button onclick="sendResetEmail('${u.email}')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1.5 rounded text-xs shadow"><i class="fas fa-key"></i></button><button onclick="deleteUser('${uid}', '${u.name}', '${cpf}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1.5 rounded text-xs shadow"><i class="fas fa-trash"></i></button></td></tr>`;tbody.innerHTML+=row})}catch(err){tbody.innerHTML=`<tr><td colspan="6" class="p-4 text-center text-red-500">Erro: ${err.message}</td></tr>`}};window.editUserData=async function(uid,oldName,oldCpf){const newName=prompt("Novo nome:",oldName);if(newName===null)return;const newCpfRaw=prompt("Novo CPF:",oldCpf==='Sem CPF'?'':oldCpf);if(newCpfRaw===null)return;const newCpf=newCpfRaw.replace(/\D/g,'');if(!newName||!newCpf){alert("Obrigatório.");return}try{const batch=window.__fbDB.batch();const userRef=window.__fbDB.collection('users').doc(uid);batch.update(userRef,{name:newName,cpf:newCpf});if(oldCpf!=='Sem CPF'&&oldCpf!==newCpf){batch.delete(window.__fbDB.collection('cpfs').doc(oldCpf));batch.set(window.__fbDB.collection('cpfs').doc(newCpf),{uid:uid})}else if(oldCpf==='Sem CPF'){batch.set(window.__fbDB.collection('cpfs').doc(newCpf),{uid:uid})}await batch.commit();alert("Atualizado!");openAdminPanel()}catch(err){alert("Erro: "+err.message)}};window.manageUserAccess=async function(uid,currentExpiryStr){const op=prompt("1-MENSAL, 2-SEMESTRAL, 3-ANUAL, 4-VITALÍCIO, 5-PERSONALIZADO");if(!op)return;let d=0,p='';if(op==='1'){d=30;p='Mensal'}else if(op==='2'){d=180;p='Semestral'}else if(op==='3'){d=365;p='Anual'}else if(op==='4'){d=3650;p='Vitalício'}else if(op==='5'){const i=prompt("Dias:");if(!i)return;d=parseInt(i);p='Personalizado'}else return;const h=new Date();let b=new Date(currentExpiryStr);if(isNaN(b.getTime())||b<h)b=h;b.setDate(b.getDate()+d);try{await window.__fbDB.collection('users').doc(uid).update({status:'premium',acesso_ate:b.toISOString(),planType:p});alert("Sucesso!");openAdminPanel()}catch(e){alert("Erro:"+e.message)}};window.editUserNote=async function(uid,current){const n=prompt("Nota:",current);if(n===null)return;try{await window.__fbDB.collection('users').doc(uid).update({adminNote:n});alert("Salvo.");openAdminPanel()}catch(e){alert(e.message)}};window.deleteUser=async function(uid,name,cpf){if(confirm(`Excluir ${name}?`)&&prompt("Digite DELETAR")==="DELETAR"){try{const b=window.__fbDB.batch();b.delete(window.__fbDB.collection('users').doc(uid));if(cpf&&cpf!=='Sem CPF')b.delete(window.__fbDB.collection('cpfs').doc(cpf));await b.commit();alert("Excluído.");openAdminPanel()}catch(e){alert(e.message)}}};window.sendResetEmail=async function(e){if(confirm(`Resetar senha de ${e}?`))try{await window.__fbAuth.sendPasswordResetEmail(e);alert("Enviado!")}catch(x){alert(x.message)}};
 
     function checkTrialStatus(expiryDateString) {
@@ -1287,6 +1289,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateProgress() {
+        // CORREÇÃO: Check para evitar divisão por zero
+        if (totalModules === 0) return;
+        
         const p = (completedModules.length / totalModules) * 100;
         document.getElementById('progress-text').textContent = `${p.toFixed(0)}%`;
         document.getElementById('completed-modules-count').textContent = completedModules.length;
