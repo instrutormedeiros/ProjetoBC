@@ -1,6 +1,13 @@
-/* === ARQUIVO app_final.js (VERSÃO V13 - CARTEIRINHA RESPONSIVA SEM IMPRESSÃO) === */
+/* === ARQUIVO app_final.js (VERSÃO OTIMIZADA - LAYOUT ORIGINAL PRESERVADO) === */
 
 document.addEventListener('DOMContentLoaded', () => {
+
+    // [MELHORIA DE SEGURANÇA] Verifica se o conteúdo carregou antes de iniciar para evitar tela branca
+    if (typeof window.moduleContent === 'undefined') {
+        console.error("ERRO CRÍTICO: data.js não carregado.");
+        document.body.innerHTML = '<div style="color:white; text-align:center; padding:50px; font-family:sans-serif;">Erro de conexão. Por favor, recarregue a página.</div>';
+        return;
+    }
 
     // --- VARIÁVEIS GLOBAIS DO APP ---
     const contentArea = document.getElementById('content-area');
@@ -159,15 +166,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if(installBtn) installBtn.addEventListener('click', triggerInstall);
     if(installBtnMobile) installBtnMobile.addEventListener('click', triggerInstall);
 
-    if (typeof moduleContent === 'undefined' || typeof moduleCategories === 'undefined') {
-        document.getElementById('main-header')?.classList.add('hidden');
-        document.querySelector('footer')?.classList.add('hidden');
-        return; 
+    // [MELHORIA] Navegação "Voltar" Nativa no Mobile (History API)
+    // Permite que o botão voltar do celular feche o módulo e volte para a home, em vez de sair do site.
+    function setupMobileBackNavigation() {
+        window.addEventListener('popstate', (event) => {
+            // Se o estado for nulo, significa que voltamos para a home
+            if (!event.state) {
+                if (currentModuleId) {
+                    goToHomePage(false); // false para não adicionar outro estado
+                }
+            }
+        });
     }
 
     function init() {
         setupProtection();
         setupTheme();
+        setupMobileBackNavigation(); 
         
         const firebaseConfig = {
           apiKey: "AIzaSyDNet1QC72jr79u8JpnFMLBoPI26Re6o3g",
@@ -278,6 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // (Funções de Admin mantidas exatamente como no original)
     window.editUserData = async function(uid, oldName, oldCpf) {
         const newName = prompt("Novo nome do aluno:", oldName);
         if (newName === null) return;
@@ -550,6 +566,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Verifica bloqueio premium
         if (isPremiumContent && userIsNotPremium) { renderPremiumLockScreen(moduleContent[id].title); return; }
 
+        // [MELHORIA] Adiciona estado ao histórico para o botão voltar funcionar
+        if (currentModuleId !== id) {
+            history.pushState({ module: id }, null, `#${id}`);
+        }
+
         currentModuleId = id;
         localStorage.setItem('gateBombeiroLastModule', id);
         
@@ -625,6 +646,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 6. MODO AULA NORMAL (TEXTO + AUDIO)
             else {
+                // [MANTIDO] Layout e Classes originais preservados
                 let html = `
                     <h3 class="flex items-center text-3xl mb-6 pb-4 border-b"><i class="${d.iconClass} mr-4 ${getCategoryColor(id)} fa-fw"></i>${d.title}</h3>
                     
@@ -699,7 +721,6 @@ document.addEventListener('DOMContentLoaded', () => {
         currentSurvivalIndex = 0;
         survivalQuestions = [];
 
-        // Coleta todas as questões disponíveis no app
         const allQs = [];
         for(let i=1; i<=52; i++) { // Módulos de conteúdo
             const modId = `module${i}`;
@@ -729,7 +750,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const q = survivalQuestions[currentSurvivalIndex];
         if(!q) {
-            // Acabaram as questões (Raro)
             contentArea.innerHTML = `<h2 class="text-center text-2xl">Você zerou o banco de questões! Incrível!</h2>`;
             return;
         }
@@ -791,7 +811,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderRPGScene(sceneId, rpgData) {
         const scene = rpgData.scenes[sceneId];
-        if(!scene) return; // Erro ou fim
+        if(!scene) return; 
 
         let html = `
             <div class="max-w-2xl mx-auto animate-fade-in">
@@ -823,13 +843,13 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.rpg-choice-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const next = btn.dataset.next;
-                if(next === 'exit') loadModuleContent('module61'); // Reset
+                if(next === 'exit') loadModuleContent('module61'); 
                 else renderRPGScene(next, rpgData);
             });
         });
     }
 
-    // === LÓGICA ATUALIZADA V13: CARTEIRINHA RESPONSIVA (SEM BOTÃO IMPRIMIR) ===
+    // === CARTEIRINHA DIGITAL ===
     window.updateProfilePic = function(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
@@ -852,16 +872,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('id-card-container');
         if (!container) return;
 
-        // 1. Foto
         const savedPhoto = localStorage.getItem('user_profile_pic');
         const defaultPhoto = "https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png"; 
         const currentPhoto = savedPhoto || defaultPhoto;
 
-        // 2. Dados Persistidos
         const savedRG = localStorage.getItem('user_rg') || '';
         const savedDataNasc = localStorage.getItem('user_nasc') || '';
 
-        // 3. Matrícula Automática
         let matricula = 'BC-';
         if (currentUserData.createdAt && currentUserData.createdAt.seconds) {
             matricula += currentUserData.createdAt.seconds.toString().slice(-6);
@@ -869,19 +886,17 @@ document.addEventListener('DOMContentLoaded', () => {
             matricula += currentUserData.uid.substring(0, 6).toUpperCase();
         }
 
-        // 4. Validade
         const validityYear = "2026"; 
         const validUntilFull = new Date(currentUserData.acesso_ate).toLocaleDateString('pt-BR');
 
-        // CSS RESPONSIVO E ADAPTÁVEL
         const styleBlock = `
             <style>
                 .id-card-wrapper {
                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                     perspective: 1000px;
                     width: 100%;
-                    max-width: 600px; /* Largura máxima para desktop */
-                    aspect-ratio: 1.7 / 1; /* Mantém proporção de cartão */
+                    max-width: 600px;
+                    aspect-ratio: 1.7 / 1;
                     margin: 20px auto;
                     position: relative;
                     cursor: pointer;
@@ -903,20 +918,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     height: 100%;
                     -webkit-backface-visibility: hidden;
                     backface-visibility: hidden;
-                    border-radius: 3cqw; /* Borda arredondada responsiva */
+                    border-radius: 3cqw;
                     overflow: hidden;
                     box-shadow: 0 10px 25px rgba(0,0,0,0.3);
                     color: #ffffff;
-                    container-type: inline-size; /* Permite queries relativas ao container */
+                    container-type: inline-size;
                 }
-                
-                /* FRENTE */
                 .id-card-front {
                     background: linear-gradient(135deg, #0056b3 0%, #003366 100%);
                     display: flex;
                     flex-direction: row;
                 }
-                /* VERSO */
                 .id-card-back {
                     background: linear-gradient(135deg, #003366 0%, #0056b3 100%);
                     transform: rotateY(180deg);
@@ -928,8 +940,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     text-align: center;
                     border: 2px solid rgba(255,255,255,0.1);
                 }
-
-                /* Layout Frente */
                 .front-left {
                     width: 32%;
                     background-color: rgba(0, 0, 0, 0.2);
@@ -948,8 +958,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     justify-content: center;
                     position: relative;
                 }
-
-                /* Elementos Responsivos (usando cqw = container query width) */
                 .photo-box {
                     width: 18cqw;
                     height: 22cqw;
@@ -962,10 +970,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
                 }
                 .photo-box img { width: 100%; height: 100%; object-fit: cover; }
-                
                 .qr-box { background: white; padding: 0.5cqw; border-radius: 1cqw; }
                 .qr-box img { width: 14cqw; height: 14cqw; display: block; }
-
                 .logo-top-right {
                     position: absolute;
                     top: 3cqw;
@@ -977,16 +983,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     padding: 0.5cqw;
                     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
                 }
-
                 .student-name {
                     font-weight: 900;
-                    font-size: 4.5cqw; /* Fonte responsiva */
+                    font-size: 4.5cqw;
                     line-height: 1.1;
                     margin-bottom: 1cqw;
                     text-transform: uppercase;
                     color: #ffdd57;
                     text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-                    padding-right: 16cqw; /* Espaço para logo */
+                    padding-right: 16cqw;
                 }
                 .institute-name {
                     font-size: 2.5cqw;
@@ -995,7 +1000,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     font-weight: 600;
                     text-transform: uppercase;
                 }
-
                 .data-group { display: flex; flex-direction: column; gap: 1cqw; }
                 .data-row {
                     font-size: 2.8cqw;
@@ -1021,7 +1025,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     outline: none;
                     padding: 0;
                 }
-
                 .big-year {
                     position: absolute;
                     bottom: 2cqw;
@@ -1032,8 +1035,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     color: #ffdd57;
                     text-shadow: 0 2px 5px rgba(0,0,0,0.4);
                 }
-
-                /* Verso */
                 .back-icon { font-size: 10cqw; color: #ffdd57; margin-bottom: 2cqw; }
                 .legal-text { font-size: 2.5cqw; line-height: 1.4; margin-bottom: 3cqw; font-weight: 500; max-width: 95%; }
                 .validity-box {
@@ -1055,8 +1056,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     border-radius: 1cqw;
                     box-shadow: 0 3px 6px rgba(0,0,0,0.2);
                 }
-                
-                /* Ajuste Mobile: Em telas muito pequenas, ocupa 100% da largura */
                 @media (max-width: 480px) {
                     .id-card-wrapper { width: 95%; margin: 10px auto; }
                 }
@@ -1066,7 +1065,6 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = styleBlock + `
             <div class="id-card-wrapper" onclick="this.classList.toggle('flipped')">
                 <div class="id-card-inner">
-                    
                     <!-- FRENTE -->
                     <div class="id-card-front">
                         <div class="front-left">
@@ -1133,7 +1131,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
-    // === FUNÇÕES PADRÃO DO APP ===
+    // === FUNÇÕES PADRÃO DO APP (COM LAYOUT PRESERVADO) ===
     async function startSimuladoMode(moduleData) {
         loadingSpinner.classList.remove('hidden');
         contentArea.classList.add('hidden');
@@ -1393,7 +1391,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function goToHomePage() {
+    function goToHomePage(pushState = true) {
+        // [MELHORIA] pushState opcional para evitar loop no botão voltar
+        if (pushState) {
+            history.pushState(null, null, window.location.pathname);
+        }
+        
         localStorage.removeItem('gateBombeiroLastModule'); 
         
         if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
@@ -1803,6 +1806,169 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('close-congrats')?.addEventListener('click', () => { document.getElementById('congratulations-modal').classList.remove('show'); document.getElementById('modal-overlay').classList.remove('show'); });
         closeAchButton?.addEventListener('click', hideAchievementModal);
         achievementOverlay?.addEventListener('click', hideAchievementModal);
+    }
+
+    // --- CARREGAMENTO DE MÓDULOS (ROTEADOR PRINCIPAL) ---
+    async function loadModuleContent(id) {
+        if (!id || !moduleContent[id]) return;
+        const d = moduleContent[id];
+        const num = parseInt(id.replace('module', ''));
+        let moduleCategory = null;
+        for (const key in moduleCategories) {
+            const cat = moduleCategories[key];
+            if (num >= cat.range[0] && num <= cat.range[1]) { moduleCategory = cat; break; }
+        }
+        const isPremiumContent = moduleCategory && moduleCategory.isPremium;
+        const userIsNotPremium = !currentUserData || currentUserData.status !== 'premium';
+
+        // Verifica bloqueio premium
+        if (isPremiumContent && userIsNotPremium) { renderPremiumLockScreen(moduleContent[id].title); return; }
+
+        // [MELHORIA] Salva o estado no histórico para o botão voltar do celular funcionar
+        if (currentModuleId !== id) {
+            history.pushState({ module: id }, null, `#${id}`);
+        }
+
+        currentModuleId = id;
+        localStorage.setItem('gateBombeiroLastModule', id);
+        
+        if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+        if (simuladoTimerInterval) clearInterval(simuladoTimerInterval);
+
+        contentArea.style.opacity = '0';
+        loadingSpinner.classList.remove('hidden');
+        contentArea.classList.add('hidden'); 
+
+        setTimeout(async () => {
+            loadingSpinner.classList.add('hidden');
+            contentArea.classList.remove('hidden'); 
+
+            // 1. MODO SIMULADO
+            if (d.isSimulado) {
+                contentArea.innerHTML = `
+                    <h3 class="text-3xl mb-4 pb-4 border-b text-orange-600 dark:text-orange-500 flex items-center">
+                        <i class="${d.iconClass} mr-3"></i> ${d.title}
+                    </h3>
+                    <div>${d.content}</div>
+                    <div class="text-center mt-8">
+                        <button id="start-simulado-btn" class="action-button pulse-button text-xl px-8 py-4">
+                            <i class="fas fa-play mr-2"></i> INICIAR SIMULADO
+                        </button>
+                    </div>
+                `;
+                document.getElementById('start-simulado-btn').addEventListener('click', () => startSimuladoMode(d));
+            } 
+            
+            // 2. FERRAMENTAS (Módulo 59)
+            else if (id === 'module59') { 
+                contentArea.innerHTML = `
+                    <h3 class="text-3xl mb-4 pb-4 border-b text-blue-600 dark:text-blue-400 flex items-center">
+                        <i class="fas fa-tools mr-3"></i> Ferramentas Operacionais
+                    </h3>
+                    <div id="tools-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                `;
+                const grid = document.getElementById('tools-grid');
+                if (typeof ToolsApp !== 'undefined') {
+                    ToolsApp.renderPonto(grid);
+                    ToolsApp.renderEscala(grid);
+                    ToolsApp.renderPlanner(grid);
+                    ToolsApp.renderWater(grid);
+                    ToolsApp.renderNotes(grid);
+                    ToolsApp.renderHealth(grid);
+                } else {
+                    grid.innerHTML = '<p class="text-red-500">Erro: Script de Ferramentas não carregado.</p>';
+                }
+            }
+
+            // 3. MODO SOBREVIVÊNCIA (Módulo 60)
+            else if (d.isSurvival) {
+                contentArea.innerHTML = d.content;
+                const survivalScoreEl = document.getElementById('survival-last-score');
+                const lastScore = localStorage.getItem('lastSurvivalScore');
+                if(survivalScoreEl && lastScore) survivalScoreEl.innerText = `Seu recorde anterior: ${lastScore} pontos`;
+                
+                document.getElementById('start-survival-btn').addEventListener('click', initSurvivalGame);
+            }
+
+            // 4. RPG (Módulo 61)
+            else if (d.isRPG) {
+                contentArea.innerHTML = d.content;
+                document.getElementById('start-rpg-btn').addEventListener('click', () => initRPGGame(d.rpgData));
+            }
+
+            // 5. CARTEIRINHA (Módulo 62)
+            else if (d.isIDCard) {
+                contentArea.innerHTML = d.content;
+                renderDigitalID();
+            }
+
+            // 6. MODO AULA NORMAL (TEXTO + AUDIO)
+            else {
+                let html = `
+                    <h3 class="flex items-center text-3xl mb-6 pb-4 border-b"><i class="${d.iconClass} mr-4 ${getCategoryColor(id)} fa-fw"></i>${d.title}</h3>
+                    
+                    <div id="audio-btn" class="audio-controls mb-6" onclick="window.speakContent()">
+                        <i id="audio-btn-icon" class="fas fa-headphones text-lg mr-2"></i>
+                        <span id="audio-btn-text">Ouvir Aula</span>
+                    </div>
+
+                    <div>${d.content}</div>
+                `;
+
+                const isSpecialModule = ['module53', 'module54', 'module55', 'module56', 'module57', 'module58', 'module59', 'module60', 'module61', 'module62'].includes(id);
+
+                if (d.driveLink) {
+                    if (userIsNotPremium) {
+                        html += `<div class="mt-10 mb-8"><button onclick="document.getElementById('expired-modal').classList.add('show'); document.getElementById('name-modal-overlay').classList.add('show');" class="drive-button opacity-75 hover:opacity-100 relative overflow-hidden"><div class="absolute inset-0 bg-black/30 flex items-center justify-center z-10"><i class="fas fa-lock text-2xl mr-2"></i></div><span class="blur-[2px] flex items-center"><i class="fab fa-google-drive mr-3"></i> VER FOTOS E VÍDEOS (PREMIUM)</span></button><p class="text-xs text-center mt-2 text-gray-500"><i class="fas fa-lock text-yellow-500"></i> Recurso exclusivo para assinantes</p></div>`;
+                    } else {
+                        html += `<div class="mt-10 mb-8"><a href="${d.driveLink}" target="_blank" class="drive-button"><i class="fab fa-google-drive"></i>VER FOTOS E VÍDEOS DESTA MATÉRIA</a></div>`;
+                    }
+                }
+
+                const savedNote = localStorage.getItem('note-' + id) || '';
+
+                let allQuestions = null;
+                try { allQuestions = await loadQuestionBank(id); } catch(error) { console.error(error); }
+
+                if (allQuestions && allQuestions.length > 0) {
+                    const count = Math.min(allQuestions.length, 4); 
+                    const shuffledQuestions = shuffleArray([...allQuestions]); 
+                    const selectedQuestions = shuffledQuestions.slice(0, count);
+                    
+                    let quizHtml = `<div class="quiz-section-separator"></div><h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Exercícios de Fixação</h3>`;
+                    selectedQuestions.forEach((q, index) => {
+                        const questionNumber = index + 1;
+                        quizHtml += `<div class="quiz-block" data-question-id="${q.id}"><p class="font-semibold mt-4 mb-2 text-gray-700 dark:text-gray-200">${questionNumber}. ${q.question}</p><div class="quiz-options-group space-y-2 mb-4">`;
+                        for (const key in q.options) {
+                            quizHtml += `<div class="quiz-option" data-module="${id}" data-question-id="${q.id}" data-answer="${key}"><span class="option-key">${key.toUpperCase()})</span> ${q.options[key]}<span class="ripple"></span></div>`;
+                        }
+                        quizHtml += `</div><div id="feedback-${q.id}" class="feedback-area hidden"></div></div>`;
+                    });
+                    html += quizHtml;
+                } else {
+                    if (!d.id.startsWith('module9') && !isSpecialModule) {
+                        html += `<div class="warning-box mt-8"><p><strong><i class="fas fa-exclamation-triangle mr-2"></i> Exercícios não encontrados.</strong></p></div>`;
+                    }
+                }
+
+                html += `<div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 text-right"><button class="action-button conclude-button" data-module="${id}">Concluir Módulo</button></div><div class="mt-10 pt-6 border-t-2 border-dashed border-gray-200 dark:border-gray-700"><h4 class="text-xl font-bold mb-3 text-secondary dark:text-gray-200"><i class="fas fa-pencil-alt mr-2"></i>Anotações Pessoais</h4><p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Suas notas para este módulo. Elas são salvas automaticamente no seu navegador.</p><textarea id="notes-module-${id}" class="notes-textarea" placeholder="Digite suas anotações aqui...">${savedNote}</textarea></div>`;
+
+                contentArea.innerHTML = html;
+                setupQuizListeners();
+                setupConcludeButtonListener();
+                setupNotesListener(id);
+            }
+
+            contentArea.style.opacity = '1';
+            contentArea.style.transition = 'opacity 0.3s ease';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            updateActiveModuleInList();
+            updateNavigationButtons();
+            updateBreadcrumbs(d.title);
+            document.getElementById('module-nav').classList.remove('hidden');
+            closeSidebar();
+            document.getElementById('next-module')?.classList.remove('blinking-button');
+        }, 300);
     }
 
     init();
