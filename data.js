@@ -1761,7 +1761,7 @@ const moduleContent = {
         `
     },
 
-    'module61': {
+   'module61': {
         id: "module61",
         title: "61. Simulador de Ocorrências (RPG)",
         iconClass: "fas fa-gamepad",
@@ -1769,71 +1769,159 @@ const moduleContent = {
         content: `
             <div class="text-center">
                 <div class="mb-4 text-5xl text-orange-500"><i class="fas fa-fire-fighter"></i></div>
-                <h3 class="text-2xl font-bold mb-2">Simulador de Decisões</h3>
-                <p class="text-gray-600 dark:text-gray-300 mb-6">Você no comando. Suas escolhas salvam vidas ou causam desastres.</p>
+                <h3 class="text-2xl font-bold mb-2">Simulador de Decisões Operacionais</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-6">Você no comando. Escolha um cenário e teste sua capacidade de tomada de decisão sob pressão.</p>
                 <button id="start-rpg-btn" class="action-button text-lg px-6 py-3 bg-orange-600 hover:bg-orange-700">
-                    <i class="fas fa-book-open mr-2"></i> Iniciar Cenário: "O Galpão"
+                    <i class="fas fa-play mr-2"></i> INICIAR SIMULAÇÃO
                 </button>
             </div>
         `,
-        // DADOS DO RPG (CENÁRIOS)
         rpgData: {
-            start: 'cena1',
+            start: 'menu_inicial',
             scenes: {
-                'cena1': {
-                    text: "Você chega em um galpão industrial. Há fumaça negra saindo em lufadas (pulsando) pelas frestas da janela. A porta de entrada está quente ao toque e a tinta está borbulhando. O que você faz?",
-                    image: null, // Pode adicionar URL de imagem aqui
+                // --- MENU DE ESCOLHA ---
+                'menu_inicial': {
+                    text: "<strong>CENTRAL DE OPERAÇÕES:</strong><br>Equipe de prontidão. Temos 3 chamados pendentes. Qual ocorrência você assume?",
                     options: [
-                        { text: "Abrir a porta imediatamente para ventilar a fumaça.", next: 'gameover_backdraft' },
-                        { text: "Resfriar a porta, posicionar-se lateralmente e fazer uma abertura controlada.", next: 'cena2' }
+                        { text: "Incêndio em Galpão Industrial (Risco de Backdraft)", next: 'cenario1_inicio' },
+                        { text: "Acidente Veicular com Vítima Presa (Trauma)", next: 'cenario2_inicio' },
+                        { text: "Resgate em Espaço Confinado (Silo)", next: 'cenario3_inicio' }
                     ]
                 },
-                'gameover_backdraft': {
+
+                // --- CENÁRIO 1: INCÊNDIO (O Original, melhorado) ---
+                'cenario1_inicio': {
+                    text: "<strong>CENÁRIO 1: O GALPÃO</strong><br>Você chega em um galpão industrial. Há fumaça negra saindo em lufadas (pulsando) pelas frestas da janela. A porta de entrada está quente ao toque e a tinta está borbulhando. O que você faz?",
+                    options: [
+                        { text: "Abrir a porta imediatamente para ventilar a fumaça e entrar combatendo.", next: 'c1_gameover_backdraft' },
+                        { text: "Resfriar a porta, posicionar-se lateralmente e fazer uma abertura controlada (ventilação tática).", next: 'c1_entrada_segura' }
+                    ]
+                },
+                'c1_gameover_backdraft': {
                     text: "<strong>GAME OVER!</strong><br>Ao abrir a porta sem precaução, o oxigênio entrou violentamente e causou um <strong>BACKDRAFT</strong>. A explosão feriu gravemente você e sua equipe.",
                     type: 'death',
+                    options: [{ text: "Tentar Novamente", next: 'menu_inicial' }]
+                },
+                'c1_entrada_segura': {
+                    text: "Boa técnica! Você evitou o Backdraft. Ao entrar, a visibilidade é zero. Você escuta um gemido fraco vindo do fundo à direita. Porém, o teto sobre o centro do galpão estala e parece instável.",
                     options: [
-                        { text: "Tentar Novamente", next: 'cena1' }
+                        { text: "Avançar rapidamente pelo centro (caminho mais curto) para chegar logo à vítima.", next: 'c1_gameover_colapso' },
+                        { text: "Ir tateando pela parede (técnica de exploração) contornando o perigo.", next: 'c1_vitima_encontrada' }
                     ]
                 },
-                'cena2': {
-                    text: "Boa escolha! Você evitou o Backdraft. Ao entrar, a visibilidade é zero. Você escuta um gemido fraco vindo do fundo à direita. Porém, o teto sobre o centro do galpão estala e parece instável.",
-                    options: [
-                        { text: "Avançar rapidamente pelo centro para chegar logo à vítima.", next: 'gameover_colapso' },
-                        { text: "Ir tateando pela parede (técnica de exploração) contornando o perigo.", next: 'cena3' }
-                    ]
-                },
-                'gameover_colapso': {
+                'c1_gameover_colapso': {
                     text: "<strong>GAME OVER!</strong><br>O teto central colapsou sobre você. Em estruturas instáveis, nunca cruze áreas abertas sem avaliação. Siga sempre pelas paredes/vigas mestras.",
                     type: 'death',
-                    options: [
-                        { text: "Tentar Novamente", next: 'cena1' }
-                    ]
+                    options: [{ text: "Tentar Novamente", next: 'menu_inicial' }]
                 },
-                'cena3': {
+                'c1_vitima_encontrada': {
                     text: "Você alcança a vítima! É um homem inconsciente, pesado (aprox. 100kg). Seu ar está acabando (o alarme do SCBA apitou).",
                     options: [
-                        { text: "Tentar arrastar a vítima sozinho (Arrasto Rautek).", next: 'gameover_ar' },
-                        { text: "Pedir apoio via rádio (MAYDAY/Prioridade) e aguardar a dupla.", next: 'vitoria' }
+                        { text: "Tentar arrastar a vítima sozinho (Arrasto Rautek) para sair logo.", next: 'c1_gameover_ar' },
+                        { text: "Pedir apoio via rádio (MAYDAY/Prioridade) e aguardar a dupla para extração.", next: 'c1_vitoria' }
                     ]
                 },
-                'gameover_ar': {
-                    text: "<strong>GAME OVER!</strong><br>O esforço excessivo consumiu o resto do seu ar. Você desmaiou antes de sair. Nunca subestime o consumo de ar sob esforço.",
+                'c1_gameover_ar': {
+                    text: "<strong>GAME OVER!</strong><br>O esforço excessivo consumiu o resto do seu ar. Você desmaiou antes de sair. Nunca subestime o consumo de ar sob esforço pesado.",
                     type: 'death',
-                    options: [
-                        { text: "Tentar Novamente", next: 'cena1' }
-                    ]
+                    options: [{ text: "Tentar Novamente", next: 'menu_inicial' }]
                 },
-                'vitoria': {
+                'c1_vitoria': {
                     text: "<strong>PARABÉNS! MISSÃO CUMPRIDA!</strong><br>Sua dupla chegou, vocês dividiram o peso e saíram com segurança. A vítima foi entregue ao SAMU e sobreviveu.",
                     type: 'win',
+                    options: [{ text: "Voltar ao Menu", next: 'exit' }]
+                },
+
+                // --- CENÁRIO 2: TRAUMA (Veicular) ---
+                'cenario2_inicio': {
+                    text: "<strong>CENÁRIO 2: A COLISÃO</strong><br>Colisão frontal carro x poste. Vítima no banco do motorista, consciente, mas confusa. Fios elétricos caídos sobre o capô do carro. O que você faz primeiro?",
                     options: [
-                        { text: "Voltar ao Menu", next: 'exit' }
+                        { text: "Correr para abrir a porta e retirar a vítima (risco de incêndio).", next: 'c2_gameover_choque' },
+                        { text: "Isolar a área, solicitar corte de energia e ordenar à vítima que não saia.", next: 'c2_seguranca_cena' }
                     ]
+                },
+                'c2_gameover_choque': {
+                    text: "<strong>GAME OVER!</strong><br>O carro estava energizado pelos fios. Ao tocar na maçaneta, você sofreu uma descarga elétrica fatal. <strong>Segurança da cena vem primeiro!</strong>",
+                    type: 'death',
+                    options: [{ text: "Tentar Novamente", next: 'menu_inicial' }]
+                },
+                'c2_seguranca_cena': {
+                    text: "Cena segura (Neoenergia desligou a rede). Vítima reclama de muita dor no pescoço e falta de ar. O airbag foi acionado. Qual sua abordagem?",
+                    options: [
+                        { text: "Fazer a extricação rápida (Rautek) para levá-lo logo à ambulância.", next: 'c2_gameover_lesao' },
+                        { text: "Entrar pelo banco de trás, estabilizar a coluna cervical (manobra manual) e colocar colar cervical.", next: 'c2_estabilizacao' }
+                    ]
+                },
+                'c2_gameover_lesao': {
+                    text: "<strong>FALHA CRÍTICA!</strong><br>A vítima não estava em parada cardiorrespiratória nem risco iminente (fogo). A retirada rápida sem colar cervical agravou uma lesão na medula, deixando a vítima tetraplégica.",
+                    type: 'death',
+                    options: [{ text: "Tentar Novamente", next: 'menu_inicial' }]
+                },
+                'c2_estabilizacao': {
+                    text: "Cervical estabilizada. Agora é hora de retirar a vítima com a prancha longa (KED levaria muito tempo pois a vítima dessaturou). Ao mover a vítima, ela vomita. O que fazer?",
+                    options: [
+                        { text: "Continuar puxando para fora.", next: 'c2_gameover_aspiracao' },
+                        { text: "Lateralizar a prancha/bloco inteiro imediatamente para evitar broncoaspiração.", next: 'c2_vitoria' }
+                    ]
+                },
+                'c2_gameover_aspiracao': {
+                    text: "<strong>GAME OVER!</strong><br>A vítima broncoaspirou o vômito, obstruindo as vias aéreas e evoluindo para PCR hipóxica.",
+                    type: 'death',
+                    options: [{ text: "Tentar Novamente", next: 'menu_inicial' }]
+                },
+                'c2_vitoria': {
+                    text: "<strong>PARABÉNS!</strong><br>Vias aéreas preservadas, coluna íntegra. A vítima foi extraída com segurança e encaminhada ao hospital.",
+                    type: 'win',
+                    options: [{ text: "Voltar ao Menu", next: 'exit' }]
+                },
+
+                // --- CENÁRIO 3: ESPAÇO CONFINADO ---
+                'cenario3_inicio': {
+                    text: "<strong>CENÁRIO 3: O SILO</strong><br>Trabalhador desmaiado dentro de um silo de grãos. A família está desesperada gritando na entrada. Você é o supervisor. O que faz?",
+                    options: [
+                        { text: "Entrar prendendo a respiração para puxar ele rápido.", next: 'c3_gameover_gas' },
+                        { text: "Barrar a entrada de todos, medir a atmosfera e preparar o tripé de resgate.", next: 'c3_preparo' }
+                    ]
+                },
+                'c3_gameover_gas': {
+                    text: "<strong>GAME OVER!</strong><br>O ambiente estava com 15% de Oxigênio e presença de gases de fermentação. Você desmaiou em 30 segundos. Agora são duas vítimas.",
+                    type: 'death',
+                    options: [{ text: "Tentar Novamente", next: 'menu_inicial' }]
+                },
+                'c3_preparo': {
+                    text: "Atmosfera IPVS (Imediatamente Perigosa à Vida). Tripé montado. Você precisa de alguém para entrar e clipar a vítima. Quem vai?",
+                    options: [
+                        { text: "O trabalhador mais magro da empresa, amarrado em uma corda.", next: 'c3_gameover_amador' },
+                        { text: "Bombeiro equipado com SCBA (Autônomo) e cinto paraquedista, conectado ao guincho.", next: 'c3_resgate' }
+                    ]
+                },
+                'c3_gameover_amador': {
+                    text: "<strong>FALHA GRAVE!</strong><br>Nunca coloque civis em risco. O trabalhador entrou em pânico e travou no meio da descida.",
+                    type: 'death',
+                    options: [{ text: "Tentar Novamente", next: 'menu_inicial' }]
+                },
+                'c3_resgate': {
+                    text: "Bombeiro desceu. O gás H2S está aumentando. O detector apita ALARME ALTO. O bombeiro clipou a vítima mas a corda do guincho enroscou levemente.",
+                    options: [
+                        { text: "Mandar o bombeiro tirar a máscara para enxergar melhor e desenroscar.", next: 'c3_gameover_toxico' },
+                        { text: "Manter a calma, operar o guincho lentamente para cima e baixo até soltar, mantendo proteção respiratória.", next: 'c3_vitoria' }
+                    ]
+                },
+                'c3_gameover_toxico': {
+                    text: "<strong>GAME OVER!</strong><br>Tirar a máscara em ambiente IPVS é suicídio. O bombeiro inalou gás sulfídrico letal.",
+                    type: 'death',
+                    options: [{ text: "Tentar Novamente", next: 'menu_inicial' }]
+                },
+                'c3_vitoria': {
+                    text: "<strong>MISSÃO CUMPRIDA!</strong><br>Com paciência técnica, o sistema foi liberado e ambos foram içados em segurança.",
+                    type: 'win',
+                    options: [{ text: "Voltar ao Menu", next: 'exit' }]
                 }
             }
         }
     },
 
+    // MÓDULO CARTEIRINHA MANTIDO
     'module62': {
         id: "module62",
         title: "62. Carteirinha Digital",
@@ -1841,14 +1929,13 @@ const moduleContent = {
         isIDCard: true,
         content: `
             <div id="id-card-container" class="flex flex-col items-center justify-center py-6">
-                <!-- CARTEIRINHA SERÁ RENDERIZADA AQUI VIA JS -->
                 <div class="loader"></div>
             </div>
         `
     }
 };
 
-/* === MAPA DAS CATEGORIAS (ATUALIZADO) === */
+/* === MAPA DAS CATEGORIAS === */
 const moduleCategories = { 
     rh: { id: "rh", title: "Relações Humanas", achievementTitle: "Excelente Comunicador", range: [1, 5], icon: "fas fa-users" }, 
     legislacao: { id: "legislacao", title: "Legislação Aplicada", achievementTitle: "Mestre em Leis", range: [6, 10], icon: "fas fa-gavel" }, 
@@ -1858,8 +1945,6 @@ const moduleCategories = {
     nr33: { id: "nr33", title: "NR 33 - Espaço Confinado", achievementTitle: "Perito Confinado", range: [41, 42], icon: "fas fa-person-booth" }, 
     nr35: { id: "nr35", title: "NR 35 - Trabalho em Altura", achievementTitle: "Mestre do Ar", range: [43, 52], icon: "fas fa-hard-hat" },
     simulados: { id: "simulados", title: "Simulados por Matéria", achievementTitle: "Mestre dos Testes", range: [53, 57], icon: "fas fa-clipboard-check", isPremium: true },
-    
-    // BÔNUS E NOVIDADES
     bonus: { id: "bonus", title: "Bônus & Ferramentas", achievementTitle: "Caçador de Recompensas", range: [58, 62], icon: "fas fa-star", isPremium: true }
 };
 
