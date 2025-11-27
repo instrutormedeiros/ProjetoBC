@@ -5,25 +5,16 @@
 (function(){
   window.FirebaseCourse = window.FirebaseCourse || {};
 
-  // --- 1. INICIALIZAÇÃO SEGURA ---
+  // --- 1. INICIALIZAÇÃO ---
   window.FirebaseCourse.init = function(config){
     if (!config || !window.firebase) return;
-    
-    // Previne erro de "App already initialized"
-    if (!firebase.apps.length) {
-        firebase.initializeApp(config);
-    } else {
-        firebase.app(); // Usa a instância existente
-    }
-
+    if (!firebase.apps.length) firebase.initializeApp(config);
     window.__fbAuth = firebase.auth();
     window.__fbDB = firebase.firestore();
-    
-    // Persistência Local para manter login ao fechar navegador
     window.__fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
   };
 
-  // --- VALIDAÇÃO CPF (MANTIDA) ---
+  // --- VALIDAÇÃO CPF ---
   function validarCPF(cpf) {
       cpf = cpf.replace(/[^\d]+/g,'');
       if(cpf.length != 11 || /^(\d)\1+$/.test(cpf)) return false;
@@ -58,14 +49,13 @@
 
         const trialEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
         const sessionId = Date.now().toString();
+        // Captura Fingerprint
         const userAgent = navigator.userAgent; 
 
         const batch = __fbDB.batch();
         
-        // Reserva o CPF
         batch.set(cpfDocRef, { uid: uid });
         
-        // Cria o Perfil
         const userDocRef = __fbDB.collection('users').doc(uid);
         batch.set(userDocRef, {
           name: name,
@@ -74,7 +64,7 @@
           status: 'trial',
           acesso_ate: trialEndDate,
           current_session_id: sessionId,
-          last_device: userAgent, 
+          last_device: userAgent, // Grava o dispositivo
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
@@ -82,7 +72,6 @@
         return { uid, acesso_ate: trialEndDate };
 
     } catch (error) {
-        // Se falhar o banco, deleta o usuário criado na Auth para não gerar usuário fantasma
         if (userCred && userCred.user) {
             await userCred.user.delete().catch(err => console.error("Erro ao limpar usuário:", err));
         }
@@ -90,13 +79,13 @@
     }
   };
 
-  // --- 3. LOGIN ---
+  // --- 3. LOGIN COM ATUALIZAÇÃO DE FINGERPRINT ---
   window.FirebaseCourse.signInWithEmail = async function(email, password){
     const userCred = await __fbAuth.signInWithEmailAndPassword(email, password);
     const newSessionId = Date.now().toString();
     const userAgent = navigator.userAgent;
 
-    // Atualiza sessão para Single Device Login (derruba o anterior)
+    // Atualiza sessão e dispositivo
     __fbDB.collection('users').doc(userCred.user.uid).update({ 
         current_session_id: newSessionId,
         last_device: userAgent,
@@ -111,7 +100,6 @@
     window.location.reload();
   };
 
-  // --- 4. CHECK AUTH COM PROTEÇÃO ---
   window.FirebaseCourse.checkAuth = function(onLoginSuccess) {
     const loginModal = document.getElementById('name-prompt-modal');
     const loginOverlay = document.getElementById('name-modal-overlay');
@@ -120,40 +108,32 @@
 
     __fbAuth.onAuthStateChanged(async (user) => {
       if (user) {
-        // Listener em tempo real no documento do usuário
         unsubscribe = __fbDB.collection('users').doc(user.uid).onSnapshot((doc) => {
-            if (!doc.exists) {
-                console.warn("Usuário autenticado sem documento no Firestore.");
-                return; 
-            }
+            if (!doc.exists) return; 
             
             const userData = doc.data();
             const hoje = new Date();
             const validade = new Date(userData.acesso_ate);
 
-            // Verifica Validade do Plano
             if (hoje > validade) {
                 if(expiredModal) {
                     expiredModal.classList.add('show');
                     if(loginOverlay) loginOverlay.classList.add('show');
                 }
-                return; // Bloqueia o carregamento do app
+                return; 
             }
 
-            // Verifica Sessão Única (Anti-Compartilhamento de Senha)
             const localSession = localStorage.getItem('my_session_id');
             if (!localSession) {
                 localStorage.setItem('my_session_id', userData.current_session_id);
                 onLoginSuccess(user, userData);
             } else if (localSession !== userData.current_session_id) {
-                alert("Sua conta foi acessada em outro dispositivo. Você foi desconectado por segurança.");
+                alert("Conta acessada em outro dispositivo. Desconectando por segurança.");
                 localStorage.removeItem('my_session_id');
                 FirebaseCourse.signOutUser();
             } else {
                 onLoginSuccess(user, userData);
             }
-        }, (error) => {
-            console.error("Erro ao ouvir dados do usuário:", error);
         });
       } else {
         if (unsubscribe) unsubscribe();

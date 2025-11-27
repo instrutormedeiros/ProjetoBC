@@ -2,8 +2,7 @@
 <html lang="pt-BR" class="">
 <head>
     <meta charset="UTF-8">
-    <!-- Previne zoom no iOS -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Curso de Formação | Bombeiro Civil e Brigadista</title>
     
     <link rel="manifest" href="./manifest.json">
@@ -11,7 +10,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-    <!-- Ícones corrigidos para garantir que apareçam na instalação -->
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png">
     <link rel="shortcut icon" href="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png" type="image/png">
     
@@ -46,7 +44,7 @@
     <div id="print-watermark" style="display: none;"></div>
     <div id="toast-container"></div>
     
-    <!-- FAB ACESSIBILIDADE (DIREITA) -->
+    <!-- FAB ACESSIBILIDADE -->
     <div id="accessibility-fab" title="Menu de Acessibilidade">
         <i class="fas fa-universal-access"></i>
     </div>
@@ -57,7 +55,6 @@
         <button class="acc-btn" id="acc-spacing"><i class="fas fa-text-width"></i> Espaçamento</button>
     </div>
 
-    <!-- TRIAL NOTIFY -->
     <div id="trial-floating-notify" class="hidden fixed bottom-20 right-4 bg-white dark:bg-gray-800 border-l-4 border-yellow-500 text-gray-800 dark:text-white p-4 rounded-r shadow-2xl z-50 flex items-center gap-4 animate-slide-in max-w-sm">
         <div>
             <p class="font-bold text-sm" id="trial-title-text">Período de Experiência</p>
@@ -103,15 +100,19 @@
                     </div>
 
                     <div class="hidden lg:flex items-center space-x-4">
+                        
                         <button id="admin-panel-btn" class="hidden bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-3 rounded-full shadow-md transition-all" title="Painel Administrativo">
                             <i class="fas fa-crown"></i>
                         </button>
+
                         <button id="install-app-btn" class="hidden bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-full text-sm font-bold shadow-md transition-all flex items-center">
                             <i class="fas fa-download mr-2"></i> Instalar App
                         </button>
+
                         <button id="header-subscribe-btn" class="action-button pulse-button bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-6 rounded-full shadow-lg border-2 border-green-400 transform hover:scale-105 transition-all">
                             <i class="fas fa-crown mr-2"></i> ASSINAR
                         </button>
+                        
                         <button id="home-button-desktop" title="Voltar ao Início" class="text-gray-800 dark:text-gray-100 text-xl hover:text-orange-500 transition-colors">
                             <i class="fas fa-home"></i>
                         </button>
@@ -134,6 +135,7 @@
                         <button id="mobile-admin-btn" class="hidden bg-yellow-500 text-white text-sm px-3 py-1.5 rounded-full shadow-lg border border-yellow-400">
                             <i class="fas fa-crown"></i>
                         </button>
+
                         <button id="mobile-subscribe-btn" class="pulse-button bg-green-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg border border-green-400">
                             <i class="fas fa-crown"></i>
                         </button>
@@ -187,7 +189,6 @@
         
         <footer class="bg-gray-800 dark:bg-black text-white py-10 mt-12">
             <div class="container mx-auto px-4 md:px-6 max-w-7xl">
-                <!-- Conteúdo do Footer mantido igual -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
                         <h3 class="text-xl font-semibold mb-4 text-white">Formação Bombeiro Civil / Brigadista</h3>
@@ -227,7 +228,6 @@
     
     <button id="back-to-top" class="action-button fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full hidden justify-center items-center shadow-lg text-2xl"><i class="fas fa-arrow-up"></i></button>
     
-    <!-- MODAIS -->
     <div id="name-prompt-modal" class="modal premium-login-modal w-11/12 max-w-lg mx-auto overflow-hidden flex flex-col max-h-[90vh]" style="background: #0f172a; border: 1px solid #334155;">
         <div class="relative bg-gradient-to-b from-orange-600 to-gray-900 p-5 text-center overflow-hidden flex-shrink-0">
             <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
@@ -240,6 +240,7 @@
                 </h2>
             </div>
         </div>
+
         <div class="p-6 bg-gray-900 overflow-y-auto custom-scrollbar">
             <div class="space-y-4 text-left">
                 <div id="name-field-container" class="hidden transition-all duration-300">
@@ -271,24 +272,36 @@
                     </div>
                 </div>
             </div>
+            
             <p id="auth-feedback" class="text-center text-sm mt-4 text-orange-400 min-h-[24px] font-semibold"></p>
+            
             <div id="login-button-group" class="w-full mt-5 space-y-3">
                 <button id="login-button" class="w-full py-3.5 px-6 bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 bg-[length:200%_auto] animate-gradient hover:scale-[1.02] text-white font-bold text-base rounded-xl shadow-[0_10px_20px_rgba(234,88,12,0.3)] transition-all transform uppercase tracking-wide">
                     ACESSAR PLATAFORMA <i class="fas fa-arrow-right ml-2"></i>
                 </button>
+                
                 <div class="flex flex-col space-y-3 pt-4 items-center border-t border-gray-800 mt-4">
                     <div class="grid grid-cols-2 gap-4 w-full">
-                        <button id="show-signup-button" class="text-sm text-gray-300 hover:text-white hover:bg-gray-800 border border-gray-700 rounded-lg py-3 transition-all font-medium">Criar Conta</button>
-                        <button id="open-payment-login-btn" class="text-sm text-green-400 hover:text-white hover:bg-green-600/20 border border-green-500/30 rounded-lg py-3 font-bold transition-all pulse-button-slow"><i class="fas fa-gem mr-1"></i> Ver Planos</button>
+                        <button id="show-signup-button" class="text-sm text-gray-300 hover:text-white hover:bg-gray-800 border border-gray-700 rounded-lg py-3 transition-all font-medium">
+                            Criar Conta
+                        </button>
+                        <button id="open-payment-login-btn" class="text-sm text-green-400 hover:text-white hover:bg-green-600/20 border border-green-500/30 rounded-lg py-3 font-bold transition-all pulse-button-slow">
+                            <i class="fas fa-gem mr-1"></i> Ver Planos
+                        </button>
                     </div>
                 </div>
             </div>
+            
             <div id="signup-button-group" class="w-full mt-5 space-y-4 hidden">
                 <div class="my-2 border-y border-orange-500/30 py-2 px-2 bg-black/20 rounded text-center">
                     <p id="auth-message" class="text-sm text-orange-200">Cadastre-se para o Acesso Degustação.</p>
                 </div>
-                <button id="signup-button" class="w-full py-3.5 px-6 bg-gradient-to-r from-green-600 to-teal-600 text-white font-bold text-base rounded-xl shadow-lg hover:scale-[1.02] transition-all uppercase">Confirmar Cadastro</button>
-                <button id="show-login-button" class="w-full text-sm text-gray-400 hover:text-white hover:underline block text-center mt-2"><i class="fas fa-arrow-left mr-1"></i> Voltar para Login</button>
+                <button id="signup-button" class="w-full py-3.5 px-6 bg-gradient-to-r from-green-600 to-teal-600 text-white font-bold text-base rounded-xl shadow-lg hover:scale-[1.02] transition-all uppercase">
+                    Confirmar Cadastro
+                </button>
+                <button id="show-login-button" class="w-full text-sm text-gray-400 hover:text-white hover:underline block text-center mt-2">
+                    <i class="fas fa-arrow-left mr-1"></i> Voltar para Login
+                </button>
             </div>
         </div>
     </div>
@@ -304,7 +317,6 @@
         </div>
         <div class="p-4 md:p-8 bg-gray-900 overflow-y-auto custom-scrollbar">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Cards de Pagamento -->
                 <div class="bg-gray-800 rounded-xl border border-gray-700 hover:border-blue-500 transition-all hover:shadow-xl hover:-translate-y-1 relative overflow-hidden flex flex-col">
                     <div class="p-5 text-center bg-gray-800/50 border-b border-gray-700">
                         <h3 class="text-xl font-bold text-blue-400">MENSAL</h3>
@@ -312,45 +324,44 @@
                     </div>
                     <div class="p-5 flex-grow flex flex-col items-center">
                         <img src="./assets/img/29,99.jpeg" class="w-32 h-32 object-cover rounded-lg mb-4 border-2 border-blue-500/30" alt="QR Code Mensal">
+                        <ul class="text-sm text-gray-300 space-y-2 mb-6 text-left w-full pl-4"><li><i class="fas fa-check text-blue-500 mr-2"></i> Acesso por 30 dias</li><li><i class="fas fa-check text-blue-500 mr-2"></i> Conteúdo Completo</li></ul>
                         <a href="https://pay.infinitepay.io/pixmedeiros/VC1D-7jMqYZwKN-29,99" target="_blank" class="w-full block text-center bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition-colors mt-auto">ASSINAR MENSAL</a>
                     </div>
                 </div>
-                <!-- ... outros cards mantidos iguais ... -->
+                
                 <div class="bg-gray-800 rounded-xl border-2 border-orange-500 shadow-[0_0_20px_rgba(234,88,12,0.15)] transform md:-translate-y-2 relative overflow-hidden flex flex-col">
                     <div class="absolute top-0 right-0 bg-orange-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">MAIS POPULAR</div>
                     <div class="p-5 text-center bg-gradient-to-b from-gray-800 to-gray-700 border-b border-gray-600">
                         <h3 class="text-xl font-bold text-orange-500">SEMESTRAL</h3>
                         <div class="mt-3"><span class="text-sm text-gray-400">R$</span><span class="text-5xl font-extrabold text-white">49,90</span></div>
+                        <p class="text-xs text-orange-300 mt-1">Economia Gigante!</p>
                     </div>
                     <div class="p-5 flex-grow flex flex-col items-center">
                         <img src="./assets/img/49,99.jpeg" class="w-36 h-36 object-cover rounded-lg mb-4 border-2 border-orange-500" alt="QR Code Semestral">
+                        <ul class="text-sm text-gray-300 space-y-2 mb-6 text-left w-full pl-4"><li><i class="fas fa-check text-orange-500 mr-2"></i> Acesso por 6 meses</li><li><i class="fas fa-check text-orange-500 mr-2"></i> Vídeos e Fotos Liberados</li></ul>
                         <a href="https://pay.infinitepay.io/pixmedeiros/VC1D-6jVuG1yMV1-49,99" target="_blank" class="w-full block text-center bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-bold py-4 rounded-lg transition-all shadow-lg mt-auto animate-pulse">ASSINAR AGORA</a>
                     </div>
                 </div>
+                
                 <div class="bg-gray-800 rounded-xl border border-gray-700 hover:border-green-500 transition-all hover:shadow-xl hover:-translate-y-1 relative overflow-hidden flex flex-col">
                     <div class="p-5 text-center bg-gray-800/50 border-b border-gray-700">
                         <h3 class="text-xl font-bold text-green-400">ANUAL</h3>
                         <div class="mt-3"><span class="text-sm text-gray-400">R$</span><span class="text-4xl font-extrabold text-white">69,90</span></div>
+                        <p class="text-xs text-green-300 mt-1">Melhor Custo-Benefício</p>
                     </div>
                     <div class="p-5 flex-grow flex flex-col items-center">
                         <img src="./assets/img/69,99.jpeg" class="w-32 h-32 object-cover rounded-lg mb-4 border-2 border-green-500/30" alt="QR Code Anual">
+                        <ul class="text-sm text-gray-300 space-y-2 mb-6 text-left w-full pl-4"><li><i class="fas fa-check text-green-500 mr-2"></i> Acesso por 1 ANO</li><li><i class="fas fa-check text-green-500 mr-2"></i> Todo o Conteúdo</li><li><i class="fas fa-star text-yellow-500 mr-2"></i> Prioridade no Suporte</li></ul>
                         <a href="https://pay.infinitepay.io/pixmedeiros/VC1D-6jVuclBoT3-69,99" target="_blank" class="w-full block text-center bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg transition-colors mt-auto">ASSINAR ANUAL</a>
                     </div>
                 </div>
             </div>
-            
-            <!-- [NOVO] Botão WhatsApp para envio de comprovante -->
             <div class="mt-8 pt-4 border-t border-gray-800 text-center">
-                <a href="https://wa.me/5561992960683?text=Ol%C3%A1%2C%20estou%20enviando%20meu%20comprovante%20do%20Bravo%20Charlie" target="_blank" class="inline-block bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-6 rounded-full shadow-lg transition-transform hover:scale-105 mb-4">
-                    <i class="fab fa-whatsapp text-xl mr-2"></i> Já fiz o PIX! Enviar Comprovante
-                </a>
-                <p class="text-xs text-gray-500"><i class="fas fa-lock mr-1"></i> Pagamento 100% Seguro. Liberação imediata após compensação e envio do comprovante.</p>
+                <p class="text-xs text-gray-500"><i class="fas fa-lock mr-1"></i> Pagamento 100% Seguro via InfinitePay ou QRCode. Liberação imediata após compensação e envio do comprovante.</p>
                 <button id="logout-expired-button" class="mt-4 text-xs text-red-400 hover:text-red-300 underline">Sair da Conta</button>
             </div>
         </div>
     </div>
-
-    <!-- Demais modais mantidos (Admin, iOS, Reset...) -->
     <div id="admin-modal" class="modal w-[95%] max-w-6xl mx-auto overflow-hidden flex flex-col max-h-[90vh]" style="background: #f8f9fa; border: 1px solid #e2e8f0; color: #1a202c; z-index: 20002 !important;">
         <div class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
             <h2 class="text-xl font-bold text-white flex items-center">
@@ -358,6 +369,7 @@
             </h2>
             <button id="close-admin-modal" class="text-gray-400 hover:text-white text-2xl"><i class="fas fa-times"></i></button>
         </div>
+        
         <div class="p-4 bg-gray-100 overflow-y-auto flex-grow">
             <div class="overflow-x-auto bg-white rounded-lg shadow">
                 <table class="min-w-full divide-y divide-gray-200" id="admin-users-table">
@@ -365,7 +377,7 @@
                         <tr>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email / CPF</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dispositivo</th> 
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dispositivo</th> <!-- NOVA COLUNA -->
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vencimento</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
@@ -428,11 +440,11 @@
          <button id="focus-menu-exit" title="Sair" class="action-button w-12 h-12 rounded-full p-0 flex items-center justify-center bg-gray-600"><i class="fas fa-times"></i></button>
     </div>
 
-    <!-- SCRIPTS -->
+    <!-- SCRIPTS (A ORDEM IMPORTA) -->
     <script src="quizzes.js" defer></script>
     <script src="data.js" defer></script>
     <script src="course.js" defer></script>
-    <script src="tools_logic.js" defer></script> 
+    <script src="tools_logic.js" defer></script> <!-- NOVA LÓGICA FERRAMENTAS -->
     <script src="firebase-init.js" defer></script>
     <script src="app_final.js" defer></script>
     
@@ -451,28 +463,33 @@
                 const chatHost = document.getElementById('voiceflow-chat');
                 if (chatHost && chatHost.shadowRoot) {
                     clearInterval(checkChat);
-                    
-                    // [CORREÇÃO] Botão do Voiceflow na ESQUERDA, alinhado com o FAB da direita
                     const style = document.createElement('style');
                     style.textContent = `
-                        .vfrc-launcher {
-                            bottom: 80px !important; 
-                            left: 20px !important;
-                            right: auto !important; /* Remove alinhamento à direita */
-                            position: fixed !important;
-                            box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-                            z-index: 49 !important;
-                        }
-                        /* Ajuste do chat aberto para mobile */
                         @media (max-width: 768px) {
-                            .vfrc-widget--chat {
-                                bottom: 140px !important; /* Acima do botão */
+                            .vfrc-launcher {
+                                bottom: 110px !important; 
                                 left: 20px !important;
                                 right: auto !important;
+                                position: fixed !important;
+                                opacity: 0.6 !important;
+                                box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+                            }
+                            .vfrc-widget--chat {
+                                bottom: 110px !important; 
+                                height: 65vh !important; 
                                 width: 85vw !important;
-                                height: 60vh !important;
+                                left: 20px !important;
+                                right: auto !important;
+                                border-radius: 16px !important;
+                            }
+                            .vfrc-widget.is-mobile {
+                                background: transparent !important;
+                                width: auto !important;
+                                height: auto !important;
+                                position: static !important;
                             }
                         }
+                        .vfrc-launcher:active, .vfrc-launcher:hover { opacity: 1 !important; }
                     `;
                     chatHost.shadowRoot.appendChild(style);
                 }
