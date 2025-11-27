@@ -1,4 +1,4 @@
-/* === ARQUIVO app_final.js (VERSÃO V12 - CARTEIRINHA AZUL VIBRANTE, GRANDE E SEM CORTES) === */
+/* === ARQUIVO app_final.js (VERSÃO V13 - CARTEIRINHA RESPONSIVA SEM IMPRESSÃO) === */
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -829,7 +829,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // === LÓGICA ATUALIZADA V12: CARTEIRINHA DIGITAL (MAIOR, AZUL VIBRANTE, SEM CORTES) ===
+    // === LÓGICA ATUALIZADA V13: CARTEIRINHA RESPONSIVA (SEM BOTÃO IMPRIMIR) ===
     window.updateProfilePic = function(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
@@ -861,7 +861,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedRG = localStorage.getItem('user_rg') || '';
         const savedDataNasc = localStorage.getItem('user_nasc') || '';
 
-        // 3. Matrícula Automática (Baseada no UID ou Data de Criação)
+        // 3. Matrícula Automática
         let matricula = 'BC-';
         if (currentUserData.createdAt && currentUserData.createdAt.seconds) {
             matricula += currentUserData.createdAt.seconds.toString().slice(-6);
@@ -870,19 +870,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 4. Validade
-        const validityYear = "2026"; // Ano fixo
+        const validityYear = "2026"; 
         const validUntilFull = new Date(currentUserData.acesso_ate).toLocaleDateString('pt-BR');
 
-        // INJEÇÃO DE CSS ESPECÍFICO PARA A CARTEIRINHA (MAIOR E COM NOVAS CORES)
+        // CSS RESPONSIVO E ADAPTÁVEL
         const styleBlock = `
             <style>
                 .id-card-wrapper {
                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                     perspective: 1000px;
                     width: 100%;
-                    max-width: 600px; /* TAMANHO AUMENTADO */
-                    height: 350px;    /* ALTURA AUMENTADA */
-                    margin: 20px auto; /* Margem centralizada */
+                    max-width: 600px; /* Largura máxima para desktop */
+                    aspect-ratio: 1.7 / 1; /* Mantém proporção de cartão */
+                    margin: 20px auto;
                     position: relative;
                     cursor: pointer;
                 }
@@ -903,18 +903,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     height: 100%;
                     -webkit-backface-visibility: hidden;
                     backface-visibility: hidden;
-                    border-radius: 20px; /* Bordas mais arredondadas */
+                    border-radius: 3cqw; /* Borda arredondada responsiva */
                     overflow: hidden;
-                    box-shadow: 0 15px 35px rgba(0,0,0,0.3); /* Sombra mais forte */
-                    color: #ffffff; /* Texto branco puro */
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+                    color: #ffffff;
+                    container-type: inline-size; /* Permite queries relativas ao container */
                 }
-                /* FRENTE: Azul Vibrante */
+                
+                /* FRENTE */
                 .id-card-front {
-                    background: linear-gradient(135deg, #0056b3 0%, #003366 100%); /* Azul mais forte e profissional */
+                    background: linear-gradient(135deg, #0056b3 0%, #003366 100%);
                     display: flex;
                     flex-direction: row;
                 }
-                /* VERSO: Azul Vibrante Invertido */
+                /* VERSO */
                 .id-card-back {
                     background: linear-gradient(135deg, #003366 0%, #0056b3 100%);
                     transform: rotateY(180deg);
@@ -922,157 +924,141 @@ document.addEventListener('DOMContentLoaded', () => {
                     flex-direction: column;
                     justify-content: center;
                     align-items: center;
-                    padding: 25px;
+                    padding: 4cqw;
                     text-align: center;
-                    border: 2px solid rgba(255,255,255,0.1); /* Borda sutil */
+                    border: 2px solid rgba(255,255,255,0.1);
                 }
+
                 /* Layout Frente */
                 .front-left {
-                    width: 32%; /* Levemente ajustado */
-                    background-color: rgba(0, 0, 0, 0.2); /* Fundo mais escuro para contraste */
+                    width: 32%;
+                    background-color: rgba(0, 0, 0, 0.2);
                     display: flex;
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
-                    padding: 15px;
-                    border-right: 2px solid rgba(255,255,255,0.1);
+                    padding: 2cqw;
+                    border-right: 1px solid rgba(255,255,255,0.1);
                 }
                 .front-right {
                     width: 68%;
-                    padding: 25px 30px; /* Mais espaçamento interno */
+                    padding: 3cqw 4cqw;
                     display: flex;
                     flex-direction: column;
+                    justify-content: center;
                     position: relative;
-                    justify-content: center; /* Centraliza verticalmente */
                 }
+
+                /* Elementos Responsivos (usando cqw = container query width) */
                 .photo-box {
-                    width: 110px; /* Foto maior */
-                    height: 140px;
+                    width: 18cqw;
+                    height: 22cqw;
                     background: #fff;
-                    border: 4px solid white;
+                    border: 0.5cqw solid white;
                     overflow: hidden;
-                    margin-bottom: 15px;
-                    border-radius: 8px;
+                    margin-bottom: 2cqw;
+                    border-radius: 1cqw;
                     position: relative;
                     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
                 }
-                .photo-box img {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                }
-                .qr-box {
-                    background: white;
-                    padding: 4px;
-                    border-radius: 8px;
-                    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-                }
-                .qr-box img {
-                    width: 85px; /* QR Code maior */
-                    height: 85px;
-                    display: block;
-                }
+                .photo-box img { width: 100%; height: 100%; object-fit: cover; }
+                
+                .qr-box { background: white; padding: 0.5cqw; border-radius: 1cqw; }
+                .qr-box img { width: 14cqw; height: 14cqw; display: block; }
+
                 .logo-top-right {
                     position: absolute;
-                    top: 20px;
-                    right: 20px;
-                    width: 90px; /* LOGO BEM MAIOR */
-                    height: 90px;
+                    top: 3cqw;
+                    right: 3cqw;
+                    width: 15cqw;
+                    height: 15cqw;
                     background: white;
                     border-radius: 50%;
-                    padding: 4px;
+                    padding: 0.5cqw;
                     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
                 }
+
                 .student-name {
                     font-weight: 900;
-                    font-size: 22px; /* Fonte maior */
-                    line-height: 1.2;
-                    margin-bottom: 5px;
+                    font-size: 4.5cqw; /* Fonte responsiva */
+                    line-height: 1.1;
+                    margin-bottom: 1cqw;
                     text-transform: uppercase;
+                    color: #ffdd57;
                     text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-                    color: #ffdd57; /* Nome em amarelo destaque */
+                    padding-right: 16cqw; /* Espaço para logo */
                 }
                 .institute-name {
-                    font-size: 14px; /* Fonte maior */
+                    font-size: 2.5cqw;
                     opacity: 0.9;
-                    margin-bottom: 20px;
+                    margin-bottom: 3cqw;
                     font-weight: 600;
                     text-transform: uppercase;
-                    letter-spacing: 0.5px;
                 }
-                .data-group {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px; /* Espaçamento entre linhas de dados */
-                }
+
+                .data-group { display: flex; flex-direction: column; gap: 1cqw; }
                 .data-row {
-                    font-size: 15px; /* Fonte maior */
+                    font-size: 2.8cqw;
                     font-weight: 500;
                     display: flex;
                     align-items: center;
                 }
                 .data-label {
                     font-weight: 800;
-                    margin-right: 8px;
-                    color: #a0aec0; /* Cinza claro para rótulos */
+                    margin-right: 1.5cqw;
+                    color: #a0aec0;
                     text-transform: uppercase;
-                    font-size: 13px;
+                    font-size: 2.4cqw;
                 }
                 .editable-input {
                     background: transparent;
                     border: none;
-                    border-bottom: 2px dashed rgba(255,255,255,0.4);
+                    border-bottom: 1px dashed rgba(255,255,255,0.4);
                     color: white;
-                    font-size: 15px; /* Fonte maior */
+                    font-size: 2.8cqw;
                     font-weight: 600;
-                    width: 120px; /* Input mais largo */
+                    width: 20cqw;
                     outline: none;
-                    padding-bottom: 2px;
+                    padding: 0;
                 }
-                .editable-input::placeholder { color: rgba(255,255,255,0.5); }
+
                 .big-year {
                     position: absolute;
-                    bottom: 20px;
-                    right: 25px;
-                    font-size: 58px; /* ANO BEM MAIOR */
+                    bottom: 2cqw;
+                    right: 3cqw;
+                    font-size: 9cqw;
                     font-weight: 900;
-                    opacity: 1;
                     line-height: 1;
-                    text-shadow: 0 3px 6px rgba(0,0,0,0.4);
-                    color: #ffdd57; /* Ano em amarelo destaque */
+                    color: #ffdd57;
+                    text-shadow: 0 2px 5px rgba(0,0,0,0.4);
                 }
-                /* Layout Verso */
-                .back-icon {
-                    font-size: 64px; /* Ícone maior */
-                    color: #ffdd57; /* Amarelo */
-                    margin-bottom: 15px;
-                    filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));
-                }
-                .legal-text {
-                    font-size: 12px; /* Fonte maior */
-                    line-height: 1.5;
-                    margin-bottom: 20px;
-                    font-weight: 500;
-                    max-width: 90%;
-                }
+
+                /* Verso */
+                .back-icon { font-size: 10cqw; color: #ffdd57; margin-bottom: 2cqw; }
+                .legal-text { font-size: 2.5cqw; line-height: 1.4; margin-bottom: 3cqw; font-weight: 500; max-width: 95%; }
                 .validity-box {
                     background: rgba(0,0,0,0.3);
-                    padding: 8px 15px;
-                    border-radius: 6px;
-                    font-size: 14px; /* Fonte maior */
+                    padding: 1.5cqw 3cqw;
+                    border-radius: 1cqw;
+                    font-size: 3cqw;
                     font-weight: 700;
-                    margin-bottom: 15px;
+                    margin-bottom: 2cqw;
                     border: 1px solid rgba(255,255,255,0.2);
                 }
                 .course-title {
-                    font-size: 18px; /* Fonte maior */
+                    font-size: 3.5cqw;
                     font-weight: 900;
                     text-transform: uppercase;
-                    background: #ffdd57; /* Fundo amarelo */
-                    color: #003366; /* Texto azul escuro */
-                    padding: 6px 15px;
-                    border-radius: 6px;
+                    background: #ffdd57;
+                    color: #003366;
+                    padding: 1cqw 3cqw;
+                    border-radius: 1cqw;
                     box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+                }
+                
+                /* Ajuste Mobile: Em telas muito pequenas, ocupa 100% da largura */
+                @media (max-width: 480px) {
+                    .id-card-wrapper { width: 95%; margin: 10px auto; }
                 }
             </style>
         `;
@@ -1143,7 +1129,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             <div class="text-center mt-8 space-y-4">
                 <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center"><i class="fas fa-hand-pointer animate-bounce mr-2"></i> Toque no cartão para ver o verso</p>
-                <button onclick="window.print()" class="action-button py-3 px-6 text-lg flex items-center justify-center mx-auto"><i class="fas fa-print mr-2"></i> Imprimir Carteirinha</button>
             </div>
         `;
     }
