@@ -567,3 +567,35 @@ body.focus-mode #main-wrapper { padding-bottom: 2rem; }
     background: linear-gradient(125deg, rgba(255,255,255,0) 40%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 60%);
     pointer-events: none;
 }
+
+/* ... (Mantenha todo o seu CSS anterior aqui) ... */
+
+/* ESTILO DO PLAYER DE ÁUDIO ATIVO */
+#audio-controls-container {
+    transition: all 0.3s ease;
+}
+#audio-controls-container.audio-active {
+    background-color: #fee2e2; /* Vermelho bem claro para indicar atividade */
+    border-color: #fca5a5;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
+}
+.dark #audio-controls-container.audio-active {
+    background-color: #7f1d1d;
+    border-color: #ef4444;
+}
+.dark #audio-speed-select option {
+    background-color: #1f2937;
+}
+
+/* FLUXO DO BOTÃO DE WHATSAPP */
+.fa-whatsapp {
+    font-weight: 900;
+}
+
+/* AJUSTES FINAIS PARA CARTEIRINHA */
+.id-card-static {
+    transition: transform 0.3s ease;
+}
+.id-card-static:hover {
+    transform: translateY(-5px);
+}
