@@ -1,4 +1,4 @@
-/* === ARQUIVO app_final.js (VERSÃO FINAL COMPLETA - 100% FUNCIONAL) === */
+/* === ARQUIVO app_final.js (VERSÃO FINAL COMPLETA - CORRIGIDA) === */
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log("Sistema Bravo Charlie Iniciado - Versão Estável");
@@ -199,7 +199,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function onLoginSuccess(user, userData) {
         console.log("Login efetuado com sucesso para:", userData.name);
-        currentUserData = userData; 
+        
+        // CORREÇÃO: Mesclamos os dados do banco com o UID do usuário autenticado
+        // Isso garante que currentUserData.uid sempre exista para a carteirinha
+        currentUserData = { ...userData, uid: user.uid }; 
+        
         document.body.setAttribute('data-app-ready', 'true');
         
         // Remove telas de login e bloqueio
@@ -362,7 +366,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <i class="${d.iconClass} mr-4 text-orange-500 fa-fw"></i>${d.title}
             </h3>
             
-            <!-- NOVO PLAYER DE ÁUDIO -->
             <div id="audio-player-container" class="flex flex-wrap items-center gap-3 mb-6 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 w-full md:w-auto shadow-sm transition-all duration-300">
                 
                 <button id="audio-play-btn" class="flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold shadow-sm transition-colors min-w-[120px]">
@@ -429,8 +432,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedPhoto = localStorage.getItem('user_profile_pic');
         const defaultPhoto = "https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png"; 
         const currentPhoto = savedPhoto || defaultPhoto;
-        const matricula = currentUserData.uid.substring(0, 8).toUpperCase();
-        const validade = new Date(currentUserData.acesso_ate).toLocaleDateString('pt-BR');
+        
+        // --- CORREÇÃO APLICADA ---
+        // Garante que existe um ID para evitar o erro de substring
+        const userId = currentUserData.uid || currentUserData.id || "ALUNO-0000";
+        const matricula = userId.substring(0, 8).toUpperCase();
+        
+        // Proteção para a data
+        const validade = currentUserData.acesso_ate ? new Date(currentUserData.acesso_ate).toLocaleDateString('pt-BR') : "--/--/----";
+        // -------------------------
 
         const style = `
             <style>
