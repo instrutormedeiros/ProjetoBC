@@ -1,15 +1,16 @@
-/* === ARQUIVO app_final.js (VERSÃO FINAL INTEGRADA - ESTRUTURA ORIGINAL + MELHORIAS) === */
+/* === ARQUIVO app_final.js (VERSÃO COMPLETA V14 - CORRIGIDA E ATUALIZADA) === */
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // 1. SEGURANÇA: Verifica se o conteúdo (data.js) carregou
+    // 1. SEGURANÇA CRÍTICA: Verifica se o conteúdo (data.js) foi carregado
     if (typeof window.moduleContent === 'undefined') {
         console.error("ERRO CRÍTICO: data.js não carregado.");
-        document.body.innerHTML = '<div style="color:white; text-align:center; padding:50px; font-family:sans-serif;">Erro de conexão. Por favor, recarregue a página.</div>';
+        // Exibe mensagem amigável se falhar
+        document.body.innerHTML = '<div style="color:#333; text-align:center; padding:50px; font-family:sans-serif; background:#f8f9fa; height:100vh; display:flex; align-items:center; justify-content:center;"><div><h2 style="margin-bottom:10px">Erro de Conexão</h2><p>O conteúdo do curso não pôde ser carregado.<br>Verifique sua internet e recarregue a página.</p><button onclick="location.reload()" style="margin-top:20px; padding:10px 20px; background:#007bff; color:white; border:none; border-radius:5px; cursor:pointer;">Recarregar</button></div></div>';
         return;
     }
 
-    // --- VARIÁVEIS GLOBAIS DO APP ---
+    // --- VARIÁVEIS GLOBAIS ---
     const contentArea = document.getElementById('content-area');
     const totalModules = Object.keys(window.moduleContent || {}).length; 
     let completedModules = JSON.parse(localStorage.getItem('gateBombeiroCompletedModules_v3')) || [];
@@ -53,39 +54,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminOverlay = document.getElementById('admin-modal-overlay');
     const closeAdminBtn = document.getElementById('close-admin-modal');
 
-    // --- ACESSIBILIDADE ---
-    const fab = document.getElementById('accessibility-fab');
-    const menu = document.getElementById('accessibility-menu');
-    let fontSizeScale = 1;
-
-    if (fab) {
-        fab.addEventListener('click', () => menu.classList.toggle('show'));
-    }
-    
-    document.getElementById('acc-font-plus')?.addEventListener('click', () => {
-        fontSizeScale += 0.1;
-        document.documentElement.style.fontSize = (16 * fontSizeScale) + 'px';
-    });
-    document.getElementById('acc-font-minus')?.addEventListener('click', () => {
-        if(fontSizeScale > 0.8) fontSizeScale -= 0.1;
-        document.documentElement.style.fontSize = (16 * fontSizeScale) + 'px';
-    });
-    document.getElementById('acc-dyslexic')?.addEventListener('click', () => {
-        document.body.classList.toggle('dyslexic-font');
-    });
-    document.getElementById('acc-spacing')?.addEventListener('click', () => {
-        document.body.classList.toggle('high-spacing');
-    });
-
-    // --- FUNÇÃO DE INICIALIZAÇÃO ---
+    // --- INICIALIZAÇÃO DO SISTEMA ---
     function init() {
         setupProtection();
         setupTheme();
         
-        // Melhorias solicitadas injetadas no início
-        injectVoiceflowFix(); 
-        injectWhatsAppButton();
+        // Tenta injetar melhorias com tratamento de erro para não quebrar o app
+        try { injectVoiceflowFix(); } catch(e) { console.warn("Aviso Voiceflow:", e); }
+        try { injectWhatsAppButton(); } catch(e) { console.warn("Aviso WhatsApp:", e); }
         
+        setupMobileBackNavigation();
+
         const firebaseConfig = {
           apiKey: "AIzaSyDNet1QC72jr79u8JpnFMLBoPI26Re6o3g",
           authDomain: "projeto-bravo-charlie-app.firebaseapp.com",
@@ -100,20 +79,50 @@ document.addEventListener('DOMContentLoaded', () => {
             FirebaseCourse.init(firebaseConfig);
             setupAuthEventListeners(); 
             
-            document.getElementById('logout-button')?.addEventListener('click', FirebaseCourse.signOutUser);
-            document.getElementById('logout-expired-button')?.addEventListener('click', FirebaseCourse.signOutUser);
-            document.getElementById('logout-button-header')?.addEventListener('click', FirebaseCourse.signOutUser);
+            // Listeners de Logout Global
+            const logoutBtns = document.querySelectorAll('[id^="logout-"]');
+            logoutBtns.forEach(btn => {
+                btn.addEventListener('click', FirebaseCourse.signOutUser);
+            });
 
+            // Verifica autenticação ao iniciar
             FirebaseCourse.checkAuth((user, userData) => {
                 onLoginSuccess(user, userData);
             });
+        } else {
+            console.error("Módulo FirebaseCourse não encontrado.");
         }
         
         setupHeaderScroll();
-        setupRippleEffects();
+        
+        // Inicializa Menu de Acessibilidade
+        const fab = document.getElementById('accessibility-fab');
+        const menu = document.getElementById('accessibility-menu');
+        if(fab && menu) {
+            fab.addEventListener('click', () => menu.classList.toggle('show'));
+        }
+        
+        setupAccessibilityListeners();
     }
 
-    // --- MELHORIA 1: FIX VOICEFLOW (Alinhamento Esquerda/Baixo) ---
+    function setupAccessibilityListeners() {
+        document.getElementById('acc-font-plus')?.addEventListener('click', () => {
+            let currentSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+            document.documentElement.style.fontSize = (currentSize + 1) + 'px';
+        });
+        document.getElementById('acc-font-minus')?.addEventListener('click', () => {
+            let currentSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+            if(currentSize > 10) document.documentElement.style.fontSize = (currentSize - 1) + 'px';
+        });
+        document.getElementById('acc-dyslexic')?.addEventListener('click', () => {
+            document.body.classList.toggle('dyslexic-font');
+        });
+        document.getElementById('acc-spacing')?.addEventListener('click', () => {
+            document.body.classList.toggle('high-spacing');
+        });
+    }
+
+    // --- MELHORIA 1: FIX POSIÇÃO VOICEFLOW ---
     function injectVoiceflowFix() {
         const checkChat = setInterval(() => {
             const chatHost = document.getElementById('voiceflow-chat');
@@ -127,9 +136,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         right: auto !important;
                         position: fixed !important;
                         z-index: 9999 !important;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
                     }
                     @media (max-width: 768px) {
                         .vfrc-launcher { bottom: 80px !important; left: 20px !important; }
+                        .vfrc-widget--chat { bottom: 140px !important; left: 20px !important; right: auto !important; width: 85vw !important; height: 60vh !important; }
                     }
                 `;
                 chatHost.shadowRoot.appendChild(style);
@@ -137,207 +148,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     }
 
-    // --- MELHORIA 2: BOTÃO WHATSAPP NO MODAL PIX ---
+    // --- MELHORIA 2: BOTÃO WHATSAPP (CORREÇÃO DE INSERÇÃO) ---
     function injectWhatsAppButton() {
-        const modalBody = document.querySelector('#expired-modal .overflow-y-auto');
-        if (modalBody && !document.getElementById('whatsapp-proof-btn')) {
-            const container = document.createElement('div');
-            container.className = "mt-6 pt-4 border-t border-gray-700 text-center";
-            container.innerHTML = `
-                <a id="whatsapp-proof-btn" href="https://wa.me/5561992960683?text=Ol%C3%A1%2C%20estou%20enviando%20meu%20comprovante%20do%20Bravo%20Charlie" target="_blank" class="inline-block w-full md:w-auto bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform hover:scale-105 mb-2 no-underline">
-                    <i class="fab fa-whatsapp text-xl mr-2"></i> Já fiz o PIX! Enviar Comprovante
-                </a>
-                <p class="text-xs text-gray-500 mt-2">Envie o comprovante para liberação imediata pelo Admin.</p>
-            `;
-            const logoutBtn = document.getElementById('logout-expired-button');
-            if(logoutBtn) {
-                modalBody.insertBefore(container, logoutBtn);
-            } else {
-                modalBody.appendChild(container);
-            }
-        }
-    }
+        if (document.getElementById('whatsapp-proof-btn')) return;
 
-    // --- LÓGICA DE ÁUDIO ATUALIZADA (PLAY/PAUSE/SPEED) ---
-    // Substitui a função window.speakContent antiga
-    window.initAudioControls = function() {
-        const playBtn = document.getElementById('audio-play-btn');
-        const pauseBtn = document.getElementById('audio-pause-btn');
-        const speedSelect = document.getElementById('audio-speed-select');
-        const playIcon = document.getElementById('audio-play-icon');
-        const playText = document.getElementById('audio-play-text');
-        const pauseIcon = document.getElementById('audio-pause-icon');
-
-        if(!playBtn || !pauseBtn) return;
-
-        playBtn.addEventListener('click', () => {
-            if (isSpeaking) {
-                // Parar
-                window.speechSynthesis.cancel();
-                isSpeaking = false;
-                isPaused = false;
-                updateAudioButtons(false, false);
-            } else {
-                // Tocar
-                speakContent();
-            }
-        });
-
-        pauseBtn.addEventListener('click', () => {
-            if (!isSpeaking) return;
-            
-            if (isPaused) {
-                window.speechSynthesis.resume();
-                isPaused = false;
-                pauseIcon.className = "fas fa-pause";
-            } else {
-                window.speechSynthesis.pause();
-                isPaused = true;
-                pauseIcon.className = "fas fa-play";
-            }
-        });
-
-        if(speedSelect) {
-            speedSelect.addEventListener('change', (e) => {
-                currentSpeed = parseFloat(e.target.value);
-                if (isSpeaking) {
-                    window.speechSynthesis.cancel();
-                    speakContent();
-                }
-            });
-        }
-
-        function updateAudioButtons(speaking, paused) {
-            if (speaking) {
-                playIcon.className = "fas fa-stop";
-                playText.textContent = "Parar Áudio";
-                playBtn.classList.add('audio-playing'); 
-                if(pauseBtn) pauseBtn.disabled = false;
-                if(pauseIcon) pauseIcon.className = paused ? "fas fa-play" : "fas fa-pause";
-            } else {
-                playIcon.className = "fas fa-headphones";
-                playText.textContent = "Ouvir Aula";
-                playBtn.classList.remove('audio-playing');
-                if(pauseBtn) pauseBtn.disabled = true;
-                if(pauseIcon) pauseIcon.className = "fas fa-pause";
-            }
-        }
-        window.updateAudioUI = updateAudioButtons;
-    };
-
-    function speakContent() {
-        if (!currentModuleId || !moduleContent[currentModuleId]) return;
-        window.speechSynthesis.cancel();
-
-        // Pega apenas texto visível
-        const div = document.createElement('div');
-        div.innerHTML = moduleContent[currentModuleId].content;
-        const cleanText = div.textContent || div.innerText || "";
-
-        speechUtterance = new SpeechSynthesisUtterance(cleanText);
-        speechUtterance.lang = 'pt-BR';
-        speechUtterance.rate = currentSpeed;
-
-        speechUtterance.onstart = () => {
-            isSpeaking = true;
-            isPaused = false;
-            if(window.updateAudioUI) window.updateAudioUI(true, false);
-        };
+        const logoutBtn = document.getElementById('logout-expired-button');
         
-        speechUtterance.onend = () => {
-            isSpeaking = false;
-            isPaused = false;
-            if(window.updateAudioUI) window.updateAudioUI(false, false);
-        };
-
-        speechUtterance.onerror = () => {
-            isSpeaking = false;
-            if(window.updateAudioUI) window.updateAudioUI(false, false);
-        };
-
-        window.speechSynthesis.speak(speechUtterance);
-    }
-
-    // --- INSTALL PWA ---
-    let deferredPrompt;
-    const installBtn = document.getElementById('install-app-btn');
-    const installBtnMobile = document.getElementById('install-app-btn-mobile');
-    const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-    if (isIos) {
-        if(installBtn) installBtn.classList.remove('hidden'); 
-        if(installBtnMobile) installBtnMobile.classList.remove('hidden');
-    }
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      if(installBtn) installBtn.classList.remove('hidden'); 
-      if(installBtnMobile) installBtnMobile.classList.remove('hidden'); 
-    });
-
-    window.addEventListener('appinstalled', () => {
-        if(installBtn) installBtn.classList.add('hidden');
-        if(installBtnMobile) installBtnMobile.classList.add('hidden');
-        deferredPrompt = null;
-    });
-
-    async function triggerInstall() {
-        if (isIos) {
-            const iosModal = document.getElementById('ios-install-modal');
-            const iosOverlay = document.getElementById('ios-modal-overlay');
-            if (iosModal && iosOverlay) {
-                iosModal.classList.add('show');
-                iosOverlay.classList.add('show');
-                
-                document.getElementById('close-ios-modal')?.addEventListener('click', () => {
-                    iosModal.classList.remove('show');
-                    iosOverlay.classList.remove('show');
-                });
-                iosOverlay.addEventListener('click', () => {
-                    iosModal.classList.remove('show');
-                    iosOverlay.classList.remove('show');
-                });
-            } else {
-                alert("Para instalar no iPhone:\nToque em Compartilhar (quadrado com seta).\nToque em 'Adicionar à Tela de Início'.");
-            }
-        } else if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
-                if(installBtn) installBtn.classList.add('hidden');
-                if(installBtnMobile) installBtnMobile.classList.add('hidden');
-            }
-            deferredPrompt = null;
-        } else {
-            alert("Para instalar:\nProcure o ícone de instalação na barra de endereço ou menu.");
+        // Só tenta inserir se o botão de logout existir (garantia de estar no modal correto)
+        if (logoutBtn && logoutBtn.parentNode) {
+            const container = document.createElement('div');
+            container.className = "w-full text-center mb-6 pt-4 border-t border-gray-700 mt-4"; 
+            container.innerHTML = `
+                <a id="whatsapp-proof-btn" href="https://wa.me/5561992960683?text=Ol%C3%A1%2C%20estou%20enviando%20meu%20comprovante%20do%20Bravo%20Charlie" target="_blank" class="inline-flex items-center justify-center w-full md:w-auto bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform hover:scale-105 mb-2 no-underline gap-2">
+                    <i class="fab fa-whatsapp text-xl"></i> <span>Já fiz o PIX! Enviar Comprovante</span>
+                </a>
+                <p class="text-xs text-gray-500 mt-1">Envie o comprovante para liberação imediata pelo Administrador.</p>
+            `;
+            
+            // Insere ANTES do botão de sair, usando o pai direto para evitar erros
+            logoutBtn.parentNode.insertBefore(container, logoutBtn);
         }
     }
 
-    if(installBtn) installBtn.addEventListener('click', triggerInstall);
-    if(installBtnMobile) installBtnMobile.addEventListener('click', triggerInstall);
-
-    // --- LOGIN SUCCESS ---
+    // --- SUCESSO NO LOGIN ---
     function onLoginSuccess(user, userData) {
         currentUserData = userData; 
-
-        if (document.body.getAttribute('data-app-ready') === 'true') return;
         document.body.setAttribute('data-app-ready', 'true');
         
-        document.getElementById('name-prompt-modal')?.classList.remove('show');
-        document.getElementById('name-modal-overlay')?.classList.remove('show');
-        document.getElementById('expired-modal')?.classList.remove('show');
+        // Limpa todos os modais de login/bloqueio
+        document.querySelectorAll('.modal, .modal-overlay').forEach(el => el.classList.remove('show'));
         
+        // Atualiza UI de Boas-Vindas
         const greetingEl = document.getElementById('welcome-greeting');
         if(greetingEl) greetingEl.textContent = `Olá, ${userData.name.split(' ')[0]}!`;
         
+        // Marca d'água
         if (printWatermark) {
             printWatermark.textContent = `Licenciado para ${userData.name} (CPF: ${userData.cpf || '...'}) - Proibida a Cópia`;
         }
 
+        // Ativa Botões de Admin se for o caso
         if (userData.isAdmin === true) {
             if(adminBtn) adminBtn.classList.remove('hidden');
             if(mobileAdminBtn) mobileAdminBtn.classList.remove('hidden');
+            setupAdminListeners();
         }
 
         checkTrialStatus(userData.acesso_ate);
@@ -351,492 +205,140 @@ document.addEventListener('DOMContentLoaded', () => {
         handleInitialLoad();
     }
 
-    // --- FUNÇÕES ADMIN ---
-    window.openAdminPanel = async function() {
-        if (!currentUserData || !currentUserData.isAdmin) return;
-        adminModal.classList.add('show');
-        adminOverlay.classList.add('show');
-        const tbody = document.getElementById('admin-table-body');
-        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center">Carregando...</td></tr>';
-        try {
-            const snapshot = await window.__fbDB.collection('users').orderBy('name').get();
-            tbody.innerHTML = '';
-            snapshot.forEach(doc => {
-                const u = doc.data();
-                const uid = doc.id;
-                const isPremium = u.status === 'premium';
-                const validade = u.acesso_ate ? new Date(u.acesso_ate).toLocaleDateString('pt-BR') : '-';
-                const cpf = u.cpf || 'Sem CPF';
-                const planoTipo = u.planType || (isPremium ? 'Indefinido' : 'Trial');
-                const deviceInfo = u.last_device || 'Desconhecido';
-                const noteIconColor = u.adminNote ? 'text-yellow-500' : 'text-gray-400';
-                const row = `
-                    <tr class="border-b hover:bg-gray-50 transition-colors">
-                        <td class="p-3 font-bold text-gray-800">${u.name}</td>
-                        <td class="p-3 text-gray-600 text-sm">${u.email}<br><span class="text-xs text-gray-500">CPF: ${cpf}</span></td>
-                        <td class="p-3 text-xs text-gray-500 max-w-[150px] truncate" title="${deviceInfo}">${deviceInfo}</td>
-                        <td class="p-3">
-                            <div class="flex flex-col items-start">
-                                <span class="px-2 py-1 rounded text-xs font-bold uppercase ${isPremium ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
-                                    ${u.status || 'trial'}
-                                </span>
-                                <span class="text-xs text-gray-500 mt-1">${planoTipo}</span>
-                            </div>
-                        </td>
-                        <td class="p-3 text-sm font-medium">${validade}</td>
-                        <td class="p-3 flex flex-wrap gap-2">
-                            <button onclick="editUserData('${uid}', '${u.name}', '${cpf}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Editar Dados"><i class="fas fa-pen"></i></button>
-                            <button onclick="editUserNote('${uid}', '${(u.adminNote || '').replace(/'/g, "\\'")}')" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 px-2 py-1.5 rounded text-xs shadow" title="Observações"><i class="fas fa-sticky-note ${noteIconColor}"></i></button>
-                            <button onclick="manageUserAccess('${uid}', '${u.acesso_ate}')" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Gerenciar Acesso"><i class="fas fa-calendar-alt"></i></button>
-                            <button onclick="sendResetEmail('${u.email}')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Resetar Senha"><i class="fas fa-key"></i></button>
-                            <button onclick="deleteUser('${uid}', '${u.name}', '${cpf}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Excluir"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
-            });
-        } catch (err) {
-            tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Erro ao carregar: ${err.message}</td></tr>`;
-        }
-    };
-
-    // (Funções de Edição Admin mantidas do original)
-    window.editUserData = async function(uid, oldName, oldCpf) {
-        const newName = prompt("Novo nome do aluno:", oldName);
-        if (newName === null) return;
-        const newCpfRaw = prompt("Novo CPF (apenas números):", oldCpf === 'Sem CPF' ? '' : oldCpf);
-        if (newCpfRaw === null) return;
-        const newCpf = newCpfRaw.replace(/\D/g, ''); 
-        if (!newName || !newCpf) { alert("Nome e CPF são obrigatórios."); return; }
-        try {
-            const batch = window.__fbDB.batch();
-            const userRef = window.__fbDB.collection('users').doc(uid);
-            batch.update(userRef, { name: newName, cpf: newCpf });
-            if (oldCpf !== 'Sem CPF' && oldCpf !== newCpf) {
-                batch.delete(window.__fbDB.collection('cpfs').doc(oldCpf));
-                batch.set(window.__fbDB.collection('cpfs').doc(newCpf), { uid: uid });
-            } else if (oldCpf === 'Sem CPF') {
-                batch.set(window.__fbDB.collection('cpfs').doc(newCpf), { uid: uid });
-            }
-            await batch.commit();
-            alert("Dados atualizados!");
-            openAdminPanel();
-        } catch (err) { alert("Erro: " + err.message); }
-    };
-
-    window.manageUserAccess = async function(uid, currentExpiryStr) {
-        const opcao = prompt("Gerenciar Plano e Validade:\n\n1 - MENSAL (+30 dias)\n2 - SEMESTRAL (+180 dias)\n3 - ANUAL (+365 dias)\n4 - PERMANENTE (10 anos)\n5 - PERSONALIZADO (Adicionar/Remover dias)\n\nDigite o número da opção:");
-        if (!opcao) return;
-        let diasToAdd = 0;
-        let novoPlano = '';
-        if (opcao === '1') { diasToAdd = 30; novoPlano = 'Mensal'; }
-        else if (opcao === '2') { diasToAdd = 180; novoPlano = 'Semestral'; }
-        else if (opcao === '3') { diasToAdd = 365; novoPlano = 'Anual'; }
-        else if (opcao === '4') { diasToAdd = 3650; novoPlano = 'Vitalício'; }
-        else if (opcao === '5') {
-            const diasInput = prompt("Digite a quantidade de dias para adicionar (ex: 15) ou remover (ex: -5):");
-            if(!diasInput) return;
-            diasToAdd = parseInt(diasInput);
-            novoPlano = 'Personalizado';
-        }
-        else { alert("Opção inválida"); return; }
-
-        const hoje = new Date();
-        let baseDate = new Date(currentExpiryStr);
-        if (isNaN(baseDate.getTime()) || baseDate < hoje) baseDate = hoje;
-        baseDate.setDate(baseDate.getDate() + diasToAdd);
-        const newExpiryISO = baseDate.toISOString();
-
-        try {
-            await window.__fbDB.collection('users').doc(uid).update({ status: 'premium', acesso_ate: newExpiryISO, planType: novoPlano });
-            alert("Acesso atualizado com sucesso!");
-            openAdminPanel();
-        } catch (err) { alert("Erro ao atualizar: " + err.message); }
-    };
-
-    window.editUserNote = async function(uid, currentNote) {
-        const newNote = prompt("Observações sobre este aluno:", currentNote);
-        if (newNote === null) return; 
-        try {
-            await window.__fbDB.collection('users').doc(uid).update({ adminNote: newNote });
-            alert("Observação salva.");
-            openAdminPanel();
-        } catch (err) { alert("Erro: " + err.message); }
-    };
-
-    window.deleteUser = async function(uid, name, cpf) {
-        if(confirm(`TEM CERTEZA que deseja excluir o aluno ${name}?`)) {
-            const userConfirm = prompt("Para confirmar, digite DELETAR:");
-            if (userConfirm !== "DELETAR") return;
-            try {
-                const batch = window.__fbDB.batch();
-                batch.delete(window.__fbDB.collection('users').doc(uid));
-                if (cpf && cpf !== 'Sem CPF' && cpf !== 'undefined') batch.delete(window.__fbDB.collection('cpfs').doc(cpf));
-                await batch.commit();
-                alert("Usuário excluído.");
-                openAdminPanel();
-            } catch (err) { alert("Erro ao excluir: " + err.message); }
-        }
-    };
-
-    window.sendResetEmail = async function(email) {
-        if(confirm(`Enviar e-mail de redefinição de senha para ${email}?`)) {
-            try {
-                await window.__fbAuth.sendPasswordResetEmail(email);
-                alert('E-mail enviado!');
-            } catch(err) { alert('Erro: ' + err.message); }
-        }
-    };
-
-    function checkTrialStatus(expiryDateString) {
-        const expiryDate = new Date(expiryDateString);
-        const today = new Date();
-        const diffTime = expiryDate - today; 
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-        const trialToast = document.getElementById('trial-floating-notify');
-        const daysLeftSpan = document.getElementById('trial-days-left');
-        const trialBtn = document.getElementById('trial-subscribe-btn');
-        const closeTrialBtn = document.getElementById('close-trial-notify');
-        const trialTitle = document.getElementById('trial-title-text');
-
-        if (trialToast && diffDays <= 30 && diffDays >= 0) {
-            trialToast.classList.remove('hidden');
-            if(daysLeftSpan) daysLeftSpan.textContent = diffDays;
-            if(trialTitle) trialTitle.textContent = "Período de Experiência";
-            trialBtn?.addEventListener('click', () => {
-                document.getElementById('expired-modal').classList.add('show');
-                document.getElementById('name-modal-overlay').classList.add('show');
-            });
-            closeTrialBtn?.addEventListener('click', () => { trialToast.classList.add('hidden'); });
-        }
-    }
-
-    function setupAuthEventListeners() {
-        const nameField = document.getElementById('name-field-container');
-        const cpfField = document.getElementById('cpf-field-container'); 
-        const nameInput = document.getElementById('name-input');
-        const cpfInput = document.getElementById('cpf-input'); 
-        const emailInput = document.getElementById('email-input');
-        const passwordInput = document.getElementById('password-input');
-        const feedback = document.getElementById('auth-feedback');
-        const loginGroup = document.getElementById('login-button-group');
-        const signupGroup = document.getElementById('signup-button-group');
-        const authTitle = document.getElementById('auth-title');
-        const authMsg = document.getElementById('auth-message');
-        const btnShowLogin = document.getElementById('show-login-button');
-        const btnShowSignup = document.getElementById('show-signup-button');
-        const btnLogin = document.getElementById('login-button');
-        const btnSignup = document.getElementById('signup-button');
-        const btnOpenPayHeader = document.getElementById('header-subscribe-btn');
-        const btnOpenPayMobile = document.getElementById('mobile-subscribe-btn');
-        const btnOpenPayLogin = document.getElementById('open-payment-login-btn');
-        const expiredModal = document.getElementById('expired-modal');
-        const closePayModal = document.getElementById('close-payment-modal-btn');
-        const loginModalOverlay = document.getElementById('name-modal-overlay');
-        const loginModal = document.getElementById('name-prompt-modal');
-
-        function openPaymentModal() {
-            expiredModal.classList.add('show');
-            if (loginModalOverlay) loginModalOverlay.classList.add('show');
-            if (loginModal && loginModal.classList.contains('show')) {
-                loginModal.classList.remove('show');
-                loginModal.dataset.wasOpen = 'true'; 
-            }
-        }
-        btnOpenPayHeader?.addEventListener('click', openPaymentModal);
-        btnOpenPayMobile?.addEventListener('click', openPaymentModal);
-        btnOpenPayLogin?.addEventListener('click', openPaymentModal);
-        closePayModal?.addEventListener('click', () => {
-            expiredModal.classList.remove('show');
-            if (loginModal && loginModal.dataset.wasOpen === 'true') {
-                loginModal.classList.add('show');
-                loginModal.dataset.wasOpen = 'false';
-            } else {
-                if (document.body.getAttribute('data-app-ready') === 'true') {
-                     loginModalOverlay?.classList.remove('show');
-                } else {
-                    loginModal?.classList.add('show');
-                }
-            }
-        });
-        btnShowSignup?.addEventListener('click', () => {
-            loginGroup.classList.add('hidden');
-            signupGroup.classList.remove('hidden');
-            nameField.classList.remove('hidden');
-            cpfField.classList.remove('hidden'); 
-            authTitle.textContent = "Criar Nova Conta";
-            authMsg.textContent = "Cadastre-se para o Período de Experiência.";
-            feedback.textContent = "";
-        });
-        btnShowLogin?.addEventListener('click', () => {
-            loginGroup.classList.remove('hidden');
-            signupGroup.classList.add('hidden');
-            nameField.classList.add('hidden');
-            cpfField.classList.add('hidden'); 
-            authTitle.textContent = "Área do Aluno";
-            authMsg.textContent = "Acesso Restrito";
-            feedback.textContent = "";
-        });
-        btnLogin?.addEventListener('click', async () => {
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            if (!email || !password) {
-                feedback.textContent = "Preencha e-mail e senha.";
-                feedback.className = "text-center text-sm mt-4 font-semibold text-red-500";
-                return;
-            }
-            feedback.textContent = "Entrando...";
-            feedback.className = "text-center text-sm mt-4 text-blue-400 font-semibold";
-            try {
-                localStorage.removeItem('my_session_id'); 
-                await FirebaseCourse.signInWithEmail(email, password);
-                feedback.textContent = "Verificando...";
-            } catch (error) {
-                feedback.className = "text-center text-sm mt-4 text-red-400 font-semibold";
-                feedback.textContent = "Erro ao entrar. Verifique seus dados.";
-            }
-        });
-        btnSignup?.addEventListener('click', async () => {
-            const name = nameInput.value;
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            const cpf = cpfInput.value;
-            if (!name || !email || !password || !cpf) {
-                feedback.textContent = "Todos os campos são obrigatórios.";
-                feedback.className = "text-center text-sm mt-4 font-semibold text-red-500";
-                return;
-            }
-            feedback.textContent = "Criando conta...";
-            feedback.className = "text-center text-sm mt-4 text-blue-400 font-semibold";
-            try {
-                await FirebaseCourse.signUpWithEmail(name, email, password, cpf);
-                feedback.textContent = "Sucesso! Iniciando...";
-            } catch (error) {
-                feedback.className = "text-center text-sm mt-4 text-red-400 font-semibold";
-                feedback.textContent = error.message || "Erro ao criar conta.";
-            }
-        });
-    }
-
-    function handleInitialLoad() {
-        const lastModule = localStorage.getItem('gateBombeiroLastModule');
-        if (lastModule) loadModuleContent(lastModule); else goToHomePage();
-    }
-
-    async function loadQuestionBank(moduleId) {
-        if (cachedQuestionBanks[moduleId]) return cachedQuestionBanks[moduleId];
-        if (typeof QUIZ_DATA === 'undefined') return null;
-        const questions = QUIZ_DATA[moduleId];
-        if (!questions || !Array.isArray(questions) || questions.length === 0) return null; 
-        cachedQuestionBanks[moduleId] = questions;
-        return questions;
-    }
-
-    async function generateSimuladoQuestions(config) {
-        const allQuestions = [];
-        const questionsByCategory = {};
-        
-        for (const catKey in moduleCategories) {
-            questionsByCategory[catKey] = [];
-            const cat = moduleCategories[catKey];
-            for (let i = cat.range[0]; i <= cat.range[1]; i++) {
-                const modId = `module${i}`;
-                if (typeof QUIZ_DATA !== 'undefined' && QUIZ_DATA[modId]) {
-                    questionsByCategory[catKey].push(...QUIZ_DATA[modId]);
-                }
-            }
-        }
-
-        for (const [catKey, qty] of Object.entries(config.distribution)) {
-            if (questionsByCategory[catKey]) {
-                const shuffled = shuffleArray(questionsByCategory[catKey]);
-                allQuestions.push(...shuffled.slice(0, qty));
-            }
-        }
-        
-        return shuffleArray(allQuestions);
-    }
-
-    // --- CARREGAMENTO DE MÓDULOS (ROTEADOR PRINCIPAL) ---
+    // --- SISTEMA DE NAVEGAÇÃO ---
     async function loadModuleContent(id) {
-        if (!id || !moduleContent[id]) return;
-        const d = moduleContent[id];
+        if (!id || !window.moduleContent[id]) return;
+        const d = window.moduleContent[id];
+        
+        // Verifica Categoria e Premium
         const num = parseInt(id.replace('module', ''));
         let moduleCategory = null;
-        for (const key in moduleCategories) {
-            const cat = moduleCategories[key];
+        for (const key in window.moduleCategories) {
+            const cat = window.moduleCategories[key];
             if (num >= cat.range[0] && num <= cat.range[1]) { moduleCategory = cat; break; }
         }
-        const isPremiumContent = moduleCategory && moduleCategory.isPremium;
         const userIsNotPremium = !currentUserData || currentUserData.status !== 'premium';
+        
+        // Bloqueio Premium
+        if (moduleCategory && moduleCategory.isPremium && userIsNotPremium) { 
+            renderPremiumLockScreen(d.title); return; 
+        }
 
-        // Verifica bloqueio premium
-        if (isPremiumContent && userIsNotPremium) { renderPremiumLockScreen(moduleContent[id].title); return; }
+        // Histórico de Navegação
+        if (currentModuleId !== id) {
+            history.pushState({ module: id }, null, `#${id}`);
+        }
 
         currentModuleId = id;
         localStorage.setItem('gateBombeiroLastModule', id);
         
-        if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+        // Limpa estados anteriores
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
         if (simuladoTimerInterval) clearInterval(simuladoTimerInterval);
 
+        // Transição de UI
         contentArea.style.opacity = '0';
         loadingSpinner.classList.remove('hidden');
-        contentArea.classList.add('hidden'); 
+        contentArea.classList.add('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
 
+        // Delay simulado para transição suave
         setTimeout(async () => {
             loadingSpinner.classList.add('hidden');
             contentArea.classList.remove('hidden'); 
 
-            // 1. MODO SIMULADO
-            if (d.isSimulado) {
-                contentArea.innerHTML = `
-                    <h3 class="text-3xl mb-4 pb-4 border-b text-orange-600 dark:text-orange-500 flex items-center">
-                        <i class="${d.iconClass} mr-3"></i> ${d.title}
-                    </h3>
-                    <div>${d.content}</div>
-                    <div class="text-center mt-8">
-                        <button id="start-simulado-btn" class="action-button pulse-button text-xl px-8 py-4">
-                            <i class="fas fa-play mr-2"></i> INICIAR SIMULADO
-                        </button>
-                    </div>
-                `;
-                document.getElementById('start-simulado-btn').addEventListener('click', () => startSimuladoMode(d));
-            } 
-            
-            // 2. FERRAMENTAS (Módulo 59)
-            else if (id === 'module59') { 
-                contentArea.innerHTML = `
-                    <h3 class="text-3xl mb-4 pb-4 border-b text-blue-600 dark:text-blue-400 flex items-center">
-                        <i class="fas fa-tools mr-3"></i> Ferramentas Operacionais
-                    </h3>
-                    <div id="tools-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
-                `;
-                const grid = document.getElementById('tools-grid');
-                if (typeof ToolsApp !== 'undefined') {
-                    ToolsApp.renderPonto(grid);
-                    ToolsApp.renderEscala(grid);
-                    ToolsApp.renderPlanner(grid);
-                    ToolsApp.renderWater(grid);
-                    ToolsApp.renderNotes(grid);
-                    ToolsApp.renderHealth(grid);
-                } else {
-                    grid.innerHTML = '<p class="text-red-500">Erro: Script de Ferramentas não carregado.</p>';
-                }
-            }
-
-            // 3. MODO SOBREVIVÊNCIA (Módulo 60)
-            else if (d.isSurvival) {
-                contentArea.innerHTML = d.content;
-                const survivalScoreEl = document.getElementById('survival-last-score');
-                const lastScore = localStorage.getItem('lastSurvivalScore');
-                if(survivalScoreEl && lastScore) survivalScoreEl.innerText = `Seu recorde anterior: ${lastScore} pontos`;
-                
-                document.getElementById('start-survival-btn').addEventListener('click', initSurvivalGame);
-            }
-
-            // 4. RPG (Módulo 61)
-            else if (d.isRPG) {
-                contentArea.innerHTML = d.content;
-                document.getElementById('start-rpg-btn').addEventListener('click', () => initRPGGame(d.rpgData));
-            }
-
-            // 5. CARTEIRINHA (Módulo 62)
-            else if (d.isIDCard) {
+            // Roteamento de Tipos de Módulo
+            if (d.isIDCard) {
                 contentArea.innerHTML = d.content;
                 renderDigitalID();
-            }
-
-            // 6. MODO AULA NORMAL (TEXTO + AUDIO)
-            else {
-                let html = `
-                    <h3 class="flex items-center text-3xl mb-6 pb-4 border-b"><i class="${d.iconClass} mr-4 ${getCategoryColor(id)} fa-fw"></i>${d.title}</h3>
-                    
-                    <!-- MELHORIA: PLAYER DE ÁUDIO -->
-                    <div id="audio-controls-container" class="flex flex-wrap items-center gap-3 mb-6 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 w-full md:w-auto">
-                        
-                        <button id="audio-play-btn" class="flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold shadow-sm transition-colors min-w-[120px]">
-                            <i id="audio-play-icon" class="fas fa-headphones mr-2"></i> <span id="audio-play-text">Ouvir Aula</span>
-                        </button>
-
-                        <button id="audio-pause-btn" class="w-10 h-10 flex items-center justify-center bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-full hover:bg-gray-400 transition-colors" title="Pausar/Continuar" disabled>
-                            <i id="audio-pause-icon" class="fas fa-pause"></i>
-                        </button>
-
-                        <div class="flex items-center px-3 border-l border-gray-300 dark:border-gray-600 ml-2">
-                            <i class="fas fa-tachometer-alt text-gray-500 mr-2 text-xs"></i>
-                            <select id="audio-speed-select" class="bg-transparent text-sm font-bold text-gray-700 dark:text-white outline-none cursor-pointer">
-                                <option value="0.5">0.5x (Lento)</option>
-                                <option value="0.8">0.8x</option>
-                                <option value="1.0" selected>1.0x (Normal)</option>
-                                <option value="1.2">1.2x</option>
-                                <option value="1.5">1.5x (Rápido)</option>
-                                <option value="2.0">2.0x</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="lesson-content">${d.content}</div>
-                `;
-
-                const isSpecialModule = ['module53', 'module54', 'module55', 'module56', 'module57', 'module58', 'module59', 'module60', 'module61', 'module62'].includes(id);
-
-                if (d.driveLink) {
-                    if (userIsNotPremium) {
-                        html += `<div class="mt-10 mb-8"><button onclick="document.getElementById('expired-modal').classList.add('show'); document.getElementById('name-modal-overlay').classList.add('show');" class="drive-button opacity-75 hover:opacity-100 relative overflow-hidden"><div class="absolute inset-0 bg-black/30 flex items-center justify-center z-10"><i class="fas fa-lock text-2xl mr-2"></i></div><span class="blur-[2px] flex items-center"><i class="fab fa-google-drive mr-3"></i> VER FOTOS E VÍDEOS (PREMIUM)</span></button><p class="text-xs text-center mt-2 text-gray-500"><i class="fas fa-lock text-yellow-500"></i> Recurso exclusivo para assinantes</p></div>`;
-                    } else {
-                        html += `<div class="mt-10 mb-8"><a href="${d.driveLink}" target="_blank" class="drive-button"><i class="fab fa-google-drive"></i>VER FOTOS E VÍDEOS DESTA MATÉRIA</a></div>`;
-                    }
-                }
-
-                const savedNote = localStorage.getItem('note-' + id) || '';
-
-                let allQuestions = null;
-                try { allQuestions = await loadQuestionBank(id); } catch(error) { console.error(error); }
-
-                if (allQuestions && allQuestions.length > 0) {
-                    const count = Math.min(allQuestions.length, 4); 
-                    const shuffledQuestions = shuffleArray([...allQuestions]); 
-                    const selectedQuestions = shuffledQuestions.slice(0, count);
-                    
-                    let quizHtml = `<div class="quiz-section-separator"></div><h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Exercícios de Fixação</h3>`;
-                    selectedQuestions.forEach((q, index) => {
-                        const questionNumber = index + 1;
-                        quizHtml += `<div class="quiz-block" data-question-id="${q.id}"><p class="font-semibold mt-4 mb-2 text-gray-700 dark:text-gray-200">${questionNumber}. ${q.question}</p><div class="quiz-options-group space-y-2 mb-4">`;
-                        for (const key in q.options) {
-                            quizHtml += `<div class="quiz-option" data-module="${id}" data-question-id="${q.id}" data-answer="${key}"><span class="option-key">${key.toUpperCase()})</span> ${q.options[key]}<span class="ripple"></span></div>`;
-                        }
-                        quizHtml += `</div><div id="feedback-${q.id}" class="feedback-area hidden"></div></div>`;
-                    });
-                    html += quizHtml;
-                } else {
-                    if (!d.id.startsWith('module9') && !isSpecialModule) {
-                        html += `<div class="warning-box mt-8"><p><strong><i class="fas fa-exclamation-triangle mr-2"></i> Exercícios não encontrados.</strong></p></div>`;
-                    }
-                }
-
-                html += `<div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 text-right"><button class="action-button conclude-button" data-module="${id}">Concluir Módulo</button></div><div class="mt-10 pt-6 border-t-2 border-dashed border-gray-200 dark:border-gray-700"><h4 class="text-xl font-bold mb-3 text-secondary dark:text-gray-200"><i class="fas fa-pencil-alt mr-2"></i>Anotações Pessoais</h4><p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Suas notas para este módulo. Elas são salvas automaticamente no seu navegador.</p><textarea id="notes-module-${id}" class="notes-textarea" placeholder="Digite suas anotações aqui...">${savedNote}</textarea></div>`;
-
-                contentArea.innerHTML = html;
-                window.initAudioControls(); // Inicializa os botões de áudio novos
-                setupQuizListeners();
-                setupConcludeButtonListener();
-                setupNotesListener(id);
+            } else if (d.isSimulado) {
+                renderSimuladoStart(d);
+            } else if (id === 'module59') {
+                renderTools();
+            } else if (d.isSurvival) {
+                contentArea.innerHTML = d.content;
+                const scoreEl = document.getElementById('survival-last-score');
+                const lastScore = localStorage.getItem('lastSurvivalScore');
+                if(scoreEl && lastScore) scoreEl.innerText = `Recorde: ${lastScore}`;
+                document.getElementById('start-survival-btn').addEventListener('click', initSurvivalGame);
+            } else if (d.isRPG) {
+                contentArea.innerHTML = d.content;
+                document.getElementById('start-rpg-btn').addEventListener('click', () => initRPGGame(d.rpgData));
+            } else {
+                // Aula Padrão com Áudio
+                renderLessonWithAudio(d, id, userIsNotPremium);
             }
 
             contentArea.style.opacity = '1';
-            contentArea.style.transition = 'opacity 0.3s ease';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
             updateActiveModuleInList();
             updateNavigationButtons();
             updateBreadcrumbs(d.title);
             document.getElementById('module-nav').classList.remove('hidden');
             closeSidebar();
-            document.getElementById('next-module')?.classList.remove('blinking-button');
         }, 300);
     }
 
-    // --- LÓGICA DE ÁUDIO ---
-    window.initAudioControls = function() {
+    // --- MELHORIA 6 e 7: RENDERIZAÇÃO COM PLAYER DE ÁUDIO ---
+    function renderLessonWithAudio(d, id, userIsNotPremium) {
+        let html = `
+            <h3 class="flex items-center text-2xl md:text-3xl mb-6 pb-4 border-b border-gray-200 dark:border-gray-700 text-gray-800 dark:text-white">
+                <i class="${d.iconClass} mr-4 text-orange-500 fa-fw"></i>${d.title}
+            </h3>
+            
+            <div id="audio-player-container" class="flex flex-wrap items-center gap-3 mb-6 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 w-full md:w-auto shadow-sm">
+                
+                <button id="audio-play-btn" class="flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold shadow-sm transition-colors min-w-[120px]">
+                    <i id="audio-play-icon" class="fas fa-headphones mr-2"></i> <span id="audio-play-text">Ouvir</span>
+                </button>
+
+                <button id="audio-pause-btn" class="w-10 h-10 flex items-center justify-center bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-full hover:bg-gray-400 transition-colors border border-gray-300 dark:border-gray-600" title="Pausar/Continuar" disabled>
+                    <i id="audio-pause-icon" class="fas fa-pause"></i>
+                </button>
+
+                <div class="flex items-center px-3 border-l border-gray-300 dark:border-gray-600 ml-2">
+                    <i class="fas fa-tachometer-alt text-gray-500 mr-2 text-xs"></i>
+                    <select id="audio-speed-select" class="bg-transparent text-sm font-bold text-gray-700 dark:text-white outline-none cursor-pointer p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                        <option value="0.5">0.5x (Lento)</option>
+                        <option value="0.8">0.8x</option>
+                        <option value="1.0" selected>1.0x (Normal)</option>
+                        <option value="1.2">1.2x</option>
+                        <option value="1.5">1.5x (Rápido)</option>
+                        <option value="2.0">2.0x</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed">
+                ${d.content}
+            </div>
+        `;
+
+        if (d.driveLink && d.driveLink !== "SEU_LINK_DO_DRIVE_AQUI") {
+            if (userIsNotPremium) {
+                html += `<div class="mt-10 mb-8 p-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl shadow-lg cursor-pointer transform hover:scale-[1.01] transition-all" onclick="document.getElementById('expired-modal').classList.add('show');"><div class="bg-gray-900 rounded-lg p-4 flex items-center justify-between text-white"><div class="flex items-center"><i class="fas fa-lock text-2xl mr-4 text-yellow-400"></i><div><p class="font-bold text-lg">Material Complementar</p><p class="text-xs text-gray-400">Vídeos e Fotos exclusivos para assinantes</p></div></div><button class="bg-yellow-500 text-black font-bold py-2 px-4 rounded text-xs hover:bg-yellow-400 transition-colors">DESBLOQUEAR</button></div></div>`;
+            } else {
+                html += `<div class="mt-10 mb-8"><a href="${d.driveLink}" target="_blank" class="drive-button flex items-center justify-center w-full p-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold transition-colors shadow-md"><i class="fab fa-google-drive mr-2 text-xl"></i> ACESSAR MATERIAL EXTRA NO DRIVE</a></div>`;
+            }
+        }
+
+        const savedNote = localStorage.getItem('note-' + id) || '';
+        html += `<div class="mt-12 pt-8 border-t-2 border-dashed border-gray-200 dark:border-gray-700"><h4 class="text-xl font-bold mb-4 text-gray-700 dark:text-gray-200 flex items-center"><i class="fas fa-pencil-alt mr-3 text-orange-500"></i>Anotações Pessoais</h4><textarea id="notes-module-${id}" class="notes-textarea w-full p-4 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-inner text-gray-700 dark:text-gray-300" rows="5" placeholder="Digite suas anotações sobre esta aula aqui...">${savedNote}</textarea></div>`;
+        
+        html += `<div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 text-right"><button class="action-button conclude-button" data-module="${id}">Concluir Módulo</button></div>`;
+
+        contentArea.innerHTML = html;
+        
+        initAudioLogic();
+        setupConcludeButtonListener();
+        setupNotesListener(id);
+        
+        if (window.QUIZ_DATA && window.QUIZ_DATA[id]) {
+            renderEmbeddedQuiz(id);
+        }
+    }
+
+    // --- LÓGICA DOS CONTROLES DE ÁUDIO ---
+    function initAudioLogic() {
         const playBtn = document.getElementById('audio-play-btn');
         const pauseBtn = document.getElementById('audio-pause-btn');
         const speedSelect = document.getElementById('audio-speed-select');
@@ -844,23 +346,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const playText = document.getElementById('audio-play-text');
         const pauseIcon = document.getElementById('audio-pause-icon');
 
-        if(!playBtn || !pauseBtn) return;
+        if(!playBtn) return;
 
         playBtn.addEventListener('click', () => {
             if (isSpeaking) {
-                // Parar
                 window.speechSynthesis.cancel();
                 isSpeaking = false;
                 isPaused = false;
                 updateAudioButtons(false, false);
             } else {
-                // Tocar
                 speakContent();
             }
         });
 
         pauseBtn.addEventListener('click', () => {
             if (!isSpeaking) return;
+            
             if (isPaused) {
                 window.speechSynthesis.resume();
                 isPaused = false;
@@ -886,28 +387,38 @@ document.addEventListener('DOMContentLoaded', () => {
             if (speaking) {
                 playIcon.className = "fas fa-stop";
                 playText.textContent = "Parar";
-                playBtn.classList.add('bg-red-600', 'hover:bg-red-500');
                 playBtn.classList.remove('bg-blue-600', 'hover:bg-blue-500');
-                if(pauseBtn) pauseBtn.disabled = false;
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-500');
+                
+                if(pauseBtn) {
+                    pauseBtn.disabled = false;
+                    pauseBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
                 if(pauseIcon) pauseIcon.className = paused ? "fas fa-play" : "fas fa-pause";
             } else {
                 playIcon.className = "fas fa-headphones";
-                playText.textContent = "Ouvir Aula";
-                playBtn.classList.add('bg-blue-600', 'hover:bg-blue-500');
+                playText.textContent = "Ouvir";
                 playBtn.classList.remove('bg-red-600', 'hover:bg-red-500');
-                if(pauseBtn) pauseBtn.disabled = true;
+                playBtn.classList.add('bg-blue-600', 'hover:bg-blue-500');
+                
+                if(pauseBtn) {
+                    pauseBtn.disabled = true;
+                    pauseBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
                 if(pauseIcon) pauseIcon.className = "fas fa-pause";
             }
         }
+        // Expõe para uso global se necessário
         window.updateAudioUI = updateAudioButtons;
-    };
+    }
 
     function speakContent() {
-        if (!currentModuleId || !moduleContent[currentModuleId]) return;
+        if (!currentModuleId || !window.moduleContent[currentModuleId]) return;
         window.speechSynthesis.cancel();
 
+        // Extrai apenas o texto limpo do HTML
         const div = document.createElement('div');
-        div.innerHTML = moduleContent[currentModuleId].content;
+        div.innerHTML = window.moduleContent[currentModuleId].content;
         const cleanText = div.textContent || div.innerText || "";
 
         speechUtterance = new SpeechSynthesisUtterance(cleanText);
@@ -934,144 +445,74 @@ document.addEventListener('DOMContentLoaded', () => {
         window.speechSynthesis.speak(speechUtterance);
     }
 
-    // === LÓGICA: MODO SOBREVIVÊNCIA ===
-    async function initSurvivalGame() {
-        survivalLives = 3;
-        survivalScore = 0;
-        currentSurvivalIndex = 0;
-        survivalQuestions = [];
+    // --- MELHORIA 4 e 5: CARTEIRINHA DIGITAL (LAYOUT FIXO DARK) ---
+    function renderDigitalID() {
+        if (!currentUserData) return;
+        const container = document.getElementById('id-card-container');
+        if (!container) return;
 
-        // Coleta todas as questões disponíveis no app
-        const allQs = [];
-        for(let i=1; i<=52; i++) { // Módulos de conteúdo
-            const modId = `module${i}`;
-            if(QUIZ_DATA[modId]) allQs.push(...QUIZ_DATA[modId]);
-        }
-        survivalQuestions = shuffleArray(allQs);
+        const savedPhoto = localStorage.getItem('user_profile_pic');
+        const defaultPhoto = "https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png"; 
+        const currentPhoto = savedPhoto || defaultPhoto;
+        const matricula = currentUserData.uid.substring(0, 8).toUpperCase();
+        const validade = new Date(currentUserData.acesso_ate).toLocaleDateString('pt-BR');
 
-        renderSurvivalScreen();
-    }
-
-    function renderSurvivalScreen() {
-        if(survivalLives <= 0) {
-            // Game Over
-            localStorage.setItem('lastSurvivalScore', survivalScore);
-            contentArea.innerHTML = `
-                <div class="text-center animate-slide-in p-8">
-                    <h2 class="text-4xl font-bold text-red-600 mb-4">GAME OVER</h2>
-                    <div class="text-6xl mb-6">💀</div>
-                    <p class="text-2xl text-gray-800 dark:text-white mb-2">Sua Pontuação Final</p>
-                    <div class="text-5xl font-extrabold text-orange-500 mb-8">${survivalScore}</div>
-                    <button id="retry-survival" class="action-button pulse-button">Tentar Novamente</button>
-                </div>
-            `;
-            document.getElementById('retry-survival').addEventListener('click', initSurvivalGame);
-            return;
-        }
-
-        const q = survivalQuestions[currentSurvivalIndex];
-        if(!q) {
-            // Acabaram as questões (Raro)
-            contentArea.innerHTML = `<h2 class="text-center text-2xl">Você zerou o banco de questões! Incrível!</h2>`;
-            return;
-        }
-
-        let hearts = '';
-        for(let i=0; i<survivalLives; i++) hearts += '<i class="fas fa-heart text-red-600 text-2xl mx-1 survival-life-heart"></i>';
-
-        contentArea.innerHTML = `
-            <div class="flex justify-between items-center mb-6 bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow">
-                <div class="flex items-center">${hearts}</div>
-                <div class="text-xl font-bold text-blue-600 dark:text-blue-400">Pontos: ${survivalScore}</div>
-            </div>
-            <div class="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg animate-fade-in">
-                <p class="font-bold text-lg mb-6 text-gray-800 dark:text-white">Questão ${currentSurvivalIndex + 1}: ${q.question}</p>
-                <div class="space-y-3">
-                    ${Object.keys(q.options).map(key => `
-                        <button class="w-full text-left p-4 rounded border border-gray-200 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors survival-option" data-key="${key}">
-                            <span class="font-bold text-orange-500 mr-2">${key.toUpperCase()})</span> ${q.options[key]}
-                        </button>
-                    `).join('')}
-                </div>
-            </div>
+        const style = `
+            <style>
+                .cards-wrapper { display: flex; flex-direction: column; gap: 20px; align-items: center; margin-top: 20px; }
+                @media(min-width: 768px) { .cards-wrapper { flex-direction: row; justify-content: center; align-items: flex-start; } }
+                .bc-card { width: 100%; max-width: 350px; aspect-ratio: 1.58/1; border-radius: 12px; overflow: hidden; position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.4); font-family: sans-serif; border: 1px solid #333; }
+                .bc-front { background: #111827; display: flex; color: white; }
+                .bc-sidebar { width: 35%; background: linear-gradient(180deg, #ea580c 0%, #c2410c 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; }
+                .bc-photo { width: 80px; height: 100px; background: white; object-fit: cover; border: 2px solid white; border-radius: 6px; margin-bottom: 8px; cursor: pointer; }
+                .bc-main { width: 65%; padding: 12px; display: flex; flex-direction: column; justify-content: center; }
+                .bc-header { font-size: 9px; text-transform: uppercase; color: #9ca3af; letter-spacing: 1px; margin-bottom: 4px; }
+                .bc-name { font-size: 14px; font-weight: bold; color: white; text-transform: uppercase; line-height: 1.2; margin-bottom: 12px; }
+                .bc-row { display: flex; justify-content: space-between; font-size: 9px; border-bottom: 1px solid #374151; padding-bottom: 2px; margin-bottom: 6px; }
+                .bc-label { color: #ea580c; font-weight: bold; }
+                .bc-back { background: #1f2937; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 15px; color: #d1d5db; position: relative; }
+                .bc-qr { background: white; padding: 4px; border-radius: 4px; margin-bottom: 8px; }
+                .bc-legal { font-size: 7px; line-height: 1.3; max-width: 90%; }
+                .bc-validity { background: #ea580c; color: white; font-size: 9px; font-weight: bold; padding: 3px 8px; border-radius: 4px; margin-top: 8px; }
+            </style>
         `;
 
-        document.querySelectorAll('.survival-option').forEach(btn => {
-            btn.addEventListener('click', (e) => handleSurvivalAnswer(e, q));
-        });
-    }
+        container.innerHTML = style + `
+            <div class="cards-wrapper animate-fade-in">
+                <!-- FRENTE -->
+                <div class="bc-card bc-front">
+                    <div class="bc-sidebar">
+                        <img src="${currentPhoto}" class="bc-photo" id="id-card-photo" onclick="document.getElementById('profile-pic-input').click()" title="Clique para alterar foto">
+                        <img src="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png" style="width: 35px; opacity: 0.9;">
+                    </div>
+                    <div class="bc-main">
+                        <div class="bc-header">Bombeiro Civil / Brigadista</div>
+                        <div class="bc-name">${currentUserData.name}</div>
+                        <div class="bc-row"><span class="bc-label">MATRÍCULA</span> <span>${matricula}</span></div>
+                        <div class="bc-row"><span class="bc-label">CPF</span> <span>${currentUserData.cpf || '---'}</span></div>
+                        <div class="bc-row"><span class="bc-label">TIPO SANG.</span> 
+                            <input type="text" class="bg-transparent text-right w-10 text-white outline-none focus:text-orange-500" placeholder="---" onchange="window.saveExtraData('blood', this.value)" value="${localStorage.getItem('user_blood') || ''}">
+                        </div>
+                    </div>
+                    <input type="file" id="profile-pic-input" class="hidden" accept="image/*" onchange="window.updateProfilePic(this)">
+                </div>
 
-    function handleSurvivalAnswer(e, q) {
-        const selected = e.currentTarget.dataset.key;
-        const isCorrect = selected === q.answer;
-        const btns = document.querySelectorAll('.survival-option');
-        
-        btns.forEach(b => {
-            b.disabled = true;
-            if(b.dataset.key === q.answer) b.classList.add('bg-green-200', 'dark:bg-green-900', 'border-green-500');
-            else if(b.dataset.key === selected && !isCorrect) b.classList.add('bg-red-200', 'dark:bg-red-900', 'border-red-500');
-        });
-
-        if(isCorrect) {
-            survivalScore += 10;
-            if(typeof confetti === 'function') confetti({ particleCount: 30, spread: 60, origin: { y: 0.7 } });
-        } else {
-            survivalLives--;
-            navigator.vibrate?.(200);
-        }
-
-        setTimeout(() => {
-            currentSurvivalIndex++;
-            renderSurvivalScreen();
-        }, 1500);
-    }
-
-    // === LÓGICA: RPG (SIMULADOR) ===
-    async function initRPGGame(rpgData) {
-        renderRPGScene(rpgData.start, rpgData);
-    }
-
-    function renderRPGScene(sceneId, rpgData) {
-        const scene = rpgData.scenes[sceneId];
-        if(!scene) return; // Erro ou fim
-
-        let html = `
-            <div class="max-w-2xl mx-auto animate-fade-in">
-                <div class="bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-                    ${scene.image ? `<img src="${scene.image}" class="w-full h-48 object-cover">` : ''}
-                    <div class="p-6">
-                        <p class="text-lg text-gray-800 dark:text-gray-200 mb-6 leading-relaxed">${scene.text}</p>
-                        <div class="space-y-3">
+                <!-- VERSO -->
+                <div class="bc-card bc-back">
+                    <div class="bc-qr">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=Aluno:${currentUserData.name}|Valid:${validade}|Mat:${matricula}" width="70" height="70">
+                    </div>
+                    <p class="bc-legal">
+                        O portador deste documento concluiu os requisitos teóricos do Curso de Formação, conforme Lei 9394/96 e normas vigentes. Válido em todo território nacional mediante apresentação de documento oficial com foto.
+                    </p>
+                    <div class="bc-validity">VALIDADE: ${validade}</div>
+                </div>
+            </div>
+            <p class="text-center text-xs text-gray-500 mt-4"><i class="fas fa-camera mr-1"></i> Tire um print para salvar.</p>
         `;
-
-        scene.options.forEach(opt => {
-            html += `
-                <button class="rpg-choice-btn w-full text-left p-4 bg-gray-50 dark:bg-gray-800 border-l-4 border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all rounded shadow-sm mb-2" data-next="${opt.next}">
-                    <i class="fas fa-chevron-right text-blue-500 mr-2"></i> ${opt.text}
-                </button>
-            `;
-        });
-
-        html += `</div></div></div></div>`;
-        contentArea.innerHTML = html;
-
-        if(scene.type === 'death') {
-            contentArea.querySelector('.bg-white').classList.add('border-red-500', 'border-2');
-        } else if(scene.type === 'win') {
-            contentArea.querySelector('.bg-white').classList.add('border-green-500', 'border-2');
-            if(typeof confetti === 'function') confetti();
-        }
-
-        document.querySelectorAll('.rpg-choice-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const next = btn.dataset.next;
-                if(next === 'exit') loadModuleContent('module61'); // Reset
-                else renderRPGScene(next, rpgData);
-            });
-        });
     }
 
-    // === MELHORIA 4: CARTEIRINHA DIGITAL (Frente e Verso Juntos - Design Dark) ===
+    // --- FUNÇÕES AUXILIARES ---
     window.updateProfilePic = function(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
@@ -1082,211 +523,46 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.readAsDataURL(input.files[0]);
         }
     };
-
     window.saveExtraData = function(field, value) {
-        if(!value) return;
-        localStorage.setItem('user_' + field, value);
+        if(value) localStorage.setItem('user_' + field, value);
     };
 
-    function renderDigitalID() {
-        if (!currentUserData) return;
-        
-        const container = document.getElementById('id-card-container');
-        if (!container) return;
-
-        const savedPhoto = localStorage.getItem('user_profile_pic');
-        const defaultPhoto = "https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png"; 
-        const currentPhoto = savedPhoto || defaultPhoto;
-
-        const savedRG = localStorage.getItem('user_rg') || '';
-        const savedDataNasc = localStorage.getItem('user_nasc') || '';
-
-        let matricula = 'BC-';
-        if (currentUserData.createdAt && currentUserData.createdAt.seconds) {
-            matricula += currentUserData.createdAt.seconds.toString().slice(-6);
-        } else {
-            matricula += currentUserData.uid.substring(0, 6).toUpperCase();
+    // --- SIMULADOS E FERRAMENTAS ---
+    function renderSimuladoStart(d) {
+        contentArea.innerHTML = `
+            <h3 class="text-3xl mb-4 pb-4 border-b text-orange-600 dark:text-orange-500 flex items-center">
+                <i class="${d.iconClass} mr-3"></i> ${d.title}
+            </h3>
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm mb-6 text-gray-700 dark:text-gray-300">
+                ${d.content}
+            </div>
+            <div class="text-center mt-8">
+                <button id="start-simulado-btn" class="action-button pulse-button text-xl px-8 py-4 shadow-lg transform hover:scale-105 transition-all">
+                    <i class="fas fa-play mr-2"></i> INICIAR SIMULADO
+                </button>
+            </div>
+        `;
+        document.getElementById('start-simulado-btn').addEventListener('click', () => startSimuladoMode(d));
+    }
+    
+    function renderTools() {
+        contentArea.innerHTML = `
+            <h3 class="text-3xl mb-4 pb-4 border-b text-blue-600 dark:text-blue-400 flex items-center">
+                <i class="fas fa-tools mr-3"></i> Ferramentas Operacionais
+            </h3>
+            <div id="tools-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in"></div>
+        `;
+        if (typeof window.ToolsApp !== 'undefined') {
+            const g = document.getElementById('tools-grid');
+            window.ToolsApp.renderPonto(g);
+            window.ToolsApp.renderEscala(g);
+            window.ToolsApp.renderPlanner(g);
+            window.ToolsApp.renderWater(g);
+            window.ToolsApp.renderNotes(g);
+            window.ToolsApp.renderHealth(g);
         }
-
-        const validityYear = "2026"; 
-        const validUntilFull = new Date(currentUserData.acesso_ate).toLocaleDateString('pt-BR');
-
-        // Layout sem rotação: Frente em cima, Verso embaixo (ou lado a lado no desktop)
-        const styleBlock = `
-            <style>
-                .id-cards-container {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 20px;
-                    align-items: center;
-                    margin-top: 20px;
-                }
-                @media(min-width: 1024px) {
-                    .id-cards-container {
-                        flex-direction: row;
-                        justify-content: center;
-                        align-items: flex-start;
-                    }
-                }
-                .id-card-static {
-                    width: 100%;
-                    max-width: 400px;
-                    aspect-ratio: 1.58/1;
-                    border-radius: 15px;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-                    position: relative;
-                    overflow: hidden;
-                    font-family: 'Lato', sans-serif;
-                    background: #111827; /* Dark Background */
-                    color: white;
-                    border: 1px solid #374151;
-                }
-                /* Design Frente */
-                .card-front {
-                    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-                    display: flex;
-                }
-                .card-side-bar {
-                    width: 35%;
-                    background: linear-gradient(180deg, #ea580c 0%, #c2410c 100%); /* Orange Brand */
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 10px;
-                }
-                .card-main-content {
-                    width: 65%;
-                    padding: 15px;
-                    position: relative;
-                }
-                .card-photo {
-                    width: 90px;
-                    height: 110px;
-                    background: white;
-                    border: 3px solid white;
-                    border-radius: 8px;
-                    object-fit: cover;
-                    margin-bottom: 10px;
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-                }
-                .card-logo-sm {
-                    width: 40px; 
-                    opacity: 0.8;
-                }
-                .card-header {
-                    font-size: 10px;
-                    text-transform: uppercase;
-                    letter-spacing: 1px;
-                    color: #9ca3af;
-                    margin-bottom: 5px;
-                }
-                .card-name {
-                    font-family: 'Lora', serif;
-                    font-size: 16px;
-                    font-weight: bold;
-                    color: #fff;
-                    line-height: 1.2;
-                    margin-bottom: 15px;
-                    text-transform: uppercase;
-                }
-                .card-info-row {
-                    display: flex;
-                    justify-content: space-between;
-                    margin-bottom: 8px;
-                    font-size: 10px;
-                    border-bottom: 1px solid #374151;
-                    padding-bottom: 2px;
-                }
-                .card-label { font-weight: bold; color: #ea580c; }
-                .card-value { color: #d1d5db; }
-                
-                /* Design Verso */
-                .card-back {
-                    background: #1f2937;
-                    padding: 20px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    text-align: center;
-                    background-image: radial-gradient(circle at center, #374151 1px, transparent 1px);
-                    background-size: 20px 20px;
-                }
-                .card-qr {
-                    background: white;
-                    padding: 5px;
-                    border-radius: 5px;
-                    margin-bottom: 10px;
-                }
-                .card-legal {
-                    font-size: 8px;
-                    color: #9ca3af;
-                    line-height: 1.4;
-                }
-                .validity-tag {
-                    background: #ea580c;
-                    color: white;
-                    padding: 4px 10px;
-                    border-radius: 4px;
-                    font-size: 10px;
-                    font-weight: bold;
-                    margin-top: 10px;
-                }
-            </style>
-        `;
-        
-        container.innerHTML = styleBlock + `
-            <div class="id-cards-container">
-                <!-- FRENTE -->
-                <div class="id-card-static card-front">
-                    <div class="card-side-bar">
-                        <div class="cursor-pointer group relative" onclick="document.getElementById('profile-pic-input').click()">
-                            <img src="${currentPhoto}" class="card-photo" id="id-card-photo">
-                            <div class="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity rounded">Alterar</div>
-                        </div>
-                        <img src="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png" class="card-logo-sm">
-                    </div>
-                    <div class="card-main-content">
-                        <div class="card-header">Bombeiro Civil / Brigadista</div>
-                        <div class="card-name">${currentUserData.name}</div>
-                        
-                        <div class="card-info-row">
-                            <span class="card-label">Matrícula</span>
-                            <span class="card-value">${matricula}</span>
-                        </div>
-                        <div class="card-info-row">
-                            <span class="card-label">CPF</span>
-                            <span class="card-value">${currentUserData.cpf || '---'}</span>
-                        </div>
-                        <div class="card-info-row">
-                            <span class="card-label">Tipo Sanguíneo</span>
-                            <input type="text" class="bg-transparent text-right w-10 text-white border-b border-gray-600 outline-none focus:border-orange-500 text-[10px]" placeholder="---" onchange="window.saveExtraData('blood', this.value)" value="${localStorage.getItem('user_blood') || ''}">
-                        </div>
-                    </div>
-                    <input type="file" id="profile-pic-input" class="hidden" accept="image/*" onchange="window.updateProfilePic(this)">
-                </div>
-
-                <!-- VERSO -->
-                <div class="id-card-static card-back">
-                    <div class="card-qr">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=Aluno:${currentUserData.name}|Valid:${validade}|Mat:${matricula}" width="80" height="80">
-                    </div>
-                    <p class="card-legal">
-                        Atestamos que o portador deste documento concluiu os requisitos teóricos do Curso de Formação de Bombeiro Civil / Brigadista, em conformidade com as normas técnicas vigentes.
-                    </p>
-                    <div class="validity-tag">
-                        VALIDADE: ${validade}
-                    </div>
-                </div>
-            </div>
-            <div class="text-center mt-6 text-sm text-gray-500">
-                <i class="fas fa-print mr-2"></i> Para imprimir, tire um print da tela ou salve como imagem.
-            </div>
-        `;
     }
 
-    // === FUNÇÕES PADRÃO DO APP ===
     async function startSimuladoMode(moduleData) {
         loadingSpinner.classList.remove('hidden');
         contentArea.classList.add('hidden');
@@ -1295,30 +571,37 @@ document.addEventListener('DOMContentLoaded', () => {
         userAnswers = {};
         simuladoTimeLeft = moduleData.simuladoConfig.timeLimit * 60; 
         currentSimuladoQuestionIndex = 0;
-
+        
         contentArea.innerHTML = `
             <div class="relative pt-4 pb-12">
-                <div id="simulado-timer-bar" class="simulado-header-sticky shadow-lg">
-                    <span class="simulado-timer flex items-center"><i class="fas fa-clock mr-2 text-lg"></i><span id="timer-display">60:00</span></span>
-                    <span class="simulado-progress text-sm bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">Questão <span id="q-current">1</span> / ${activeSimuladoQuestions.length}</span>
+                <div id="simulado-timer-bar" class="simulado-header-sticky shadow-lg flex justify-between items-center p-4 bg-white dark:bg-gray-800 rounded-b-lg sticky top-20 z-30 border-t-4 border-orange-500">
+                    <span class="simulado-timer flex items-center font-mono text-xl font-bold text-orange-600 dark:text-orange-400">
+                        <i class="fas fa-clock mr-2"></i><span id="timer-display">60:00</span>
+                    </span>
+                    <span class="simulado-progress text-sm bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full font-bold text-gray-600 dark:text-gray-300">
+                        Questão <span id="q-current">1</span> / ${activeSimuladoQuestions.length}
+                    </span>
                 </div>
-                
-                <div class="mt-10 mb-6 px-2 text-center">
-                     <h3 class="text-xl md:text-2xl font-bold text-gray-800 dark:text-white border-b pb-2 inline-block">${moduleData.title}</h3>
+                <div class="mt-8 mb-6 px-2 text-center">
+                    <h3 class="text-xl font-bold text-gray-800 dark:text-white border-b-2 border-gray-200 dark:border-gray-700 pb-2 inline-block">
+                        ${moduleData.title}
+                    </h3>
                 </div>
-
-                <div id="question-display-area" class="simulado-question-container"></div>
-                
-                <div class="mt-8 flex justify-between items-center">
-                    <button id="sim-prev-btn" class="sim-nav-btn sim-btn-prev shadow" style="visibility: hidden;"><i class="fas fa-arrow-left mr-2"></i> Anterior</button>
-                    <button id="sim-next-btn" class="sim-nav-btn sim-btn-next shadow">Próxima <i class="fas fa-arrow-right ml-2"></i></button>
+                <div id="question-display-area" class="simulado-question-container min-h-[300px]"></div>
+                <div class="mt-10 flex justify-between items-center px-4 pb-8">
+                    <button id="sim-prev-btn" class="action-button bg-gray-500 hover:bg-gray-600 shadow-md" style="visibility: hidden;">
+                        <i class="fas fa-arrow-left mr-2"></i> Anterior
+                    </button>
+                    <button id="sim-next-btn" class="action-button shadow-md">
+                        Próxima <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
                 </div>
             </div>
         `;
         
         contentArea.classList.remove('hidden');
         loadingSpinner.classList.add('hidden');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({top:0,behavior:'smooth'});
 
         showSimuladoQuestion(currentSimuladoQuestionIndex);
         startTimer(moduleData.id);
@@ -1333,16 +616,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedAnswer = userAnswers[q.id] || null;
         
         let html = `
-            <div class="bg-white dark:bg-gray-900 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700 animate-slide-in">
-                <p class="font-bold text-lg mb-6 text-gray-800 dark:text-white">${index+1}. ${q.question}</p>
+            <div class="bg-white dark:bg-gray-900 p-6 md:p-8 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 animate-slide-in">
+                <p class="font-bold text-lg mb-6 text-gray-800 dark:text-white leading-relaxed border-l-4 border-orange-500 pl-4">
+                    <span class="text-orange-500 mr-2">#${index+1}</span> ${q.question}
+                </p>
                 <div class="space-y-3">
         `;
         for (const key in q.options) {
             const isChecked = savedAnswer === key ? 'checked' : '';
+            const bgClass = savedAnswer === key ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-500 ring-1 ring-blue-500' : 'hover:bg-gray-50 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-700';
+            
             html += `
-                <label class="flex items-center p-4 rounded border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                    <input type="radio" name="q-curr" value="${key}" class="mr-4 w-5 h-5 text-orange-600 focus:ring-orange-500" ${isChecked} onchange="registerSimuladoAnswer('${q.id}', '${key}')">
-                    <span class="text-base text-gray-700 dark:text-gray-300"><strong class="mr-2 text-orange-500">${key.toUpperCase()})</strong> ${q.options[key]}</span>
+                <label class="flex items-start p-4 rounded-lg border ${bgClass} cursor-pointer transition-all select-none group">
+                    <input type="radio" name="q-curr" value="${key}" class="mt-1 mr-4 w-5 h-5 text-orange-600 focus:ring-orange-500" ${isChecked} onchange="window.registerSimuladoAnswer('${q.id}', '${key}')">
+                    <span class="text-base text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+                        <strong class="mr-2 text-orange-500 bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 rounded text-sm">${key.toUpperCase()}</strong> 
+                        ${q.options[key]}
+                    </span>
                 </label>
             `;
         }
@@ -1356,607 +646,844 @@ document.addEventListener('DOMContentLoaded', () => {
         
         prevBtn.style.visibility = index === 0 ? 'hidden' : 'visible';
         if (index === activeSimuladoQuestions.length - 1) {
-            nextBtn.innerHTML = '<i class="fas fa-check-double mr-2"></i> ENTREGAR';
-            nextBtn.className = "sim-nav-btn bg-green-600 text-white hover:bg-green-500 shadow-lg transform hover:scale-105 transition-transform";
+            nextBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i> ENTREGAR';
+            nextBtn.className = "action-button bg-green-600 hover:bg-green-500 shadow-lg transform hover:scale-105 transition-transform";
         } else {
             nextBtn.innerHTML = 'Próxima <i class="fas fa-arrow-right ml-2"></i>';
-            nextBtn.className = "sim-nav-btn sim-btn-next";
-        }
-    }
-
-    function navigateSimulado(direction, moduleId) {
-        const newIndex = currentSimuladoQuestionIndex + direction;
-        if (newIndex >= 0 && newIndex < activeSimuladoQuestions.length) {
-            currentSimuladoQuestionIndex = newIndex;
-            showSimuladoQuestion(newIndex);
-            window.scrollTo({ top: 100, behavior: 'smooth' });
-        } else if (newIndex >= activeSimuladoQuestions.length) {
-            if(confirm("Tem certeza que deseja entregar o simulado?")) {
-                finishSimulado(moduleId);
-            }
+            nextBtn.className = "action-button shadow-md";
         }
     }
 
     window.registerSimuladoAnswer = function(qId, answer) {
         userAnswers[qId] = answer;
+        // Atualiza UI imediatamente
+        const currentCard = document.querySelector('.bg-white.dark\\:bg-gray-900');
+        if(currentCard) {
+            currentCard.querySelectorAll('label').forEach(lbl => {
+                lbl.classList.remove('bg-blue-50', 'dark:bg-blue-900/30', 'border-blue-500', 'ring-1', 'ring-blue-500');
+                lbl.classList.add('border-gray-200', 'dark:border-gray-700');
+                if(lbl.querySelector('input').checked) {
+                    lbl.classList.add('bg-blue-50', 'dark:bg-blue-900/30', 'border-blue-500', 'ring-1', 'ring-blue-500');
+                    lbl.classList.remove('border-gray-200', 'dark:border-gray-700');
+                }
+            });
+        }
     };
 
-    function startTimer(moduleId) {
+    function navigateSimulado(dir, modId) {
+        const newIndex = currentSimuladoQuestionIndex + dir;
+        if (newIndex >= 0 && newIndex < activeSimuladoQuestions.length) {
+            currentSimuladoQuestionIndex = newIndex;
+            showSimuladoQuestion(newIndex);
+            const area = document.getElementById('question-display-area');
+            if(area) area.scrollIntoView({behavior:'smooth', block:'start'});
+        } else if (newIndex >= activeSimuladoQuestions.length) {
+            if(confirm("Tem certeza que deseja entregar o simulado?")) {
+                finishSimulado(modId);
+            }
+        }
+    }
+
+    function startTimer(modId) {
         const display = document.getElementById('timer-display');
         simuladoTimerInterval = setInterval(() => {
             simuladoTimeLeft--;
-            const m = Math.floor(simuladoTimeLeft / 60);
-            const s = simuladoTimeLeft % 60;
-            display.textContent = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+            const m = Math.floor(simuladoTimeLeft / 60), s = simuladoTimeLeft % 60;
+            display.textContent = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
+            
+            // Alerta visual quando tempo está acabando
+            if(simuladoTimeLeft < 60) display.classList.add('text-red-600', 'animate-pulse');
             
             if (simuladoTimeLeft <= 0) {
                 clearInterval(simuladoTimerInterval);
                 alert("Tempo esgotado! O simulado será encerrado.");
-                finishSimulado(moduleId);
+                finishSimulado(modId);
             }
         }, 1000);
     }
 
-    function finishSimulado(moduleId) {
+    function finishSimulado(modId) {
         clearInterval(simuladoTimerInterval);
-        let correctCount = 0;
-        const total = activeSimuladoQuestions.length;
-        let feedbackHtml = '<div class="space-y-4">';
+        let correct = 0; 
+        const total = activeSimuladoQuestions.length; 
+        let feedbackHtml = '<div class="space-y-6">';
 
         activeSimuladoQuestions.forEach((q, i) => {
-            const selected = userAnswers[q.id];
-            const isCorrect = selected === q.answer;
-            if(isCorrect) correctCount++;
+            const sel = userAnswers[q.id];
+            const isCorrect = sel === q.answer;
+            if(isCorrect) correct++;
             
             const statusClass = isCorrect ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : 'border-red-500 bg-red-50 dark:bg-red-900/20';
+            const icon = isCorrect ? '<i class="fas fa-check-circle text-green-500"></i>' : '<i class="fas fa-times-circle text-red-500"></i>';
             const correctAnswerText = q.options[q.answer];
-            const selectedAnswerText = selected ? q.options[selected] : "Não respondeu";
-            const explanation = q.explanation || "Sem explicação disponível.";
+            const selectedAnswerText = sel ? q.options[sel] : "Não respondeu";
 
             feedbackHtml += `
-                <div class="p-4 rounded border-l-4 ${statusClass} mb-4">
-                    <p class="font-bold text-gray-800 dark:text-gray-200 text-sm mb-3">${i+1}. ${q.question}</p>
-                    <div class="grid grid-cols-1 gap-3 text-xs mb-3">
-                        <div class="p-2 rounded ${isCorrect ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}">
-                            <span class="font-bold block mb-1">Sua Resposta:</span> 
-                            ${selected ? selected.toUpperCase() + ') ' + selectedAnswerText : 'Em branco'}
+                <div class="p-5 rounded-lg border-l-4 ${statusClass} shadow-sm bg-white dark:bg-gray-800">
+                    <div class="flex justify-between items-start mb-3">
+                        <p class="font-bold text-gray-800 dark:text-gray-200 text-sm w-11/12">${i+1}. ${q.question}</p>
+                        <span class="text-xl">${icon}</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 gap-2 text-xs mb-4">
+                        <div class="p-3 rounded ${isCorrect ? 'bg-green-100 text-green-900 dark:bg-green-900/40 dark:text-green-100' : 'bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100'}">
+                            <span class="font-bold block mb-1 text-[10px] uppercase tracking-wider opacity-70">Sua Resposta</span> 
+                            <span class="font-semibold">${sel ? sel.toUpperCase() + ') ' + selectedAnswerText : 'Em branco'}</span>
                         </div>
                         ${!isCorrect ? `
-                        <div class="p-2 rounded bg-green-50 text-green-800 dark:bg-green-900/50 dark:text-green-300 border border-green-200 dark:border-green-800">
-                            <span class="font-bold block mb-1">Resposta Correta:</span> 
-                            ${q.answer.toUpperCase()}) ${correctAnswerText}
+                        <div class="p-3 rounded bg-blue-50 text-blue-900 dark:bg-blue-900/20 dark:text-blue-100 border border-blue-200 dark:border-blue-800/50">
+                            <span class="font-bold block mb-1 text-[10px] uppercase tracking-wider opacity-70">Resposta Correta</span> 
+                            <span class="font-semibold">${q.answer.toUpperCase()}) ${correctAnswerText}</span>
                         </div>
                         ` : ''}
                     </div>
-                    <div class="bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400">
-                        <strong><i class="fas fa-info-circle mr-1 text-blue-500"></i> Explicação:</strong><br> ${explanation}
+                    
+                    <div class="pt-3 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                        <strong><i class="fas fa-info-circle mr-1 text-blue-500"></i> Explicação:</strong><br> 
+                        ${q.explanation || 'Sem explicação adicional.'}
                     </div>
                 </div>
             `;
         });
         feedbackHtml += '</div>';
 
-        const score = (correctCount / total) * 10;
-        const finalHtml = `
-            <div class="simulado-result-card mb-8 animate-slide-in">
-                <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Resultado Final</h2>
-                <div class="simulado-score-circle">${score.toFixed(1)}</div>
-                <p class="text-lg text-gray-600 dark:text-gray-300">Acertou <strong>${correctCount}</strong> de <strong>${total}</strong> questões.</p>
+        const score = (correct/total)*10;
+        const percentage = ((correct/total)*100).toFixed(0);
+        
+        contentArea.innerHTML = `
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl mb-8 text-center animate-slide-in">
+                <h2 class="text-3xl font-bold mb-2 text-gray-800 dark:text-white">Resultado Final</h2>
+                
+                <div class="relative w-40 h-40 mx-auto my-6 flex items-center justify-center rounded-full border-8 ${score >= 7 ? 'border-green-500' : 'border-orange-500'} shadow-inner bg-gray-50 dark:bg-gray-900">
+                    <div class="text-center">
+                        <div class="text-5xl font-extrabold text-gray-800 dark:text-white">${score.toFixed(1)}</div>
+                        <div class="text-xs font-bold text-gray-500 uppercase mt-1">Nota</div>
+                    </div>
+                </div>
+                
+                <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+                    Você acertou <strong>${correct}</strong> de <strong>${total}</strong> questões (${percentage}%).
+                </p>
+                
+                <div class="w-full bg-gray-200 rounded-full h-4 dark:bg-gray-700 overflow-hidden">
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-700 h-4 rounded-full transition-all duration-1000 ease-out" style="width: 0%" id="score-bar"></div>
+                </div>
+                
+                ${score >= 7 ? 
+                    '<div class="mt-6 p-3 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-lg font-bold"><i class="fas fa-trophy mr-2"></i> Aprovado! Excelente desempenho.</div>' : 
+                    '<div class="mt-6 p-3 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-lg font-bold"><i class="fas fa-book-reader mr-2"></i> Continue estudando para melhorar.</div>'
+                }
             </div>
-            <h4 class="text-xl font-bold mb-4 text-gray-800 dark:text-white border-b pb-2">Gabarito & Explicações</h4>
+            
+            <h4 class="text-xl font-bold mb-6 text-gray-800 dark:text-white border-b pb-3 flex items-center">
+                <i class="fas fa-clipboard-check mr-3 text-blue-500"></i> Gabarito Detalhado
+            </h4>
+            
             ${feedbackHtml}
-            <div class="text-center mt-8"><button onclick="location.reload()" class="action-button">Voltar ao Início</button></div>
+            
+            <div class="text-center mt-12 pb-12">
+                <button onclick="location.reload()" class="action-button bg-gray-600 hover:bg-gray-500 shadow-lg px-8 py-3">
+                    <i class="fas fa-undo mr-2"></i> Voltar ao Início
+                </button>
+            </div>
         `;
         
-        contentArea.innerHTML = finalHtml;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({top:0,behavior:'smooth'});
+        
+        // Animação da barra
+        setTimeout(() => {
+            const bar = document.getElementById('score-bar');
+            if(bar) bar.style.width = `${percentage}%`;
+        }, 300);
 
-        if (!completedModules.includes(moduleId)) {
-            completedModules.push(moduleId);
+        if(!completedModules.includes(modId)) {
+            completedModules.push(modId);
             localStorage.setItem('gateBombeiroCompletedModules_v3', JSON.stringify(completedModules));
             updateProgress();
         }
     }
 
-    function renderPremiumLockScreen(title) {
-        contentArea.innerHTML = `<div class="text-center py-12 px-6"><div class="inline-block p-6 bg-yellow-100 dark:bg-yellow-900/30 rounded-full mb-6"><i class="fas fa-lock text-5xl text-yellow-600 dark:text-yellow-500"></i></div><h2 class="text-3xl font-bold mb-4 text-gray-800 dark:text-white">Conteúdo Exclusivo</h2><p class="text-lg text-gray-600 dark:text-gray-300 max-w-md mx-auto mb-8">O módulo <strong>${title}</strong> faz parte do nosso pacote avançado. Assine agora para desbloquear Simulados, Bônus e muito mais.</p><button id="premium-lock-btn" class="action-button pulse-button text-lg px-8 py-4"><i class="fas fa-crown mr-2"></i> DESBLOQUEAR TUDO AGORA</button></div>`;
-        document.getElementById('premium-lock-btn').addEventListener('click', () => { document.getElementById('expired-modal').classList.add('show'); document.getElementById('name-modal-overlay').classList.add('show'); });
-        updateActiveModuleInList();
-        updateNavigationButtons();
+    async function generateSimuladoQuestions(config) {
+        const allQuestions = []; const questionsByCategory = {};
+        
+        for (const catKey in window.moduleCategories) {
+            questionsByCategory[catKey] = []; 
+            const cat = window.moduleCategories[catKey];
+            for (let i = cat.range[0]; i <= cat.range[1]; i++) {
+                const modId = `module${i}`;
+                if (window.QUIZ_DATA && window.QUIZ_DATA[modId]) {
+                    questionsByCategory[catKey].push(...window.QUIZ_DATA[modId]);
+                }
+            }
+        }
+        
+        for (const [catKey, qty] of Object.entries(config.distribution)) {
+            if (questionsByCategory[catKey] && questionsByCategory[catKey].length > 0) {
+                const available = questionsByCategory[catKey];
+                const needed = Math.min(qty, available.length);
+                allQuestions.push(...shuffleArray(available).slice(0, needed));
+            }
+        }
+        
+        return shuffleArray(allQuestions);
     }
 
-    function handleQuizOptionClick(e) {
-        const o = e.currentTarget;
-        if (o.disabled) return;
-        const moduleId = o.dataset.module;
-        const questionId = o.dataset.questionId;
-        const selectedAnswer = o.dataset.answer;
-        const questionData = cachedQuestionBanks[moduleId]?.find(q => q.id === questionId);
-        if (!questionData) return; 
+    async function renderEmbeddedQuiz(moduleId) {
+        let questions = window.QUIZ_DATA[moduleId];
+        if (!questions || !questions.length) return;
         
-        const correctAnswer = questionData.answer;
-        const correctAnswerText = questionData.options[correctAnswer];
-        const explanationText = questionData.explanation || 'Nenhuma explicação disponível.';
+        const shuffled = shuffleArray([...questions]).slice(0, 4);
+        const quizContainer = document.createElement('div');
+        quizContainer.className = "mt-10 mb-10 p-6 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-md";
         
-        const optionsGroup = o.closest('.quiz-options-group');
-        const feedbackArea = document.getElementById(`feedback-${questionId}`);
+        let quizHtml = `
+            <div class="flex items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg mr-3 text-blue-600 dark:text-blue-400">
+                    <i class="fas fa-brain text-xl"></i>
+                </div>
+                <h4 class="text-xl font-bold text-gray-800 dark:text-white">Exercícios de Fixação</h4>
+            </div>
+        `;
         
-        optionsGroup.querySelectorAll(`.quiz-option[data-question-id="${questionId}"]`).forEach(opt => {
-            opt.disabled = true;
-            if (opt.dataset.answer === correctAnswer) opt.classList.add('correct');
+        shuffled.forEach((q, index) => {
+            quizHtml += `
+                <div class="mb-8 last:mb-0 quiz-item-container">
+                    <p class="font-semibold text-gray-800 dark:text-gray-200 mb-4 text-base leading-relaxed">
+                        <span class="font-bold text-blue-500 mr-1">${index + 1}.</span> ${q.question}
+                    </p>
+                    <div class="space-y-2 quiz-options-group pl-2">
+            `;
+            for (const key in q.options) {
+                quizHtml += `
+                    <button class="quiz-option w-full text-left p-3.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all flex items-start group" data-answer="${key}" data-correct="${q.answer}" data-explanation="${q.explanation || ''}">
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-bold text-gray-500 dark:text-gray-400 group-hover:bg-blue-100 group-hover:text-blue-600 mr-3 transition-colors border border-gray-300 dark:border-gray-600 uppercase">
+                            ${key}
+                        </span>
+                        <span class="flex-1 text-sm text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">${q.options[key]}</span>
+                        <span class="ripple"></span>
+                    </button>
+                `;
+            }
+            quizHtml += `</div><div class="feedback-area hidden mt-4 p-4 rounded-lg text-sm animate-fade-in border-l-4"></div></div>`;
         });
         
-        let feedbackContent = '';
-        if (selectedAnswer === correctAnswer) {
-            o.classList.add('correct');
-            feedbackContent = `
-                <div class="p-3 bg-green-50 dark:bg-green-900/30 border-l-4 border-green-500 rounded">
-                    <strong class="block text-green-700 dark:text-green-400 mb-1"><i class="fas fa-check-circle mr-2"></i> Correto!</strong> 
-                    <div class="text-sm text-gray-600 dark:text-gray-300">${explanationText}</div>
-                </div>
-            `;
-            try { triggerSuccessParticles(e, o); } catch (err) {}
-        } else {
-            o.classList.add('incorrect');
-            feedbackContent = `
-                <div class="p-3 bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 rounded">
-                    <div class="mb-2"><strong class="text-red-700 dark:text-red-400"><i class="fas fa-times-circle mr-2"></i> Incorreto.</strong></div>
-                    <div class="mb-2 text-sm text-gray-700 dark:text-gray-200">
-                        A resposta correta é: <span class="font-bold text-green-600 dark:text-green-400 block mt-1 p-1 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">${correctAnswer.toUpperCase()}) ${correctAnswerText}</span>
-                    </div>
-                    <div class="text-sm text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
-                        <strong>Explicação:</strong> ${explanationText}
-                    </div>
-                </div>
-            `;
-        }
+        quizContainer.innerHTML = quizHtml;
         
-        if (feedbackArea) {
-            feedbackArea.innerHTML = `<div class="explanation mt-3 animate-slide-in">${feedbackContent}</div>`;
-            feedbackArea.classList.remove('hidden');
-        }
+        const concludeBtnDiv = contentArea.querySelector('.conclude-button')?.parentElement;
+        if (concludeBtnDiv) contentArea.insertBefore(quizContainer, concludeBtnDiv); else contentArea.appendChild(quizContainer);
+        
+        quizContainer.querySelectorAll('.quiz-option').forEach(btn => btn.addEventListener('click', handleEmbeddedQuizClick));
     }
-    
-    function updateBreadcrumbs(moduleTitle = 'Início') {
-        const homeLink = `<a href="#" id="home-breadcrumb" class="text-blue-600 dark:text-blue-400 hover:text-orange-500 transition-colors"><i class="fas fa-home mr-1"></i> Início</a>`;
-        if (!currentModuleId) {
-            breadcrumbContainer.innerHTML = homeLink;
-        } else {
-            const category = Object.values(moduleCategories).find(cat => {
-                const moduleNum = parseInt(currentModuleId.replace('module', ''));
-                return moduleNum >= cat.range[0] && moduleNum <= cat.range[1];
-            });
-            if (category) {
-                const categoryLink = `<span class="mx-2 text-gray-400">/</span> <span class="font-bold text-gray-700 dark:text-gray-300">${category.title}</span>`;
-                const moduleSpan = `<span class="mx-2 text-gray-400">/</span> <span class="text-orange-500">${moduleTitle}</span>`;
-                breadcrumbContainer.innerHTML = `${homeLink} ${categoryLink} ${moduleSpan}`;
+
+    function handleEmbeddedQuizClick(e) {
+        const btn = e.currentTarget;
+        const parent = btn.closest('.quiz-options-group');
+        const feedback = parent.nextElementSibling;
+        const isCorrect = btn.dataset.answer === btn.dataset.correct;
+        const explanation = btn.dataset.explanation;
+        
+        parent.querySelectorAll('.quiz-option').forEach(b => {
+            b.disabled = true;
+            if (b.dataset.answer === btn.dataset.correct) {
+                b.classList.add('bg-green-50', 'dark:bg-green-900/30', 'border-green-500', 'ring-1', 'ring-green-500');
+                b.querySelector('span:first-child').classList.add('bg-green-200', 'text-green-800', 'border-green-300');
+            } else if (b === btn && !isCorrect) {
+                b.classList.add('bg-red-50', 'dark:bg-red-900/30', 'border-red-500');
+                b.querySelector('span:first-child').classList.add('bg-red-200', 'text-red-800', 'border-red-300');
             } else {
-                breadcrumbContainer.innerHTML = `${homeLink} <span class="mx-2 text-gray-400">/</span> ${moduleTitle}`;
+                b.classList.add('opacity-60');
             }
-        }
-        document.getElementById('home-breadcrumb')?.addEventListener('click', (e) => { e.preventDefault(); goToHomePage(); });
-    }
-    
-    function setupNotesListener(id) {
-        const notesTextarea = document.getElementById(`notes-module-${id}`);
-        if (notesTextarea) {
-            notesTextarea.addEventListener('keyup', () => {
-                localStorage.setItem('note-' + id, notesTextarea.value);
-            });
-        }
-    }
-
-    function goToHomePage() {
-        localStorage.removeItem('gateBombeiroLastModule'); 
+        });
         
-        if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
-
-        if (contentArea) contentArea.innerHTML = getWelcomeContent();
-        document.getElementById('module-nav')?.classList.add('hidden');
-        document.querySelectorAll('.module-list-item.active').forEach(i => i.classList.remove('active'));
-        currentModuleId = null;
-        closeSidebar();
-        const btn = document.getElementById('start-course');
-        if (btn) {
-            const newBtn = btn.cloneNode(true);
-            btn.parentNode.replaceChild(newBtn, btn);
-            newBtn.addEventListener('click', () => { loadModuleContent('module1'); });
+        feedback.classList.remove('hidden');
+        if (isCorrect) {
+            feedback.classList.add('bg-green-50', 'dark:bg-green-900/20', 'border-green-500', 'text-green-900', 'dark:text-green-100');
+            feedback.innerHTML = `<div class="flex gap-2"><i class="fas fa-check-circle text-green-500 text-lg mt-0.5"></i><div><strong>Correto!</strong><br>${explanation}</div></div>`;
+            if(typeof confetti === 'function') confetti({ particleCount: 30, spread: 60, origin: { y: 0.7 }, zIndex: 50 });
+        } else {
+            feedback.classList.add('bg-red-50', 'dark:bg-red-900/20', 'border-red-500', 'text-red-900', 'dark:text-red-100');
+            feedback.innerHTML = `<div class="flex gap-2"><i class="fas fa-times-circle text-red-500 text-lg mt-0.5"></i><div><strong>Incorreto.</strong><br>${explanation}</div></div>`;
         }
-        updateBreadcrumbs();
     }
 
-    function getWelcomeContent() {
-        return `<div class="text-center py-8"><div class="floating inline-block p-5 bg-red-100 dark:bg-red-900/50 rounded-full mb-6"><i class="fas fa-fire-extinguisher text-6xl text-red-600"></i></div><h2 class="text-4xl font-bold mb-4 text-blue-900 dark:text-white">Torne-se um Profissional de Elite</h2><p class="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-8">Bem-vindo ao <strong class="font-bold text-orange-500 dark:text-orange-400">Curso de Formação para Bombeiro Civil e Brigadista</strong>.</p><button id="start-course" class="action-button pulse text-lg"><i class="fas fa-play-circle mr-2"></i> Iniciar Curso Agora</button></div>`;
-    }
-
-    function setupProtection() {
-        document.body.style.userSelect = 'none';
-        document.addEventListener('contextmenu', e => e.preventDefault());
-        document.addEventListener('keydown', e => { if (e.ctrlKey || e.metaKey) { if (['c','a','x','v','s','p','u'].includes(e.key.toLowerCase())) e.preventDefault(); } if (e.key === 'F12') e.preventDefault(); });
-        document.querySelectorAll('img').forEach(img => { img.draggable = false; img.addEventListener('dragstart', e => e.preventDefault()); });
-    }
-
-    function setupTheme() {
-        const isDark = localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        document.documentElement.classList.toggle('dark', isDark);
-        updateThemeIcons();
-    }
-    function toggleTheme() {
-        document.documentElement.classList.toggle('dark');
-        localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-        updateThemeIcons();
-    }
-    function updateThemeIcons() {
-        const icon = document.documentElement.classList.contains('dark') ? 'fa-sun' : 'fa-moon';
-        document.querySelectorAll('#dark-mode-toggle-desktop i, #bottom-nav-theme i').forEach(i => i.className = `fas ${icon} text-2xl`);
-    }
-
-    function shuffleArray(array) {
-        let newArray = [...array]; 
-        for (let i = newArray.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [newArray[i], newArray[j]] = [newArray[i], newArray[i]];
-        }
-        return newArray;
-    }
-    
-    function getCategoryColor(moduleId) {
-        if (!moduleId) return 'text-gray-500'; 
-        const num = parseInt(moduleId.replace('module', ''));
-        for (const key in moduleCategories) {
-            const cat = moduleCategories[key];
-            if (num >= cat.range[0] && num <= cat.range[1]) {
-                switch (key) {
-                    case 'rh': return 'text-orange-500'; 
-                    case 'legislacao': return 'text-orange-500'; 
-                    case 'salvamento': return 'text-blue-500'; 
-                    case 'pci': return 'text-red-500'; 
-                    case 'aph_novo': return 'text-green-500'; 
-                    case 'nr33': return 'text-teal-500';       
-                    case 'nr35': return 'text-indigo-500'; 
-                    default: return 'text-gray-500';
-                }
+    // --- ADMIN ---
+    window.openAdminPanel = async function() {
+        const am = document.getElementById('admin-modal');
+        const ao = document.getElementById('admin-modal-overlay');
+        am.classList.add('show'); ao.classList.add('show');
+        
+        const tbody = document.getElementById('admin-table-body');
+        tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center"><div class="loader mx-auto mb-2"></div><p class="text-gray-500">Carregando base de alunos...</p></td></tr>';
+        
+        try {
+            const snapshot = await window.__fbDB.collection('users').orderBy('name').get();
+            if (snapshot.empty) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Nenhum aluno encontrado.</td></tr>';
+                return;
             }
+            
+            tbody.innerHTML = '';
+            snapshot.forEach(doc => {
+                const u = doc.data();
+                const isPrem = u.status === 'premium';
+                const row = `
+                    <tr class="border-b hover:bg-gray-50 transition-colors">
+                        <td class="p-3">
+                            <div class="font-bold text-gray-800">${u.name || 'Sem Nome'}</div>
+                            <div class="text-xs text-gray-400">ID: ${doc.id.substr(0,8)}...</div>
+                        </td>
+                        <td class="p-3 text-sm">
+                            <div class="text-gray-700">${u.email}</div>
+                            <div class="text-xs text-gray-500 font-mono bg-gray-100 inline-block px-1 rounded mt-1">${u.cpf || 'CPF N/A'}</div>
+                        </td>
+                        <td class="p-3 text-xs text-gray-500 max-w-[150px] truncate" title="${u.last_device}">${u.last_device ? u.last_device.split(')')[0]+')' : '-'}</td>
+                        <td class="p-3">
+                            <span class="px-2 py-1 rounded-full text-xs font-bold uppercase ${isPrem?'bg-green-100 text-green-800 border border-green-200':'bg-yellow-100 text-yellow-800 border border-yellow-200'}">
+                                ${u.status || 'trial'}
+                            </span>
+                        </td>
+                        <td class="p-3 text-sm font-medium ${new Date(u.acesso_ate) < new Date() ? 'text-red-500' : 'text-green-600'}">
+                            ${u.acesso_ate ? new Date(u.acesso_ate).toLocaleDateString('pt-BR') : '-'}
+                        </td>
+                        <td class="p-3">
+                            <div class="flex gap-1">
+                                <button class="bg-blue-50 text-blue-600 hover:bg-blue-100 p-1.5 rounded border border-blue-200" title="Editar Dados" onclick="window.editUserData('${doc.id}', '${u.name}', '${u.cpf}')"><i class="fas fa-pen"></i></button>
+                                <button class="bg-green-50 text-green-600 hover:bg-green-100 p-1.5 rounded border border-green-200" title="Renovar Acesso" onclick="window.manageUserAccess('${doc.id}', '${u.acesso_ate}')"><i class="fas fa-calendar-plus"></i></button>
+                                <button class="bg-red-50 text-red-600 hover:bg-red-100 p-1.5 rounded border border-red-200" title="Excluir" onclick="window.deleteUser('${doc.id}', '${u.name}', '${u.cpf}')"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>`;
+                tbody.innerHTML += row;
+            });
+        } catch(e) {
+            tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Erro: ${e.message}</td></tr>`;
         }
-        return 'text-gray-500';
-    }
+    };
+
+    window.editUserData = async function(uid, oldName, oldCpf) {
+        const newName = prompt("Editar Nome:", oldName); if (newName === null) return;
+        const newCpf = prompt("Editar CPF (somente números):", oldCpf); if (newCpf === null) return;
+        if(!newName || !newCpf) return alert("Campos obrigatórios");
+        
+        try {
+            const batch = window.__fbDB.batch();
+            const userRef = window.__fbDB.collection('users').doc(uid);
+            batch.update(userRef, { name: newName, cpf: newCpf });
+            
+            // Atualiza índice de CPF se mudou
+            if(oldCpf && oldCpf !== 'undefined' && oldCpf !== newCpf) {
+                batch.delete(window.__fbDB.collection('cpfs').doc(oldCpf));
+                batch.set(window.__fbDB.collection('cpfs').doc(newCpf), { uid: uid });
+            } else if (!oldCpf || oldCpf === 'undefined') {
+                batch.set(window.__fbDB.collection('cpfs').doc(newCpf), { uid: uid });
+            }
+            await batch.commit();
+            alert("Usuário atualizado!");
+            window.openAdminPanel();
+        } catch(e) { alert("Erro: " + e.message); }
+    };
+
+    window.manageUserAccess = async function(uid, currentExpiry) {
+        const days = prompt("Quantos dias adicionar ao acesso deste aluno?", "30");
+        if(!days) return;
+        
+        const now = new Date();
+        let baseDate = new Date(currentExpiry);
+        // Se já venceu, adiciona a partir de hoje
+        if (isNaN(baseDate.getTime()) || baseDate < now) baseDate = now;
+        
+        baseDate.setDate(baseDate.getDate() + parseInt(days));
+        
+        try {
+            await window.__fbDB.collection('users').doc(uid).update({ 
+                status: 'premium', 
+                acesso_ate: baseDate.toISOString(),
+                planType: `Renovado Manual (+${days}d)`
+            });
+            alert("Acesso renovado com sucesso!");
+            window.openAdminPanel();
+        } catch(e) { alert("Erro: " + e.message); }
+    };
+
+    window.deleteUser = async function(uid, name, cpf) {
+        if(!confirm(`ATENÇÃO: Excluir o aluno ${name} permanentemente?`)) return;
+        if(prompt("Digite DELETAR para confirmar:") !== "DELETAR") return;
+        
+        try {
+            const batch = window.__fbDB.batch();
+            batch.delete(window.__fbDB.collection('users').doc(uid));
+            if(cpf && cpf !== 'undefined') batch.delete(window.__fbDB.collection('cpfs').doc(cpf));
+            await batch.commit();
+            alert("Usuário removido.");
+            window.openAdminPanel();
+        } catch(e) { alert("Erro: " + e.message); }
+    };
     
-    function closeSidebar() {
-        if (sidebar) sidebar.classList.remove('open');
-        if (sidebarOverlay) {
-            sidebarOverlay.classList.remove('show');
-            setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
-        }
-    }
-    function openSidebar() {
-        if (sidebar) sidebar.classList.add('open');
-        if (sidebarOverlay) {
-            sidebarOverlay.classList.remove('hidden');
-            setTimeout(() => sidebarOverlay.classList.add('show'), 10);
-        }
-    }
-    function populateModuleLists() {
-        document.getElementById('desktop-module-container').innerHTML = getModuleListHTML();
-        document.getElementById('mobile-module-container').innerHTML = getModuleListHTML();
+    function setupAdminListeners() {
+        document.getElementById('admin-panel-btn')?.addEventListener('click', window.openAdminPanel);
+        document.getElementById('mobile-admin-btn')?.addEventListener('click', window.openAdminPanel);
+        document.getElementById('close-admin-modal')?.addEventListener('click', () => {
+            document.getElementById('admin-modal').classList.remove('show');
+            document.getElementById('admin-modal-overlay').classList.remove('show');
+        });
     }
 
+    // --- FUNÇÕES DE LAYOUT E HELPERS ---
+    function setupHeaderScroll() { 
+        window.addEventListener('scroll', () => { 
+            const h = document.getElementById('main-header'); 
+            if (window.scrollY > 20) h.classList.add('scrolled'); 
+            else h.classList.remove('scrolled'); 
+        }); 
+    }
+    
+    function setupProtection() { 
+        document.addEventListener('contextmenu', e => e.preventDefault()); 
+        document.addEventListener('keydown', e => { 
+            if (e.key === 'F12' || (e.ctrlKey && ['u','s','p','c'].includes(e.key.toLowerCase()))) e.preventDefault(); 
+        }); 
+        document.querySelectorAll('img').forEach(img => { 
+            img.draggable = false; 
+            img.addEventListener('dragstart', e => e.preventDefault()); 
+        });
+    }
+    
+    function setupTheme() { 
+        const isDark = localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches); 
+        document.documentElement.classList.toggle('dark', isDark); 
+        updateThemeIcons(); 
+    }
+    
+    function toggleTheme() { 
+        document.documentElement.classList.toggle('dark'); 
+        localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); 
+        updateThemeIcons(); 
+    }
+    
+    function updateThemeIcons() { 
+        const icon = document.documentElement.classList.contains('dark') ? 'fa-sun' : 'fa-moon'; 
+        document.querySelectorAll('#dark-mode-toggle-desktop i, #bottom-nav-theme i').forEach(i => i.className = `fas ${icon} text-xl`); 
+    }
+    
+    function handleInitialLoad() { 
+        const last = localStorage.getItem('gateBombeiroLastModule'); 
+        if (last) loadModuleContent(last); 
+        else goToHomePage(false); 
+    }
+    
+    function setupAuthEventListeners() {
+        // Lógica de login
+        const btnLogin = document.getElementById('login-button');
+        if(btnLogin) btnLogin.addEventListener('click', async () => {
+            const email = document.getElementById('email-input').value;
+            const pass = document.getElementById('password-input').value;
+            const fb = document.getElementById('auth-feedback');
+            if(!email || !pass) return fb.textContent = "Preencha todos os campos.";
+            fb.textContent = "Autenticando...";
+            fb.className = "text-center text-sm mt-4 text-blue-400 font-semibold";
+            try { 
+                localStorage.removeItem('my_session_id'); // Limpa sessão local antiga
+                await FirebaseCourse.signInWithEmail(email, pass); 
+                fb.textContent = "Sucesso! Carregando...";
+            } catch(e) { 
+                fb.className = "text-center text-sm mt-4 text-red-400 font-semibold";
+                fb.textContent = "Erro: Verifique e-mail e senha."; 
+            }
+        });
+        
+        // Lógica de cadastro
+        const btnSignup = document.getElementById('signup-button');
+        if(btnSignup) btnSignup.addEventListener('click', async () => {
+            const name = document.getElementById('name-input').value;
+            const email = document.getElementById('email-input').value;
+            const pass = document.getElementById('password-input').value;
+            const cpf = document.getElementById('cpf-input').value;
+            const fb = document.getElementById('auth-feedback');
+            
+            if(!name || !email || !pass || !cpf) {
+                fb.className = "text-center text-sm mt-4 text-red-400 font-semibold";
+                return fb.textContent = "Preencha todos os campos.";
+            }
+            
+            fb.className = "text-center text-sm mt-4 text-blue-400 font-semibold";
+            fb.textContent = "Criando conta...";
+            try { 
+                await FirebaseCourse.signUpWithEmail(name, email, pass, cpf); 
+                fb.textContent = "Conta criada! Entrando...";
+            } catch(e) { 
+                fb.className = "text-center text-sm mt-4 text-red-400 font-semibold";
+                fb.textContent = e.message || "Erro ao criar conta."; 
+            }
+        });
+        
+        // Toggles de formulário
+        document.getElementById('show-signup-button')?.addEventListener('click', () => { 
+            document.getElementById('login-button-group').classList.add('hidden'); 
+            document.getElementById('signup-button-group').classList.remove('hidden'); 
+            document.getElementById('name-field-container').classList.remove('hidden'); 
+            document.getElementById('cpf-field-container').classList.remove('hidden'); 
+            document.getElementById('auth-title').textContent = "Nova Conta";
+        });
+        
+        document.getElementById('show-login-button')?.addEventListener('click', () => { 
+            document.getElementById('login-button-group').classList.remove('hidden'); 
+            document.getElementById('signup-button-group').classList.add('hidden'); 
+            document.getElementById('name-field-container').classList.add('hidden'); 
+            document.getElementById('cpf-field-container').classList.add('hidden'); 
+            document.getElementById('auth-title').textContent = "Área do Aluno";
+        });
+        
+        // Botoes de abrir modal de pagamento
+        const openPay = () => { document.getElementById('expired-modal').classList.add('show'); document.getElementById('name-modal-overlay').classList.add('show'); };
+        document.getElementById('header-subscribe-btn')?.addEventListener('click', openPay);
+        document.getElementById('mobile-subscribe-btn')?.addEventListener('click', openPay);
+        document.getElementById('open-payment-login-btn')?.addEventListener('click', openPay);
+        document.getElementById('close-payment-modal-btn')?.addEventListener('click', () => { 
+            document.getElementById('expired-modal').classList.remove('show'); 
+            // Só fecha o overlay se o usuário já estiver logado (app ready)
+            if(document.body.getAttribute('data-app-ready') === 'true') {
+                document.getElementById('name-modal-overlay').classList.remove('show'); 
+            }
+        });
+    }
+
+    function populateModuleLists() { 
+        const html = getModuleListHTML();
+        document.getElementById('desktop-module-container').innerHTML = html; 
+        document.getElementById('mobile-module-container').innerHTML = html; 
+    }
+    
     function getModuleListHTML() {
-        let html = `<h2 class="text-2xl font-semibold mb-5 flex items-center text-blue-900 dark:text-white"><i class="fas fa-list-ul mr-3 text-orange-500"></i> Conteúdo do Curso</h2><div class="mb-4 relative"><input type="text" class="module-search w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700" placeholder="Buscar módulo..."><i class="fas fa-search absolute right-3 top-3.5 text-gray-400"></i></div><div class="module-accordion-container space-y-2">`;
-        for (const k in moduleCategories) {
-            const cat = moduleCategories[k];
+        let html = `<div class="module-accordion-container space-y-3">`;
+        
+        for (const k in window.moduleCategories) {
+            const cat = window.moduleCategories[k];
             const isLocked = cat.isPremium && (!currentUserData || currentUserData.status !== 'premium');
             const lockIcon = isLocked ? '<i class="fas fa-lock text-xs ml-2 text-yellow-500"></i>' : '';
-            html += `<div><button class="accordion-button"><span><i class="${cat.icon} w-6 mr-2 text-gray-500"></i>${cat.title} ${lockIcon}</span><i class="fas fa-chevron-down"></i></button><div class="accordion-panel">`;
+            const catProgress = getCategoryProgress(cat);
+            
+            html += `
+            <div class="accordion-item border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <button class="accordion-button w-full flex justify-between items-center p-4 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <span class="flex items-center font-bold text-gray-700 dark:text-gray-200 text-sm md:text-base">
+                        <i class="${cat.icon} w-6 mr-2 text-gray-400 dark:text-gray-500"></i>
+                        ${cat.title} ${lockIcon}
+                    </span>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs text-gray-400 font-mono">${catProgress}</span>
+                        <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                    </div>
+                </button>
+                <div class="accordion-panel bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-700 hidden">
+                    <div class="p-2 grid grid-cols-1 gap-2">`;
+            
             for (let i = cat.range[0]; i <= cat.range[1]; i++) {
-                const m = moduleContent[`module${i}`];
+                const m = window.moduleContent[`module${i}`];
                 if (m) {
-                    const isDone = Array.isArray(completedModules) && completedModules.includes(m.id);
-                    const itemLock = isLocked ? '<i class="fas fa-lock text-xs text-gray-400 ml-2"></i>' : '';
-                    html += `<div class="module-list-item${isDone ? ' completed' : ''}" data-module="${m.id}"><i class="${m.iconClass} module-icon"></i><span style="flex:1">${m.title} ${itemLock}</span>${isDone ? '<i class="fas fa-check-circle completion-icon" aria-hidden="true"></i>' : ''}</div>`;
+                    const isDone = completedModules.includes(m.id);
+                    html += `
+                    <div class="module-list-item p-3 rounded-lg cursor-pointer transition-all border border-transparent hover:border-gray-200 dark:hover:border-gray-700 hover:bg-white dark:hover:bg-gray-800 ${isDone ? 'opacity-70' : ''} ${currentModuleId === m.id ? 'bg-white dark:bg-gray-800 border-blue-500 dark:border-blue-500 shadow-sm ring-1 ring-blue-500' : ''}" data-module="${m.id}">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                                    <i class="${m.iconClass} text-sm"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300 line-clamp-1">${m.title}</span>
+                            </div>
+                            ${isDone ? '<i class="fas fa-check-circle text-green-500 text-lg"></i>' : ''}
+                        </div>
+                    </div>`;
                 }
             }
-            html += `</div></div>`;
+            html += `</div></div></div>`;
         }
         html += `</div>`;
-        html += `<div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700"><h3 class="text-xl font-semibold mb-6 text-gray-800 dark:text-white flex items-center"><i class="fas fa-medal mr-2 text-yellow-500"></i> Conquistas por Área</h3><div id="achievements-grid" class="grid grid-cols-2 gap-4">`;
-        for (const key in moduleCategories) {
-            const cat = moduleCategories[key];
-            html += `<div id="ach-cat-${key}" class="achievement-card" title="Conclua a área para ganhar: ${cat.achievementTitle}"><div class="achievement-icon"><i class="${cat.icon}"></i></div><p class="achievement-title">${cat.achievementTitle}</p></div>`;
+        
+        // Seção Conquistas
+        html += `
+        <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white flex items-center">
+                <i class="fas fa-medal mr-2 text-yellow-500"></i> Suas Conquistas
+            </h3>
+            <div id="achievements-grid" class="grid grid-cols-2 gap-3">`;
+            
+        for (const key in window.moduleCategories) {
+            const cat = window.moduleCategories[key];
+            const isUnlocked = notifiedAchievements.includes(key);
+            html += `
+            <div id="ach-cat-${key}" class="achievement-card p-3 rounded-lg border ${isUnlocked ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 opacity-60'} flex flex-col items-center text-center transition-all">
+                <div class="text-2xl mb-2 ${isUnlocked ? 'text-yellow-500' : 'text-gray-400'}">
+                    <i class="${cat.icon}"></i>
+                </div>
+                <p class="text-xs font-bold ${isUnlocked ? 'text-gray-800 dark:text-white' : 'text-gray-500'}">${cat.achievementTitle}</p>
+            </div>`;
         }
         html += `</div></div>`;
+        
         return html;
+    }
+    
+    function getCategoryProgress(cat) {
+        let total = 0;
+        let done = 0;
+        for(let i = cat.range[0]; i <= cat.range[1]; i++) {
+            if(window.moduleContent[`module${i}`]) {
+                total++;
+                if(completedModules.includes(`module${i}`)) done++;
+            }
+        }
+        return `${done}/${total}`;
     }
 
     function updateProgress() {
-        const p = (completedModules.length / totalModules) * 100;
+        const p = totalModules > 0 ? (completedModules.length / totalModules) * 100 : 0;
         document.getElementById('progress-text').textContent = `${p.toFixed(0)}%`;
         document.getElementById('completed-modules-count').textContent = completedModules.length;
-        if (document.getElementById('progress-bar-minimal')) {
-            document.getElementById('progress-bar-minimal').style.width = `${p}%`;
+        if (document.getElementById('progress-bar-minimal')) document.getElementById('progress-bar-minimal').style.width = `${p}%`;
+        
+        // Atualiza visualmente os itens da lista
+        document.querySelectorAll('.module-list-item').forEach(i => { 
+            const isDone = completedModules.includes(i.dataset.module);
+            if(isDone && !i.innerHTML.includes('fa-check-circle')) {
+               i.querySelector('div > div').insertAdjacentHTML('afterend', '<i class="fas fa-check-circle text-green-500 text-lg"></i>');
+               i.classList.add('opacity-70');
+            }
+        });
+        
+        if (totalModules > 0 && completedModules.length === totalModules) {
+            document.getElementById('congratulations-modal').classList.add('show');
+            document.getElementById('modal-overlay').classList.add('show');
+            if(typeof confetti === 'function') confetti();
         }
-        updateModuleListStyles();
-        checkAchievements();
-        if (totalModules > 0 && completedModules.length === totalModules) showCongratulations();
     }
 
-    function showCongratulations() {
-        document.getElementById('congratulations-modal')?.classList.add('show');
-        document.getElementById('modal-overlay')?.classList.add('show');
-        if(typeof confetti === 'function') confetti({particleCount:150, spread:90, origin:{y:0.6},zIndex:200});
+    function updateActiveModuleInList() {
+        document.querySelectorAll('.module-list-item').forEach(i => { 
+            if (i.dataset.module === currentModuleId) {
+                i.classList.add('bg-white', 'dark:bg-gray-800', 'border-blue-500', 'dark:border-blue-500', 'shadow-sm', 'ring-1', 'ring-blue-500');
+                // Abre o acordeão pai
+                const panel = i.closest('.accordion-panel');
+                if(panel) {
+                    panel.classList.remove('hidden');
+                    panel.style.maxHeight = "none"; // Deixa fluir
+                    const btn = panel.previousElementSibling;
+                    if(btn) btn.querySelector('.fa-chevron-down').classList.add('rotate-180');
+                }
+            } else {
+                i.classList.remove('bg-white', 'dark:bg-gray-800', 'border-blue-500', 'dark:border-blue-500', 'shadow-sm', 'ring-1', 'ring-blue-500');
+            }
+        });
     }
-    function showAchievementToast(title) {
-        const toast = document.createElement('div');
-        toast.className = 'toast';
-        toast.innerHTML = `<i class="fas fa-trophy"></i><div><p class="font-bold">Módulo Concluído!</p><p class="text-sm">${title}</p></div>`;
-        if (toastContainer) toastContainer.appendChild(toast);
-        setTimeout(() => toast.remove(), 4500);
+
+    function updateBreadcrumbs(title) {
+        const container = document.getElementById('breadcrumb-container');
+        if(container) container.innerHTML = title ? `<span class="text-gray-400">INÍCIO</span> <i class="fas fa-chevron-right text-[10px] mx-2 text-gray-300"></i> <span class="text-orange-500">${title}</span>` : `INÍCIO`;
     }
-    function updateModuleListStyles() {
-        document.querySelectorAll('.module-list-item').forEach(i => i.classList.toggle('completed', completedModules.includes(i.dataset.module)));
+
+    function goToHomePage(pushState = true) {
+        if(pushState) history.pushState(null, null, window.location.pathname);
+        localStorage.removeItem('gateBombeiroLastModule'); currentModuleId = null;
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        
+        contentArea.innerHTML = `
+            <div class="text-center py-12 fade-in">
+                <div class="floating inline-block p-6 bg-blue-50 dark:bg-blue-900/20 rounded-full mb-6 shadow-inner">
+                    <i class="fas fa-shield-alt text-6xl text-blue-600 dark:text-blue-400"></i>
+                </div>
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white font-serif">Bem-vindo ao QG</h2>
+                <p class="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-8">
+                    Sua plataforma de formação de elite. Selecione um módulo no menu lateral para começar ou continuar seus estudos.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto">
+                    <button onclick="loadModuleContent('module1')" class="action-button pulse-button text-lg flex items-center justify-center shadow-lg">
+                        <i class="fas fa-play mr-3"></i> Começar Agora
+                    </button>
+                    <button onclick="loadModuleContent('module60')" class="bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform hover:scale-105 flex items-center justify-center">
+                        <i class="fas fa-skull mr-3"></i> Desafio Sobrevivência
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('module-nav').classList.add('hidden');
+        closeSidebar(); 
+        updateBreadcrumbs();
     }
-    function checkAchievements() {
-        let newNotification = false;
-        for(const key in moduleCategories) {
-            const cat = moduleCategories[key];
-            let allComplete = true;
-            for(let i = cat.range[0]; i <= cat.range[1]; i++) {
-                if (!moduleContent[`module${i}`] || !completedModules.includes(`module${i}`)) {
-                    allComplete = false; break;
+
+    function closeSidebar() { 
+        sidebar.classList.remove('open'); 
+        sidebarOverlay.classList.remove('show'); 
+        setTimeout(() => sidebarOverlay.classList.add('hidden'), 300); 
+    }
+    
+    function renderPremiumLockScreen(title) { 
+        contentArea.innerHTML = `
+            <div class="text-center py-16 px-6 animate-fade-in">
+                <div class="inline-block p-6 bg-yellow-100 dark:bg-yellow-900/30 rounded-full mb-6 ring-4 ring-yellow-50 dark:ring-yellow-900/10">
+                    <i class="fas fa-lock text-5xl text-yellow-600 dark:text-yellow-500"></i>
+                </div>
+                <h2 class="text-3xl font-bold mb-4 text-gray-800 dark:text-white">Conteúdo Exclusivo</h2>
+                <p class="text-lg text-gray-600 dark:text-gray-300 max-w-md mx-auto mb-8">
+                    O módulo <strong>${title}</strong> faz parte do nosso pacote avançado de treinamento.
+                </p>
+                <button onclick="document.getElementById('expired-modal').classList.add('show'); document.getElementById('name-modal-overlay').classList.add('show');" class="action-button pulse-button text-lg px-8 py-4 shadow-xl transform hover:scale-105 transition-transform">
+                    <i class="fas fa-crown mr-2"></i> DESBLOQUEAR TUDO AGORA
+                </button>
+                <p class="mt-4 text-sm text-gray-400">Acesso imediato após confirmação.</p>
+            </div>`; 
+        updateActiveModuleInList();
+        updateBreadcrumbs(title);
+    }
+    
+    function setupConcludeButtonListener() { 
+        const b = document.querySelector(`.conclude-button[data-module="${currentModuleId}"]`); 
+        if(b) b.addEventListener('click', () => { 
+            if(!completedModules.includes(currentModuleId)) { 
+                completedModules.push(currentModuleId); 
+                localStorage.setItem('gateBombeiroCompletedModules_v3', JSON.stringify(completedModules)); 
+                updateProgress(); 
+                b.disabled = true; 
+                b.innerHTML = '<i class="fas fa-check mr-2"></i> Concluído';
+                b.classList.add('opacity-75', 'cursor-not-allowed');
+                if(typeof confetti === 'function') confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); 
+            } 
+        }); 
+    }
+    
+    function setupNotesListener(id) { 
+        const area = document.getElementById(`notes-module-${id}`); 
+        if(area) area.addEventListener('keyup', () => localStorage.setItem('note-'+id, area.value)); 
+    }
+    
+    function shuffleArray(arr) { 
+        let newArr = [...arr]; 
+        for (let i = newArr.length - 1; i > 0; i--) { 
+            const j = Math.floor(Math.random() * (i + 1)); 
+            [newArr[i], newArr[j]] = [newArr[j], newArr[i]]; 
+        } 
+        return newArr; 
+    }
+    
+    function updateNavigationButtons() { 
+        const prev = document.getElementById('prev-module'), next = document.getElementById('next-module');
+        if(!prev || !currentModuleId) return;
+        const n = parseInt(currentModuleId.replace('module',''));
+        
+        if (n === 1) {
+            prev.disabled = true;
+            prev.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            prev.disabled = false;
+            prev.classList.remove('opacity-50', 'cursor-not-allowed');
+            prev.onclick = () => loadModuleContent(`module${n-1}`);
+        }
+        
+        if (n === totalModules) {
+            next.disabled = true;
+            next.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            next.disabled = false;
+            next.classList.remove('opacity-50', 'cursor-not-allowed');
+            next.onclick = () => loadModuleContent(`module${n+1}`);
+        }
+    }
+    
+    function setupMobileBackNavigation() { 
+        window.addEventListener('popstate', (e) => { 
+            if(!e.state && currentModuleId) goToHomePage(false); 
+        }); 
+    }
+    
+    function setupRippleEffects() { 
+        document.addEventListener('click', e => { 
+            const btn = e.target.closest('.action-button') || e.target.closest('.quiz-option'); 
+            if(btn) { 
+                const r = document.createElement('span'); 
+                r.className='ripple'; 
+                const rect=btn.getBoundingClientRect(); 
+                r.style.width=r.style.height=Math.max(rect.width,rect.height)+'px'; 
+                r.style.left=e.clientX-rect.left-rect.width/2+'px'; 
+                r.style.top=e.clientY-rect.top-rect.height/2+'px'; 
+                btn.appendChild(r); 
+                setTimeout(()=>r.remove(),600); 
+            } 
+        }); 
+    }
+
+    function addEventListeners() {
+        document.getElementById('mobile-menu-button')?.addEventListener('click', () => { 
+            sidebar.classList.add('open'); 
+            sidebarOverlay.classList.remove('hidden'); 
+            setTimeout(() => sidebarOverlay.classList.add('show'), 10); 
+        });
+        
+        document.getElementById('close-sidebar-button')?.addEventListener('click', closeSidebar);
+        sidebarOverlay?.addEventListener('click', closeSidebar);
+        
+        // Listener para o Accordion (Menu Lateral)
+        document.addEventListener('click', e => {
+            const moduleItem = e.target.closest('.module-list-item');
+            if(moduleItem) loadModuleContent(moduleItem.dataset.module);
+            
+            const accBtn = e.target.closest('.accordion-button');
+            if(accBtn) {
+                const panel = accBtn.nextElementSibling;
+                const icon = accBtn.querySelector('.fa-chevron-down');
+                
+                if(panel.classList.contains('hidden')) {
+                    panel.classList.remove('hidden');
+                    icon.classList.add('rotate-180');
+                } else {
+                    panel.classList.add('hidden');
+                    icon.classList.remove('rotate-180');
                 }
             }
-            if (allComplete && !notifiedAchievements.includes(key)) {
-                showAchievementModal(cat.achievementTitle, cat.icon);
-                notifiedAchievements.push(key);
-                newNotification = true;
-            }
-            document.querySelectorAll(`#ach-cat-${key}`).forEach(el => el.classList.toggle('unlocked', allComplete));
+        });
+        
+        document.getElementById('home-button-desktop')?.addEventListener('click', () => goToHomePage());
+        document.getElementById('bottom-nav-home')?.addEventListener('click', () => goToHomePage());
+        
+        document.getElementById('bottom-nav-modules')?.addEventListener('click', () => {
+            sidebar.classList.add('open'); 
+            sidebarOverlay.classList.remove('hidden'); 
+            setTimeout(() => sidebarOverlay.classList.add('show'), 10);
+        });
+        
+        document.getElementById('bottom-nav-theme')?.addEventListener('click', toggleTheme);
+        document.getElementById('dark-mode-toggle-desktop')?.addEventListener('click', toggleTheme);
+        document.getElementById('focus-mode-toggle')?.addEventListener('click', toggleFocusMode);
+        document.getElementById('bottom-nav-focus')?.addEventListener('click', toggleFocusMode);
+        
+        // Modais
+        document.getElementById('close-congrats')?.addEventListener('click', () => { 
+            document.getElementById('congratulations-modal').classList.remove('show'); 
+            document.getElementById('modal-overlay').classList.remove('show'); 
+        });
+        
+        closeAchButton?.addEventListener('click', hideAchievementModal);
+        achievementOverlay?.addEventListener('click', hideAchievementModal);
+    }
+
+    function toggleFocusMode() {
+        document.body.classList.toggle('focus-mode');
+        const isFocus = document.body.classList.contains('focus-mode');
+        if(isFocus) {
+            document.getElementById('focus-nav-bar')?.classList.remove('hidden');
+            document.getElementById('focus-menu-desktop')?.classList.remove('hidden');
+            document.getElementById('focus-menu-desktop')?.classList.add('flex');
+            closeSidebar();
+        } else {
+            document.getElementById('focus-nav-bar')?.classList.add('hidden');
+            document.getElementById('focus-menu-desktop')?.classList.add('hidden');
+            document.getElementById('focus-menu-desktop')?.classList.remove('flex');
         }
-        if (newNotification) localStorage.setItem('gateBombeiroNotifiedAchievements_v3', JSON.stringify(notifiedAchievements));
     }
-    function showAchievementModal(title, iconClass) {
-        const iconContainer = document.getElementById('ach-modal-icon-container');
-        const titleEl = document.getElementById('ach-modal-title');
-        if (!achievementModal || !achievementOverlay || !iconContainer || !titleEl) return;
-        iconContainer.innerHTML = `<i class="${iconClass}"></i>`;
-        titleEl.textContent = `Conquista: ${title}`;
-        achievementModal.classList.add('show');
-        achievementOverlay.classList.add('show');
-        if(typeof confetti === 'function') confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 }, zIndex: 103 });
-    }
+
     function hideAchievementModal() {
         achievementModal?.classList.remove('show');
         achievementOverlay?.classList.remove('show');
     }
 
-    function toggleFocusMode() {
-        const isEnteringFocusMode = !document.body.classList.contains('focus-mode');
-        document.body.classList.toggle('focus-mode');
-        if (!isEnteringFocusMode) closeSidebar();
-    }
-
-    function setupConcludeButtonListener() {
-        if (!currentModuleId) return;
-        const b = document.querySelector(`.conclude-button[data-module="${currentModuleId}"]`);
-        if(b) {
-            if (concludeButtonClickListener) b.removeEventListener('click', concludeButtonClickListener);
-            if(completedModules.includes(currentModuleId)){
-                b.disabled=true;
-                b.innerHTML='<i class="fas fa-check-circle mr-2"></i> Concluído';
-            } else {
-                b.disabled = false;
-                b.innerHTML = 'Concluir Módulo';
-                concludeButtonClickListener = () => handleConcludeButtonClick(b);
-                b.addEventListener('click', concludeButtonClickListener);
-            }
-        }
-    }
-    let concludeButtonClickListener = null;
-    function handleConcludeButtonClick(b) {
-        const id = b.dataset.module;
-        if (id && !completedModules.includes(id)) {
-            completedModules.push(id);
-            localStorage.setItem('gateBombeiroCompletedModules_v3', JSON.stringify(completedModules));
-            updateProgress();
-            b.disabled = true;
-            b.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Concluído';
-            showAchievementToast(moduleContent[id].title);
-            if(typeof confetti === 'function') confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 }, zIndex: 2000 });
-            setTimeout(() => {
-                const navContainer = document.getElementById('module-nav');
-                const nextButton = document.getElementById('next-module');
-                if (navContainer) {
-                    navContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    if (nextButton && !nextButton.disabled) nextButton.classList.add('blinking-button');
-                }
-            }, 700);
-        }
-    }
-    function updateActiveModuleInList() {
-        document.querySelectorAll('.module-list-item').forEach(i => i.classList.toggle('active', i.dataset.module === currentModuleId));
-    }
-    function updateNavigationButtons() {
-        const prevModule = document.getElementById('prev-module');
-        const nextModule = document.getElementById('next-module');
-        if (!prevModule || !nextModule) return;
-        if (!currentModuleId) {
-             prevModule.disabled = true;
-             nextModule.disabled = true;
-             return;
-        }
-        const n = parseInt(currentModuleId.replace('module',''));
-        prevModule.disabled = (n === 1);
-        nextModule.disabled = (n === totalModules); // Agora totalModules inclui até o 59
-    }
-    function setupQuizListeners() {
-        document.querySelectorAll('.quiz-option').forEach(o => o.addEventListener('click', handleQuizOptionClick));
-    }
-
-    function triggerSuccessParticles(clickEvent, element) {
-        if (typeof confetti === 'function') confetti({ particleCount: 28, spread: 70, origin: { x: clickEvent ? clickEvent.clientX/window.innerWidth : 0.5, y: clickEvent ? clickEvent.clientY/window.innerHeight : 0.5 } });
-    }
-
-    function setupHeaderScroll() {
-        const header = document.getElementById('main-header');
-        if (header) {
-            window.addEventListener('scroll', () => {
-                if (window.scrollY > 50) header.classList.add('scrolled');
-                else header.classList.remove('scrolled');
-            });
-        }
-    }
-
-    function setupRippleEffects() {
-        document.addEventListener('click', function (e) {
-            const btn = e.target.closest('.action-button') || e.target.closest('.quiz-option');
-            if (btn) {
-                const oldRipple = btn.querySelector('.ripple');
-                if (oldRipple) oldRipple.remove();
-                const ripple = document.createElement('span');
-                ripple.classList.add('ripple');
-                const rect = btn.getBoundingClientRect();
-                const size = Math.max(rect.width, rect.height);
-                ripple.style.width = ripple.style.height = size + 'px';
-                ripple.style.left = e.clientX - rect.left - size / 2 + 'px';
-                ripple.style.top = e.clientY - rect.top - size / 2 + 'px';
-                btn.appendChild(ripple);
-                setTimeout(() => ripple.remove(), 600);
-            }
-        });
-    }
-
-    function addEventListeners() {
-        // 1. Botões de Navegação
-        const nextButton = document.getElementById('next-module');
-        const prevButton = document.getElementById('prev-module');
-
-        prevButton?.addEventListener('click', () => {
-            if (!currentModuleId) return;
-            const n = parseInt(currentModuleId.replace('module',''));
-            if(n > 1) loadModuleContent(`module${n-1}`);
-            nextButton?.classList.remove('blinking-button');
-        });
-        nextButton?.addEventListener('click', () => {
-            if (!currentModuleId) return;
-            const n = parseInt(currentModuleId.replace('module',''));
-            if(n < totalModules) loadModuleContent(`module${n+1}`);
-            nextButton?.classList.remove('blinking-button');
-        });
-
-        // 2. Busca
-        document.body.addEventListener('input', e => {
-            if(e.target.matches('.module-search')) {
-                const s = e.target.value.toLowerCase();
-                const container = e.target.closest('div.relative');
-                if (container) {
-                    const accordionContainer = container.nextElementSibling;
-                    if (accordionContainer) {
-                            accordionContainer.querySelectorAll('.module-list-item').forEach(i => {
-                            const text = i.textContent.toLowerCase();
-                            const match = text.includes(s);
-                            i.style.display = match ? 'flex' : 'none';
-                            if(match && s.length > 0) {
-                                const panel = i.closest('.accordion-panel');
-                                const btn = panel.previousElementSibling;
-                                if(!btn.classList.contains('active')) {
-                                    btn.classList.add('active');
-                                    panel.style.maxHeight = panel.scrollHeight + "px";
-                                }
-                            }
-                        });
-                        if(s.length === 0) {
-                            accordionContainer.querySelectorAll('.accordion-button').forEach(btn => {
-                                btn.classList.remove('active');
-                                btn.nextElementSibling.style.maxHeight = null;
-                            });
-                        }
-                    }
-                }
-            }
-        });
-
-        // 3. Admin Panel (Correção Mobile)
-        adminBtn?.addEventListener('click', window.openAdminPanel);
-        mobileAdminBtn?.addEventListener('click', window.openAdminPanel);
-
-        closeAdminBtn?.addEventListener('click', () => {
-            adminModal.classList.remove('show');
-            adminOverlay.classList.remove('show');
-        });
-        adminOverlay?.addEventListener('click', () => {
-            adminModal.classList.remove('show');
-            adminOverlay.classList.remove('show');
-        });
-
-        // 4. Reset
-        document.getElementById('reset-progress')?.addEventListener('click', () => { document.getElementById('reset-modal')?.classList.add('show'); document.getElementById('reset-modal-overlay')?.classList.add('show'); });
-        document.getElementById('cancel-reset-button')?.addEventListener('click', () => { document.getElementById('reset-modal')?.classList.remove('show'); document.getElementById('reset-modal-overlay')?.classList.remove('show'); });
-        document.getElementById('confirm-reset-button')?.addEventListener('click', () => {
-            localStorage.removeItem('gateBombeiroCompletedModules_v3');
-            localStorage.removeItem('gateBombeiroNotifiedAchievements_v3');
-            Object.keys(localStorage).forEach(key => { if (key.startsWith('note-')) localStorage.removeItem(key); });
-            alert('Progresso local resetado.');
-            window.location.reload();
-        });
-        
-        // 5. Back to Top
-        document.getElementById('back-to-top')?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-        window.addEventListener('scroll', () => {
-            const btn = document.getElementById('back-to-top');
-            if(btn) {
-                if (window.scrollY > 300) { btn.style.display = 'flex'; setTimeout(() => { btn.style.opacity = '1'; btn.style.transform = 'translateY(0)'; }, 10); } 
-                else { btn.style.opacity = '0'; btn.style.transform = 'translateY(20px)'; setTimeout(() => btn.style.display = 'none', 300); }
-            }
-        });
-
-        // 6. Cliques
-        document.body.addEventListener('click', e => {
-            const moduleItem = e.target.closest('.module-list-item');
-            if (moduleItem) {
-                loadModuleContent(moduleItem.dataset.module);
-                const nextButton = document.getElementById('next-module');
-                if(nextButton) nextButton.classList.remove('blinking-button');
-            }
-
-            if (e.target.closest('.accordion-button')) {
-                const b = e.target.closest('.accordion-button');
-                const p = b.nextElementSibling;
-                if (!p) return;
-                const isActive = b.classList.contains('active');
-                const allPanels = b.closest('.module-accordion-container, .sidebar, #mobile-module-container').querySelectorAll('.accordion-panel');
-                allPanels.forEach(op => {
-                    if (op !== p && op.previousElementSibling) {
-                            op.style.maxHeight = null;
-                            op.previousElementSibling.classList.remove('active');
-                    }
-                });
-                if (!isActive) {
-                    b.classList.add('active');
-                    p.style.maxHeight = p.scrollHeight + "px";
-                } else {
-                    b.classList.remove('active');
-                    p.style.maxHeight = null;
-                }
-            }
-        });
-
-        document.getElementById('mobile-menu-button')?.addEventListener('click', openSidebar);
-        document.getElementById('close-sidebar-button')?.addEventListener('click', closeSidebar);
-        sidebarOverlay?.addEventListener('click', closeSidebar);
-        document.getElementById('home-button-desktop')?.addEventListener('click', goToHomePage);
-        document.getElementById('bottom-nav-home')?.addEventListener('click', goToHomePage);
-        document.getElementById('bottom-nav-modules')?.addEventListener('click', openSidebar);
-        document.getElementById('bottom-nav-theme')?.addEventListener('click', toggleTheme);
-        document.getElementById('dark-mode-toggle-desktop')?.addEventListener('click', toggleTheme);
-        document.getElementById('focus-mode-toggle')?.addEventListener('click', toggleFocusMode);
-        document.getElementById('bottom-nav-focus')?.addEventListener('click', toggleFocusMode);
-        document.getElementById('focus-menu-modules')?.addEventListener('click', openSidebar);
-        document.getElementById('focus-menu-exit')?.addEventListener('click', toggleFocusMode);
-        document.getElementById('focus-nav-modules')?.addEventListener('click', openSidebar);
-        document.getElementById('focus-nav-exit')?.addEventListener('click', toggleFocusMode);
-        document.getElementById('close-congrats')?.addEventListener('click', () => { document.getElementById('congratulations-modal').classList.remove('show'); document.getElementById('modal-overlay').classList.remove('show'); });
-        closeAchButton?.addEventListener('click', hideAchievementModal);
-        achievementOverlay?.addEventListener('click', hideAchievementModal);
-    }
-
+    // Inicializa
     init();
 });
