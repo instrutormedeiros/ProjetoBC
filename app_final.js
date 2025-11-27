@@ -65,20 +65,21 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.toggle('high-spacing');
     });
 
-    // --- AUDIOBOOK (ATUALIZADO COM VELOCIDADE) ---
+    // --- AUDIOBOOK (ATUALIZADO COM VELOCIDADE E BOTÃO PARAR) ---
     window.speakContent = function() {
         if (!currentModuleId || !moduleContent[currentModuleId]) return;
         
-        // Pega a velocidade selecionada ou usa padrão
         const speedSelect = document.getElementById('audio-speed');
         const rate = speedSelect ? parseFloat(speedSelect.value) : 0.8;
+        const btnIcon = document.getElementById('audio-btn-icon');
+        const btnText = document.getElementById('audio-btn-text');
+        const mainBtn = document.getElementById('audio-main-btn');
 
         if (window.speechSynthesis.speaking) {
             window.speechSynthesis.cancel();
-            document.getElementById('audio-btn-icon')?.classList.remove('fa-stop');
-            document.getElementById('audio-btn-icon')?.classList.add('fa-headphones');
-            document.getElementById('audio-btn-text').textContent = 'Ouvir Aula';
-            document.getElementById('audio-main-btn')?.classList.remove('playing');
+            if(btnIcon) { btnIcon.classList.remove('fa-stop'); btnIcon.classList.add('fa-headphones'); }
+            if(btnText) btnText.textContent = 'Ouvir Aula';
+            if(mainBtn) mainBtn.classList.remove('playing');
             return;
         }
 
@@ -88,20 +89,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const utterance = new SpeechSynthesisUtterance(cleanText);
         utterance.lang = 'pt-BR';
-        utterance.rate = rate; // Aplica a velocidade dinâmica
+        utterance.rate = rate; 
 
         utterance.onstart = () => {
-            document.getElementById('audio-btn-icon')?.classList.remove('fa-headphones');
-            document.getElementById('audio-btn-icon')?.classList.add('fa-stop');
-            document.getElementById('audio-btn-text').textContent = 'Parar';
-            document.getElementById('audio-main-btn')?.classList.add('playing');
+            if(btnIcon) { btnIcon.classList.remove('fa-headphones'); btnIcon.classList.add('fa-stop'); }
+            if(btnText) btnText.textContent = 'PARAR NARRAÇÃO';
+            if(mainBtn) mainBtn.classList.add('playing');
         };
         
         utterance.onend = () => {
-            document.getElementById('audio-btn-icon')?.classList.remove('fa-stop');
-            document.getElementById('audio-btn-icon')?.classList.add('fa-headphones');
-            document.getElementById('audio-btn-text').textContent = 'Ouvir Aula';
-            document.getElementById('audio-main-btn')?.classList.remove('playing');
+            if(btnIcon) { btnIcon.classList.remove('fa-stop'); btnIcon.classList.add('fa-headphones'); }
+            if(btnText) btnText.textContent = 'Ouvir Aula';
+            if(mainBtn) mainBtn.classList.remove('playing');
         };
 
         window.speechSynthesis.speak(utterance);
@@ -517,6 +516,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function generateSimuladoQuestions(config) {
         const allQuestions = [];
         const questionsByCategory = {};
+        const addedIds = new Set(); // Controle de duplicatas
         
         for (const catKey in moduleCategories) {
             questionsByCategory[catKey] = [];
@@ -532,7 +532,16 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const [catKey, qty] of Object.entries(config.distribution)) {
             if (questionsByCategory[catKey]) {
                 const shuffled = shuffleArray(questionsByCategory[catKey]);
-                allQuestions.push(...shuffled.slice(0, qty));
+                // Pega questões únicas
+                let addedCount = 0;
+                for (const q of shuffled) {
+                    if (addedCount >= qty) break;
+                    if (!addedIds.has(q.id)) {
+                        allQuestions.push(q);
+                        addedIds.add(q.id);
+                        addedCount++;
+                    }
+                }
             }
         }
         
@@ -616,35 +625,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('start-survival-btn').addEventListener('click', initSurvivalGame);
             }
 
-            // 4. RPG (Módulo 61) - NOVO LAYOUT CENTRAL DE OPERAÇÕES
+            // 4. RPG (Módulo 61)
             else if (d.isRPG) {
-                // Layout Central de Operações
                 contentArea.innerHTML = `
                     <h3 class="text-2xl font-bold mb-6 flex items-center text-orange-500">
                         <i class="fas fa-headset mr-3"></i> Central de Operações
                     </h3>
                     <p class="mb-4 text-gray-400">Equipe de prontidão. Temos 3 chamados pendentes. Qual ocorrência você assume?</p>
-                    
                     <div class="space-y-4">
                         <button id="rpg-opt-1" class="rpg-card-btn group">
                             <h4 class="font-bold text-lg group-hover:text-orange-500 transition-colors"><i class="fas fa-fire mr-2"></i> Incêndio em Galpão Industrial</h4>
                             <p class="text-sm text-gray-400 mt-1">Risco de Backdraft. Vítimas possíveis.</p>
                         </button>
-
                         <button id="rpg-opt-2" class="rpg-card-btn group">
                             <h4 class="font-bold text-lg group-hover:text-blue-500 transition-colors"><i class="fas fa-car-crash mr-2"></i> Acidente Veicular</h4>
                             <p class="text-sm text-gray-400 mt-1">Vítima presa às ferragens. Trauma grave.</p>
                         </button>
-
                         <button id="rpg-opt-3" class="rpg-card-btn group">
                             <h4 class="font-bold text-lg group-hover:text-yellow-500 transition-colors"><i class="fas fa-dungeon mr-2"></i> Espaço Confinado (Silo)</h4>
                             <p class="text-sm text-gray-400 mt-1">Trabalhador inconsciente. Atmosfera desconhecida.</p>
                         </button>
                     </div>
                 `;
-                
-                // Mapeamento dos botões (Por enquanto todos levam à cena1 ou placeholders)
-                document.getElementById('rpg-opt-1').addEventListener('click', () => initRPGGame(d.rpgData)); // Inicia o cenário real
+                document.getElementById('rpg-opt-1').addEventListener('click', () => initRPGGame(d.rpgData)); 
                 document.getElementById('rpg-opt-2').addEventListener('click', () => alert("Cenário de Acidente Veicular em desenvolvimento!"));
                 document.getElementById('rpg-opt-3').addEventListener('click', () => alert("Cenário de Espaço Confinado em desenvolvimento!"));
             }
@@ -657,7 +660,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 6. MODO AULA NORMAL (TEXTO + AUDIO ATUALIZADO)
             else {
-                // Layout do Audio Player Moderno com Seletor de Velocidade
                 let audioHtml = `
                     <div class="modern-audio-player">
                         <button id="audio-main-btn" class="audio-main-btn" onclick="window.speakContent()">
@@ -700,7 +702,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     const shuffledQuestions = shuffleArray([...allQuestions]); 
                     const selectedQuestions = shuffledQuestions.slice(0, count);
                     
-                    let quizHtml = `<div class="quiz-section-separator"></div><h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Exercícios de Fixação</h3>`;
+                    // Injeção da frase "Pratique aqui..." (Pedido 6)
+                    let quizHtml = `
+                        <div class="mt-12 text-center">
+                            <span class="bg-gray-100 dark:bg-gray-800 text-gray-500 text-sm py-1 px-3 rounded-full border border-gray-300 dark:border-gray-700">
+                                <i class="fas fa-pencil-alt mr-2"></i> Pratique aqui o que você aprendeu
+                            </span>
+                        </div>
+                        <div class="quiz-section-separator mt-4"></div>
+                        <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Exercícios de Fixação</h3>
+                    `;
+                    
                     selectedQuestions.forEach((q, index) => {
                         const questionNumber = index + 1;
                         quizHtml += `<div class="quiz-block" data-question-id="${q.id}"><p class="font-semibold mt-4 mb-2 text-gray-700 dark:text-gray-200">${questionNumber}. ${q.question}</p><div class="quiz-options-group space-y-2 mb-4">`;
@@ -735,7 +747,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('next-module')?.classList.remove('blinking-button');
         }, 300);
     }
-
+    
     // === LÓGICA: MODO SOBREVIVÊNCIA ===
     async function initSurvivalGame() {
         survivalLives = 3;
@@ -966,12 +978,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
    // === FUNÇÕES SIMULADO (NOVO LAYOUT MODERNO) ===
     async function startSimuladoMode(moduleData) {
-        // Pausar áudio se estiver tocando (Pedido 2)
+        // Pausar áudio se estiver tocando
         if (window.speechSynthesis.speaking) {
             window.speechSynthesis.cancel();
         }
 
-        // Esconder distrações (Pedido 3 - class no body)
+        // Esconder distrações (Pedido 1)
         document.body.classList.add('exam-mode');
 
         loadingSpinner.classList.remove('hidden');
@@ -982,7 +994,7 @@ document.addEventListener('DOMContentLoaded', () => {
         simuladoTimeLeft = moduleData.simuladoConfig.timeLimit * 60; 
         currentSimuladoQuestionIndex = 0;
 
-        // Novo Layout de Header Fixo
+        // Novo Layout de Header Fixo (Pedido 2 - Removida sobreposição via CSS)
         contentArea.innerHTML = `
             <div class="relative pt-4 pb-12">
                 <div id="simulado-timer-bar" class="simulado-header-modern">
@@ -1018,6 +1030,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('sim-next-btn').addEventListener('click', () => navigateSimulado(1, moduleData.id));
         document.getElementById('sim-prev-btn').addEventListener('click', () => navigateSimulado(-1, moduleData.id));
     }
+    
     function showSimuladoQuestion(index) {
         const q = activeSimuladoQuestions[index];
         const container = document.getElementById('question-display-area');
@@ -1105,11 +1118,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     }
 
-    // === FINALIZAÇÃO DO SIMULADO (NOVO LAYOUT DE RESULTADO) ===
+   // === FINALIZAÇÃO DO SIMULADO ===
     function finishSimulado(moduleId) {
         clearInterval(simuladoTimerInterval);
         
-        // Restaurar Menu e Sidebar (Pedido 2)
+        // Restaurar Menu e Sidebar (Sair do modo exame)
         document.body.classList.remove('exam-mode');
 
         let correctCount = 0;
@@ -1123,21 +1136,18 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const boxClass = isCorrect ? 'feedback-correct' : 'feedback-wrong';
             const icon = isCorrect ? 'fa-check-circle' : 'fa-times-circle';
-            const correctAnswerText = q.options[q.answer];
             const explanation = q.explanation || "Sem explicação disponível.";
 
-            // Renderização das opções na resposta detalhada
             let optionsHtml = '';
             for (const key in q.options) {
-                let rowClass = 'bg-gray-50 dark:bg-gray-800 text-gray-500'; // Default
+                let rowClass = 'bg-gray-50 dark:bg-gray-800 text-gray-500'; 
                 let iconStatus = '';
 
-                // Lógica de cores das linhas
                 if (key === q.answer) {
-                    rowClass = 'answer-row correct-ref'; // A correta sempre verde
+                    rowClass = 'answer-row correct-ref'; 
                     iconStatus = '<i class="fas fa-check text-green-500 float-right"></i>';
                 } else if (key === selected && !isCorrect) {
-                    rowClass = 'answer-row user-wrong'; // A errada que o usuário marcou
+                    rowClass = 'answer-row user-wrong'; 
                     iconStatus = '<i class="fas fa-times text-red-500 float-right"></i>';
                 }
 
@@ -1170,7 +1180,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const score = (correctCount / total) * 10;
         const percentage = (correctCount / total) * 100;
 
-        // Novo Layout de Resultado Final
         const finalHtml = `
             <div class="text-center animate-slide-in">
                 <h2 class="text-3xl font-serif font-bold mb-6 text-white">Resultado Final</h2>
