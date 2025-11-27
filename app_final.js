@@ -1,4 +1,4 @@
-/* === ARQUIVO app_final.js (VERSÃO V11 - CARTEIRINHA PREMIUM AZUL FIXED) === */
+/* === ARQUIVO app_final.js (VERSÃO V12 - CARTEIRINHA AZUL VIBRANTE, GRANDE E SEM CORTES) === */
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -829,7 +829,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // === LÓGICA ATUALIZADA V11: CARTEIRINHA DIGITAL COM DADOS E VERSO FIXED ===
+    // === LÓGICA ATUALIZADA V12: CARTEIRINHA DIGITAL (MAIOR, AZUL VIBRANTE, SEM CORTES) ===
     window.updateProfilePic = function(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
@@ -869,22 +869,20 @@ document.addEventListener('DOMContentLoaded', () => {
             matricula += currentUserData.uid.substring(0, 6).toUpperCase();
         }
 
-        // 4. Validade (Ano 2026 fixo conforme imagem ou dinâmico)
-        // A imagem mostra "2026" grande. Vamos seguir o padrão visual.
-        const validityYear = "2026"; // Pode ser dinâmico: new Date().getFullYear() + 1;
-        
+        // 4. Validade
+        const validityYear = "2026"; // Ano fixo
         const validUntilFull = new Date(currentUserData.acesso_ate).toLocaleDateString('pt-BR');
 
-        // INJEÇÃO DE CSS ESPECÍFICO PARA A CARTEIRINHA (Estilo "Credit Card")
+        // INJEÇÃO DE CSS ESPECÍFICO PARA A CARTEIRINHA (MAIOR E COM NOVAS CORES)
         const styleBlock = `
             <style>
                 .id-card-wrapper {
                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                     perspective: 1000px;
                     width: 100%;
-                    max-width: 400px; /* Tamanho fixo para não deformar */
-                    height: 250px;    /* Proporção de cartão */
-                    margin: 0 auto;
+                    max-width: 600px; /* TAMANHO AUMENTADO */
+                    height: 350px;    /* ALTURA AUMENTADA */
+                    margin: 20px auto; /* Margem centralizada */
                     position: relative;
                     cursor: pointer;
                 }
@@ -905,55 +903,58 @@ document.addEventListener('DOMContentLoaded', () => {
                     height: 100%;
                     -webkit-backface-visibility: hidden;
                     backface-visibility: hidden;
-                    border-radius: 15px;
+                    border-radius: 20px; /* Bordas mais arredondadas */
                     overflow: hidden;
-                    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-                    color: white;
+                    box-shadow: 0 15px 35px rgba(0,0,0,0.3); /* Sombra mais forte */
+                    color: #ffffff; /* Texto branco puro */
                 }
-                /* FRENTE: Azul degradê similar à imagem */
+                /* FRENTE: Azul Vibrante */
                 .id-card-front {
-                    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                    background: linear-gradient(135deg, #0056b3 0%, #003366 100%); /* Azul mais forte e profissional */
                     display: flex;
                     flex-direction: row;
                 }
-                /* VERSO: Azul similar */
+                /* VERSO: Azul Vibrante Invertido */
                 .id-card-back {
-                    background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+                    background: linear-gradient(135deg, #003366 0%, #0056b3 100%);
                     transform: rotateY(180deg);
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
                     align-items: center;
-                    padding: 20px;
+                    padding: 25px;
                     text-align: center;
+                    border: 2px solid rgba(255,255,255,0.1); /* Borda sutil */
                 }
                 /* Layout Frente */
                 .front-left {
-                    width: 35%;
-                    background-color: rgba(255,255,255,0.1);
+                    width: 32%; /* Levemente ajustado */
+                    background-color: rgba(0, 0, 0, 0.2); /* Fundo mais escuro para contraste */
                     display: flex;
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
-                    padding: 10px;
-                    border-right: 1px solid rgba(255,255,255,0.2);
+                    padding: 15px;
+                    border-right: 2px solid rgba(255,255,255,0.1);
                 }
                 .front-right {
-                    width: 65%;
-                    padding: 15px;
+                    width: 68%;
+                    padding: 25px 30px; /* Mais espaçamento interno */
                     display: flex;
                     flex-direction: column;
                     position: relative;
+                    justify-content: center; /* Centraliza verticalmente */
                 }
                 .photo-box {
-                    width: 80px;
-                    height: 100px;
+                    width: 110px; /* Foto maior */
+                    height: 140px;
                     background: #fff;
-                    border: 3px solid white;
+                    border: 4px solid white;
                     overflow: hidden;
-                    margin-bottom: 10px;
-                    border-radius: 4px;
+                    margin-bottom: 15px;
+                    border-radius: 8px;
                     position: relative;
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
                 }
                 .photo-box img {
                     width: 100%;
@@ -962,100 +963,116 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 .qr-box {
                     background: white;
-                    padding: 2px;
-                    border-radius: 4px;
+                    padding: 4px;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
                 }
                 .qr-box img {
-                    width: 65px;
-                    height: 65px;
+                    width: 85px; /* QR Code maior */
+                    height: 85px;
                     display: block;
                 }
                 .logo-top-right {
                     position: absolute;
-                    top: 10px;
-                    right: 10px;
-                    width: 50px;
-                    height: 50px;
+                    top: 20px;
+                    right: 20px;
+                    width: 90px; /* LOGO BEM MAIOR */
+                    height: 90px;
                     background: white;
                     border-radius: 50%;
-                    padding: 2px;
+                    padding: 4px;
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
                 }
                 .student-name {
-                    font-weight: 800;
-                    font-size: 16px;
-                    line-height: 1.1;
-                    margin-top: 35px;
-                    margin-bottom: 4px;
-                    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                    font-weight: 900;
+                    font-size: 22px; /* Fonte maior */
+                    line-height: 1.2;
+                    margin-bottom: 5px;
+                    text-transform: uppercase;
+                    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+                    color: #ffdd57; /* Nome em amarelo destaque */
                 }
                 .institute-name {
-                    font-size: 10px;
+                    font-size: 14px; /* Fonte maior */
                     opacity: 0.9;
-                    margin-bottom: 10px;
-                    font-weight: 500;
+                    margin-bottom: 20px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+                .data-group {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px; /* Espaçamento entre linhas de dados */
                 }
                 .data-row {
-                    font-size: 11px;
-                    font-weight: 600;
-                    margin-bottom: 2px;
+                    font-size: 15px; /* Fonte maior */
+                    font-weight: 500;
                     display: flex;
                     align-items: center;
                 }
                 .data-label {
                     font-weight: 800;
-                    margin-right: 4px;
-                    color: #0b1220; /* Escuro para contraste */
+                    margin-right: 8px;
+                    color: #a0aec0; /* Cinza claro para rótulos */
+                    text-transform: uppercase;
+                    font-size: 13px;
                 }
                 .editable-input {
                     background: transparent;
                     border: none;
-                    border-bottom: 1px dashed rgba(255,255,255,0.5);
+                    border-bottom: 2px dashed rgba(255,255,255,0.4);
                     color: white;
-                    font-size: 11px;
+                    font-size: 15px; /* Fonte maior */
                     font-weight: 600;
-                    width: 80px;
+                    width: 120px; /* Input mais largo */
                     outline: none;
+                    padding-bottom: 2px;
                 }
-                .editable-input::placeholder { color: rgba(255,255,255,0.6); }
+                .editable-input::placeholder { color: rgba(255,255,255,0.5); }
                 .big-year {
                     position: absolute;
-                    bottom: 10px;
-                    right: 15px;
-                    font-size: 42px;
+                    bottom: 20px;
+                    right: 25px;
+                    font-size: 58px; /* ANO BEM MAIOR */
                     font-weight: 900;
-                    opacity: 0.9;
+                    opacity: 1;
                     line-height: 1;
-                    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                    text-shadow: 0 3px 6px rgba(0,0,0,0.4);
+                    color: #ffdd57; /* Ano em amarelo destaque */
                 }
                 /* Layout Verso */
                 .back-icon {
-                    font-size: 48px;
-                    color: #fbbf24; /* Amarelo */
-                    margin-bottom: 10px;
-                    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+                    font-size: 64px; /* Ícone maior */
+                    color: #ffdd57; /* Amarelo */
+                    margin-bottom: 15px;
+                    filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));
                 }
                 .legal-text {
-                    font-size: 9px;
-                    line-height: 1.3;
-                    margin-bottom: 10px;
+                    font-size: 12px; /* Fonte maior */
+                    line-height: 1.5;
+                    margin-bottom: 20px;
                     font-weight: 500;
+                    max-width: 90%;
                 }
                 .validity-box {
-                    background: rgba(0,0,0,0.2);
-                    padding: 4px 10px;
-                    border-radius: 4px;
-                    font-size: 10px;
+                    background: rgba(0,0,0,0.3);
+                    padding: 8px 15px;
+                    border-radius: 6px;
+                    font-size: 14px; /* Fonte maior */
                     font-weight: 700;
-                    margin-bottom: 8px;
+                    margin-bottom: 15px;
+                    border: 1px solid rgba(255,255,255,0.2);
                 }
                 .course-title {
-                    font-size: 14px;
+                    font-size: 18px; /* Fonte maior */
                     font-weight: 900;
                     text-transform: uppercase;
-                    background: white;
-                    color: #0056b3;
-                    padding: 2px 8px;
-                    border-radius: 4px;
+                    background: #ffdd57; /* Fundo amarelo */
+                    color: #003366; /* Texto azul escuro */
+                    padding: 6px 15px;
+                    border-radius: 6px;
+                    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
                 }
             </style>
         `;
@@ -1070,7 +1087,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="photo-box cursor-pointer group" onclick="event.stopPropagation(); document.getElementById('profile-pic-input').click()" title="Alterar Foto">
                                 <img id="id-card-photo" src="${currentPhoto}">
                                 <div class="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center">
-                                    <i class="fas fa-camera text-white"></i>
+                                    <i class="fas fa-camera text-white fa-2x"></i>
                                 </div>
                             </div>
                             <input type="file" id="profile-pic-input" class="hidden" accept="image/*" onchange="window.updateProfilePic(this)">
@@ -1086,19 +1103,21 @@ document.addEventListener('DOMContentLoaded', () => {
                             <h2 class="student-name leading-tight">${currentUserData.name}</h2>
                             <p class="institute-name">Curso de Formação Bombeiro Civil</p>
                             
-                            <div class="data-row"><span class="data-label">CPF:</span> ${currentUserData.cpf || '---'}</div>
-                            
-                            <div class="data-row" onclick="event.stopPropagation()">
-                                <span class="data-label">RG:</span> 
-                                <input type="text" value="${savedRG}" onchange="window.saveExtraData('rg', this.value)" class="editable-input" placeholder="Digite...">
+                            <div class="data-group">
+                                <div class="data-row"><span class="data-label">CPF:</span> ${currentUserData.cpf || '---'}</div>
+                                
+                                <div class="data-row" onclick="event.stopPropagation()">
+                                    <span class="data-label">RG:</span> 
+                                    <input type="text" value="${savedRG}" onchange="window.saveExtraData('rg', this.value)" class="editable-input" placeholder="Digite...">
+                                </div>
+                                
+                                <div class="data-row" onclick="event.stopPropagation()">
+                                    <span class="data-label">Nasc:</span> 
+                                    <input type="text" value="${savedDataNasc}" onchange="window.saveExtraData('nasc', this.value)" class="editable-input" placeholder="DD/MM/AAAA">
+                                </div>
+                                
+                                <div class="data-row"><span class="data-label">Matrícula:</span> <span class="font-mono">${matricula}</span></div>
                             </div>
-                            
-                            <div class="data-row" onclick="event.stopPropagation()">
-                                <span class="data-label">Nasc:</span> 
-                                <input type="text" value="${savedDataNasc}" onchange="window.saveExtraData('nasc', this.value)" class="editable-input" placeholder="DD/MM/AAAA">
-                            </div>
-                            
-                            <div class="data-row"><span class="data-label">Matrícula:</span> ${matricula}</div>
 
                             <div class="big-year">${validityYear}</div>
                         </div>
@@ -1109,7 +1128,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="back-icon"><i class="fas fa-shield-alt"></i></div>
                         
                         <p class="legal-text">
-                            Certificação válida em todo Brasil de acordo com a Lei nº 9394/96, o Decreto nº 5.154/04 e a Deliberação CEE 14/97 (Indicação CEE 14/97), os cursos livres são uma modalidade de ensino legal e válida em todo o território nacional.
+                            Certificação válida em todo Brasil de acordo com a Lei nº 9394/96, o Decreto nº 5.154/04 e a Deliberação CEE 14/97. Os cursos livres são uma modalidade de ensino legal e válida em território nacional.
                         </p>
                         
                         <div class="validity-box">
@@ -1122,9 +1141,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
             
-            <div class="text-center mt-6 space-y-2">
-                <p class="text-xs text-gray-500 dark:text-gray-400"><i class="fas fa-hand-pointer animate-bounce"></i> Toque no cartão para ver o verso</p>
-                <button onclick="window.print()" class="text-sm text-blue-500 hover:underline font-bold"><i class="fas fa-print"></i> Imprimir Carteirinha</button>
+            <div class="text-center mt-8 space-y-4">
+                <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center"><i class="fas fa-hand-pointer animate-bounce mr-2"></i> Toque no cartão para ver o verso</p>
+                <button onclick="window.print()" class="action-button py-3 px-6 text-lg flex items-center justify-center mx-auto"><i class="fas fa-print mr-2"></i> Imprimir Carteirinha</button>
             </div>
         `;
     }
@@ -1628,7 +1647,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const n = parseInt(currentModuleId.replace('module',''));
         prevModule.disabled = (n === 1);
-        nextModule.disabled = (n === totalModules); // Agora totalModules inclui até o 62
+        nextModule.disabled = (n === totalModules); // Agora totalModules inclui até o 59
     }
     function setupQuizListeners() {
         document.querySelectorAll('.quiz-option').forEach(o => o.addEventListener('click', handleQuizOptionClick));
