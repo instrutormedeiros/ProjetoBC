@@ -1,70 +1,89 @@
-/* === ARQUIVO app_final.js (VERSÃO COMPLETA V14 - CORRIGIDA E ATUALIZADA) === */
+/* === ARQUIVO app_final.js (VERSÃO FINAL COMPLETA - 100% FUNCIONAL) === */
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("Sistema Bravo Charlie Iniciado - Versão Estável");
 
-    // 1. SEGURANÇA CRÍTICA: Verifica se o conteúdo (data.js) foi carregado
+    // 1. VERIFICAÇÃO DE SEGURANÇA CRÍTICA
+    // Impede que o app carregue se o arquivo de dados (data.js) falhar
     if (typeof window.moduleContent === 'undefined') {
-        console.error("ERRO CRÍTICO: data.js não carregado.");
-        // Exibe mensagem amigável se falhar
-        document.body.innerHTML = '<div style="color:#333; text-align:center; padding:50px; font-family:sans-serif; background:#f8f9fa; height:100vh; display:flex; align-items:center; justify-content:center;"><div><h2 style="margin-bottom:10px">Erro de Conexão</h2><p>O conteúdo do curso não pôde ser carregado.<br>Verifique sua internet e recarregue a página.</p><button onclick="location.reload()" style="margin-top:20px; padding:10px 20px; background:#007bff; color:white; border:none; border-radius:5px; cursor:pointer;">Recarregar</button></div></div>';
+        console.error("ERRO CRÍTICO: O arquivo data.js não foi carregado corretamente.");
+        document.body.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #111827; color: white; font-family: sans-serif; text-align: center; padding: 20px;">
+                <div style="font-size: 40px; margin-bottom: 20px;">⚠️</div>
+                <h2 style="font-size: 24px; font-weight: bold; margin-bottom: 10px;">Erro de Conexão</h2>
+                <p style="color: #9ca3af; margin-bottom: 30px;">O conteúdo do curso não pôde ser carregado.<br>Verifique sua conexão e tente novamente.</p>
+                <button onclick="location.reload()" style="padding: 12px 24px; background-color: #ea580c; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Recarregar Página</button>
+            </div>
+        `;
         return;
     }
 
-    // --- VARIÁVEIS GLOBAIS ---
+    // =================================================================
+    // VARIÁVEIS GLOBAIS E ESTADO DA APLICAÇÃO
+    // =================================================================
     const contentArea = document.getElementById('content-area');
     const totalModules = Object.keys(window.moduleContent || {}).length; 
+    
+    // Recupera progresso e conquistas do armazenamento local
     let completedModules = JSON.parse(localStorage.getItem('gateBombeiroCompletedModules_v3')) || [];
     let notifiedAchievements = JSON.parse(localStorage.getItem('gateBombeiroNotifiedAchievements_v3')) || [];
+    
+    // Estado atual
     let currentModuleId = null;
     let cachedQuestionBanks = {}; 
     let currentUserData = null; 
 
-    // --- VARIÁVEIS DE ÁUDIO (NOVAS) ---
+    // Variáveis do Player de Áudio (NOVO)
     let speechUtterance = null;
     let isSpeaking = false;
     let isPaused = false;
     let currentSpeed = 1.0;
 
-    // --- VARIÁVEIS PARA O SIMULADO ---
+    // Variáveis do Modo Simulado
     let simuladoTimerInterval = null;
     let simuladoTimeLeft = 0;
     let activeSimuladoQuestions = [];
     let userAnswers = {};
     let currentSimuladoQuestionIndex = 0; 
 
-    // --- VARIÁVEIS PARA MODO SOBREVIVÊNCIA ---
+    // Variáveis do Modo Sobrevivência
     let survivalLives = 3;
     let survivalScore = 0;
     let survivalQuestions = [];
     let currentSurvivalIndex = 0;
 
-    // --- SELETORES DO DOM ---
-    const toastContainer = document.getElementById('toast-container');
+    // =================================================================
+    // SELETORES DO DOM (CACHE)
+    // =================================================================
     const sidebar = document.getElementById('off-canvas-sidebar');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
-    const printWatermark = document.getElementById('print-watermark');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const toastContainer = document.getElementById('toast-container');
     const achievementModal = document.getElementById('achievement-modal');
     const achievementOverlay = document.getElementById('achievement-modal-overlay');
     const closeAchButton = document.getElementById('close-ach-modal');
     const breadcrumbContainer = document.getElementById('breadcrumb-container');
-    const loadingSpinner = document.getElementById('loading-spinner');
     const adminBtn = document.getElementById('admin-panel-btn');
     const mobileAdminBtn = document.getElementById('mobile-admin-btn');
     const adminModal = document.getElementById('admin-modal');
     const adminOverlay = document.getElementById('admin-modal-overlay');
     const closeAdminBtn = document.getElementById('close-admin-modal');
 
-    // --- INICIALIZAÇÃO DO SISTEMA ---
+    // =================================================================
+    // FUNÇÃO PRINCIPAL DE INICIALIZAÇÃO (INIT)
+    // =================================================================
     function init() {
-        setupProtection();
-        setupTheme();
+        setupProtection(); // Desabilita botão direito, etc.
+        setupTheme(); // Carrega tema Dark/Light
         
-        // Tenta injetar melhorias com tratamento de erro para não quebrar o app
-        try { injectVoiceflowFix(); } catch(e) { console.warn("Aviso Voiceflow:", e); }
-        try { injectWhatsAppButton(); } catch(e) { console.warn("Aviso WhatsApp:", e); }
+        // Injeção de correções solicitadas (Try/Catch para segurança)
+        try { injectVoiceflowFix(); } catch(e) { console.warn("Voiceflow Fix Error:", e); }
+        try { injectWhatsAppButton(); } catch(e) { console.warn("WhatsApp Button Error:", e); }
         
+        // Configura navegação do botão "Voltar" do Android
         setupMobileBackNavigation();
 
+        // Inicialização do Firebase
         const firebaseConfig = {
           apiKey: "AIzaSyDNet1QC72jr79u8JpnFMLBoPI26Re6o3g",
           authDomain: "projeto-bravo-charlie-app.firebaseapp.com",
@@ -79,13 +98,12 @@ document.addEventListener('DOMContentLoaded', () => {
             FirebaseCourse.init(firebaseConfig);
             setupAuthEventListeners(); 
             
-            // Listeners de Logout Global
-            const logoutBtns = document.querySelectorAll('[id^="logout-"]');
-            logoutBtns.forEach(btn => {
+            // Configura botões de logout
+            document.querySelectorAll('[id^="logout-"]').forEach(btn => {
                 btn.addEventListener('click', FirebaseCourse.signOutUser);
             });
 
-            // Verifica autenticação ao iniciar
+            // Ouve o estado de autenticação
             FirebaseCourse.checkAuth((user, userData) => {
                 onLoginSuccess(user, userData);
             });
@@ -94,35 +112,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         setupHeaderScroll();
-        
-        // Inicializa Menu de Acessibilidade
+        setupAccessibilityMenu();
+        setupRippleEffects();
+    }
+
+    // --- Configuração do Menu de Acessibilidade ---
+    function setupAccessibilityMenu() {
         const fab = document.getElementById('accessibility-fab');
         const menu = document.getElementById('accessibility-menu');
         if(fab && menu) {
             fab.addEventListener('click', () => menu.classList.toggle('show'));
+            
+            document.getElementById('acc-font-plus')?.addEventListener('click', () => {
+                let currentSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+                document.documentElement.style.fontSize = (currentSize + 1) + 'px';
+            });
+            document.getElementById('acc-font-minus')?.addEventListener('click', () => {
+                let currentSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+                if(currentSize > 10) document.documentElement.style.fontSize = (currentSize - 1) + 'px';
+            });
+            document.getElementById('acc-dyslexic')?.addEventListener('click', () => {
+                document.body.classList.toggle('dyslexic-font');
+            });
+            document.getElementById('acc-spacing')?.addEventListener('click', () => {
+                document.body.classList.toggle('high-spacing');
+            });
         }
-        
-        setupAccessibilityListeners();
     }
 
-    function setupAccessibilityListeners() {
-        document.getElementById('acc-font-plus')?.addEventListener('click', () => {
-            let currentSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
-            document.documentElement.style.fontSize = (currentSize + 1) + 'px';
-        });
-        document.getElementById('acc-font-minus')?.addEventListener('click', () => {
-            let currentSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
-            if(currentSize > 10) document.documentElement.style.fontSize = (currentSize - 1) + 'px';
-        });
-        document.getElementById('acc-dyslexic')?.addEventListener('click', () => {
-            document.body.classList.toggle('dyslexic-font');
-        });
-        document.getElementById('acc-spacing')?.addEventListener('click', () => {
-            document.body.classList.toggle('high-spacing');
-        });
-    }
+    // =================================================================
+    // MELHORIAS SOLICITADAS (INJEÇÕES)
+    // =================================================================
 
-    // --- MELHORIA 1: FIX POSIÇÃO VOICEFLOW ---
+    // 1. CORREÇÃO DO CHAT VOICEFLOW (ALINHAMENTO ESQUERDA/BAIXO)
     function injectVoiceflowFix() {
         const checkChat = setInterval(() => {
             const chatHost = document.getElementById('voiceflow-chat');
@@ -140,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     @media (max-width: 768px) {
                         .vfrc-launcher { bottom: 80px !important; left: 20px !important; }
-                        .vfrc-widget--chat { bottom: 140px !important; left: 20px !important; right: auto !important; width: 85vw !important; height: 60vh !important; }
+                        .vfrc-widget--chat { bottom: 140px !important; left: 20px !important; right: auto !important; width: 85vw !important; height: 60vh !important; border-radius: 16px !important; }
                     }
                 `;
                 chatHost.shadowRoot.appendChild(style);
@@ -148,13 +170,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     }
 
-    // --- MELHORIA 2: BOTÃO WHATSAPP (CORREÇÃO DE INSERÇÃO) ---
+    // 2. BOTÃO WHATSAPP NO MODAL PIX (Inserção Segura)
     function injectWhatsAppButton() {
+        // Verifica se já existe para não duplicar
         if (document.getElementById('whatsapp-proof-btn')) return;
 
         const logoutBtn = document.getElementById('logout-expired-button');
         
-        // Só tenta inserir se o botão de logout existir (garantia de estar no modal correto)
+        // Só insere se o botão de logout (âncora) existir
         if (logoutBtn && logoutBtn.parentNode) {
             const container = document.createElement('div');
             container.className = "w-full text-center mb-6 pt-4 border-t border-gray-700 mt-4"; 
@@ -165,29 +188,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p class="text-xs text-gray-500 mt-1">Envie o comprovante para liberação imediata pelo Administrador.</p>
             `;
             
-            // Insere ANTES do botão de sair, usando o pai direto para evitar erros
+            // Insere ANTES do botão de sair
             logoutBtn.parentNode.insertBefore(container, logoutBtn);
         }
     }
 
-    // --- SUCESSO NO LOGIN ---
+    // =================================================================
+    // SISTEMA DE LOGIN E SESSÃO
+    // =================================================================
+    
     function onLoginSuccess(user, userData) {
+        console.log("Login efetuado com sucesso para:", userData.name);
         currentUserData = userData; 
         document.body.setAttribute('data-app-ready', 'true');
         
-        // Limpa todos os modais de login/bloqueio
+        // Remove telas de login e bloqueio
         document.querySelectorAll('.modal, .modal-overlay').forEach(el => el.classList.remove('show'));
         
-        // Atualiza UI de Boas-Vindas
+        // Personalização da Interface
         const greetingEl = document.getElementById('welcome-greeting');
         if(greetingEl) greetingEl.textContent = `Olá, ${userData.name.split(' ')[0]}!`;
         
-        // Marca d'água
-        if (printWatermark) {
-            printWatermark.textContent = `Licenciado para ${userData.name} (CPF: ${userData.cpf || '...'}) - Proibida a Cópia`;
+        const watermark = document.getElementById('print-watermark');
+        if (watermark) {
+            watermark.textContent = `Licenciado para ${userData.name} (CPF: ${userData.cpf || '...'}) - Proibida a Cópia`;
         }
 
-        // Ativa Botões de Admin se for o caso
+        // Ativa painel administrativo se for Admin
         if (userData.isAdmin === true) {
             if(adminBtn) adminBtn.classList.remove('hidden');
             if(mobileAdminBtn) mobileAdminBtn.classList.remove('hidden');
@@ -196,21 +223,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
         checkTrialStatus(userData.acesso_ate);
 
+        // Atualiza contadores
         document.getElementById('total-modules').textContent = totalModules;
         document.getElementById('course-modules-count').textContent = totalModules;
         
+        // Renderiza conteúdo
         populateModuleLists();
         updateProgress();
         addEventListeners(); 
         handleInitialLoad();
     }
 
-    // --- SISTEMA DE NAVEGAÇÃO ---
+    function checkTrialStatus(expiryDateString) {
+        if (!expiryDateString) return;
+        const expiryDate = new Date(expiryDateString);
+        const today = new Date();
+        const diffTime = expiryDate - today; 
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        
+        const trialToast = document.getElementById('trial-floating-notify');
+        
+        if (trialToast && diffDays <= 30 && diffDays >= 0) {
+            trialToast.classList.remove('hidden');
+            const daysSpan = document.getElementById('trial-days-left');
+            if(daysSpan) daysSpan.textContent = diffDays;
+            
+            // Configura botão de assinar do toast
+            const trialBtn = document.getElementById('trial-subscribe-btn');
+            const newBtn = trialBtn.cloneNode(true);
+            trialBtn.parentNode.replaceChild(newBtn, trialBtn);
+            newBtn.addEventListener('click', () => {
+                document.getElementById('expired-modal').classList.add('show');
+                document.getElementById('name-modal-overlay').classList.add('show');
+            });
+            
+            // Configura fechar
+            const closeBtn = document.getElementById('close-trial-notify');
+            const newClose = closeBtn.cloneNode(true);
+            closeBtn.parentNode.replaceChild(newClose, closeBtn);
+            newClose.addEventListener('click', () => { trialToast.classList.add('hidden'); });
+        }
+    }
+
+    // =================================================================
+    // SISTEMA DE NAVEGAÇÃO E ROTEAMENTO
+    // =================================================================
+
     async function loadModuleContent(id) {
         if (!id || !window.moduleContent[id]) return;
         const d = window.moduleContent[id];
         
-        // Verifica Categoria e Premium
+        // Identifica categoria e verifica acesso Premium
         const num = parseInt(id.replace('module', ''));
         let moduleCategory = null;
         for (const key in window.moduleCategories) {
@@ -219,12 +282,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const userIsNotPremium = !currentUserData || currentUserData.status !== 'premium';
         
-        // Bloqueio Premium
+        // Se for premium e usuário não pagar -> Bloqueia
         if (moduleCategory && moduleCategory.isPremium && userIsNotPremium) { 
             renderPremiumLockScreen(d.title); return; 
         }
 
-        // Histórico de Navegação
+        // Adiciona ao histórico (botão voltar do celular)
         if (currentModuleId !== id) {
             history.pushState({ module: id }, null, `#${id}`);
         }
@@ -232,22 +295,22 @@ document.addEventListener('DOMContentLoaded', () => {
         currentModuleId = id;
         localStorage.setItem('gateBombeiroLastModule', id);
         
-        // Limpa estados anteriores
+        // Limpeza de estados anteriores
         if (window.speechSynthesis) window.speechSynthesis.cancel();
         if (simuladoTimerInterval) clearInterval(simuladoTimerInterval);
 
-        // Transição de UI
+        // Animação de transição
         contentArea.style.opacity = '0';
         loadingSpinner.classList.remove('hidden');
         contentArea.classList.add('hidden');
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
-        // Delay simulado para transição suave
+        // Pequeno delay para suavidade
         setTimeout(async () => {
             loadingSpinner.classList.add('hidden');
             contentArea.classList.remove('hidden'); 
 
-            // Roteamento de Tipos de Módulo
+            // Roteamento de Tipos de Conteúdo
             if (d.isIDCard) {
                 contentArea.innerHTML = d.content;
                 renderDigitalID();
@@ -265,10 +328,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 contentArea.innerHTML = d.content;
                 document.getElementById('start-rpg-btn').addEventListener('click', () => initRPGGame(d.rpgData));
             } else {
-                // Aula Padrão com Áudio
+                // Aula Padrão (com player de áudio novo)
                 renderLessonWithAudio(d, id, userIsNotPremium);
             }
 
+            // Finaliza transição
             contentArea.style.opacity = '1';
             updateActiveModuleInList();
             updateNavigationButtons();
@@ -278,20 +342,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 300);
     }
 
-    // --- MELHORIA 6 e 7: RENDERIZAÇÃO COM PLAYER DE ÁUDIO ---
+    // Configura o botão voltar do Android para fechar módulo em vez de sair do app
+    function setupMobileBackNavigation() {
+        window.addEventListener('popstate', (e) => {
+            if (!e.state && currentModuleId) {
+                goToHomePage(false); // false para não duplicar histórico
+            }
+        });
+    }
+
+    // =================================================================
+    // RENDERIZADORES DE CONTEÚDO
+    // =================================================================
+
+    // --- RENDERIZADOR DE AULA (COM ÁUDIO PLAYER) ---
     function renderLessonWithAudio(d, id, userIsNotPremium) {
         let html = `
             <h3 class="flex items-center text-2xl md:text-3xl mb-6 pb-4 border-b border-gray-200 dark:border-gray-700 text-gray-800 dark:text-white">
                 <i class="${d.iconClass} mr-4 text-orange-500 fa-fw"></i>${d.title}
             </h3>
             
-            <div id="audio-player-container" class="flex flex-wrap items-center gap-3 mb-6 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 w-full md:w-auto shadow-sm">
+            <!-- NOVO PLAYER DE ÁUDIO -->
+            <div id="audio-player-container" class="flex flex-wrap items-center gap-3 mb-6 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 w-full md:w-auto shadow-sm transition-all duration-300">
                 
                 <button id="audio-play-btn" class="flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold shadow-sm transition-colors min-w-[120px]">
-                    <i id="audio-play-icon" class="fas fa-headphones mr-2"></i> <span id="audio-play-text">Ouvir</span>
+                    <i id="audio-play-icon" class="fas fa-headphones mr-2"></i> <span id="audio-play-text">Ouvir Aula</span>
                 </button>
 
-                <button id="audio-pause-btn" class="w-10 h-10 flex items-center justify-center bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-full hover:bg-gray-400 transition-colors border border-gray-300 dark:border-gray-600" title="Pausar/Continuar" disabled>
+                <button id="audio-pause-btn" class="w-10 h-10 flex items-center justify-center bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-full hover:bg-gray-400 transition-colors border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed" title="Pausar/Continuar" disabled>
                     <i id="audio-pause-icon" class="fas fa-pause"></i>
                 </button>
 
@@ -308,36 +386,112 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
 
-            <div class="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed">
+            <div class="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed text-base md:text-lg">
                 ${d.content}
             </div>
         `;
 
+        // Link do Drive
         if (d.driveLink && d.driveLink !== "SEU_LINK_DO_DRIVE_AQUI") {
             if (userIsNotPremium) {
                 html += `<div class="mt-10 mb-8 p-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl shadow-lg cursor-pointer transform hover:scale-[1.01] transition-all" onclick="document.getElementById('expired-modal').classList.add('show');"><div class="bg-gray-900 rounded-lg p-4 flex items-center justify-between text-white"><div class="flex items-center"><i class="fas fa-lock text-2xl mr-4 text-yellow-400"></i><div><p class="font-bold text-lg">Material Complementar</p><p class="text-xs text-gray-400">Vídeos e Fotos exclusivos para assinantes</p></div></div><button class="bg-yellow-500 text-black font-bold py-2 px-4 rounded text-xs hover:bg-yellow-400 transition-colors">DESBLOQUEAR</button></div></div>`;
             } else {
-                html += `<div class="mt-10 mb-8"><a href="${d.driveLink}" target="_blank" class="drive-button flex items-center justify-center w-full p-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold transition-colors shadow-md"><i class="fab fa-google-drive mr-2 text-xl"></i> ACESSAR MATERIAL EXTRA NO DRIVE</a></div>`;
+                html += `<div class="mt-10 mb-8"><a href="${d.driveLink}" target="_blank" class="drive-button flex items-center justify-center w-full p-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold transition-colors shadow-md text-center"><i class="fab fa-google-drive mr-2 text-xl"></i> ACESSAR MATERIAL EXTRA (DRIVE)</a></div>`;
             }
         }
 
+        // Área de Anotações
         const savedNote = localStorage.getItem('note-' + id) || '';
-        html += `<div class="mt-12 pt-8 border-t-2 border-dashed border-gray-200 dark:border-gray-700"><h4 class="text-xl font-bold mb-4 text-gray-700 dark:text-gray-200 flex items-center"><i class="fas fa-pencil-alt mr-3 text-orange-500"></i>Anotações Pessoais</h4><textarea id="notes-module-${id}" class="notes-textarea w-full p-4 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-inner text-gray-700 dark:text-gray-300" rows="5" placeholder="Digite suas anotações sobre esta aula aqui...">${savedNote}</textarea></div>`;
+        html += `<div class="mt-12 pt-8 border-t-2 border-dashed border-gray-200 dark:border-gray-700"><h4 class="text-xl font-bold mb-4 text-gray-700 dark:text-gray-200 flex items-center"><i class="fas fa-pencil-alt mr-3 text-orange-500"></i>Anotações Pessoais</h4><textarea id="notes-module-${id}" class="notes-textarea w-full p-4 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-inner text-gray-700 dark:text-gray-300 resize-y min-h-[150px]" placeholder="Digite suas anotações sobre esta aula aqui...">${savedNote}</textarea></div>`;
         
+        // Botão Concluir
         html += `<div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 text-right"><button class="action-button conclude-button" data-module="${id}">Concluir Módulo</button></div>`;
 
         contentArea.innerHTML = html;
         
+        // Inicializa as lógicas
         initAudioLogic();
         setupConcludeButtonListener();
         setupNotesListener(id);
         
+        // Se houver quiz, renderiza
         if (window.QUIZ_DATA && window.QUIZ_DATA[id]) {
             renderEmbeddedQuiz(id);
         }
     }
 
-    // --- LÓGICA DOS CONTROLES DE ÁUDIO ---
+    // --- RENDERIZADOR CARTEIRINHA DIGITAL (Frente e Verso Juntos) ---
+    function renderDigitalID() {
+        if (!currentUserData) return;
+        const container = document.getElementById('id-card-container');
+        if (!container) return;
+
+        const savedPhoto = localStorage.getItem('user_profile_pic');
+        const defaultPhoto = "https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png"; 
+        const currentPhoto = savedPhoto || defaultPhoto;
+        const matricula = currentUserData.uid.substring(0, 8).toUpperCase();
+        const validade = new Date(currentUserData.acesso_ate).toLocaleDateString('pt-BR');
+
+        const style = `
+            <style>
+                .cards-wrapper { display: flex; flex-direction: column; gap: 20px; align-items: center; margin-top: 20px; }
+                @media(min-width: 768px) { .cards-wrapper { flex-direction: row; justify-content: center; align-items: flex-start; gap: 40px; } }
+                .bc-card { width: 100%; max-width: 350px; aspect-ratio: 1.58/1; border-radius: 12px; overflow: hidden; position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.4); font-family: sans-serif; border: 1px solid #333; transition: transform 0.3s; }
+                .bc-card:hover { transform: translateY(-5px); }
+                
+                /* Frente */
+                .bc-front { background: #111827; display: flex; color: white; }
+                .bc-sidebar { width: 35%; background: linear-gradient(180deg, #ea580c 0%, #c2410c 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; }
+                .bc-photo { width: 80px; height: 100px; background: white; object-fit: cover; border: 2px solid white; border-radius: 6px; margin-bottom: 8px; cursor: pointer; }
+                .bc-main { width: 65%; padding: 12px; display: flex; flex-direction: column; justify-content: center; }
+                .bc-header { font-size: 9px; text-transform: uppercase; color: #9ca3af; letter-spacing: 1px; margin-bottom: 4px; }
+                .bc-name { font-size: 14px; font-weight: bold; color: white; text-transform: uppercase; line-height: 1.2; margin-bottom: 12px; }
+                .bc-row { display: flex; justify-content: space-between; font-size: 9px; border-bottom: 1px solid #374151; padding-bottom: 2px; margin-bottom: 6px; }
+                .bc-label { color: #ea580c; font-weight: bold; }
+                
+                /* Verso */
+                .bc-back { background: #1f2937; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 15px; color: #d1d5db; position: relative; }
+                .bc-qr { background: white; padding: 4px; border-radius: 4px; margin-bottom: 8px; }
+                .bc-legal { font-size: 7px; line-height: 1.3; max-width: 90%; }
+                .bc-validity { background: #ea580c; color: white; font-size: 9px; font-weight: bold; padding: 3px 8px; border-radius: 4px; margin-top: 8px; }
+                .watermark-bg { position: absolute; opacity: 0.05; font-size: 80px; color: white; pointer-events: none; }
+            </style>
+        `;
+
+        container.innerHTML = style + `
+            <div class="cards-wrapper animate-fade-in">
+                <div class="bc-card bc-front">
+                    <div class="bc-sidebar">
+                        <img src="${currentPhoto}" class="bc-photo" id="id-card-photo" onclick="document.getElementById('profile-pic-input').click()" title="Clique para alterar foto">
+                        <img src="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png" style="width: 35px; opacity: 0.9;">
+                    </div>
+                    <div class="bc-main">
+                        <div class="bc-header">Bombeiro Civil / Brigadista</div>
+                        <div class="bc-name">${currentUserData.name}</div>
+                        <div class="bc-row"><span class="bc-label">MATRÍCULA</span> <span>${matricula}</span></div>
+                        <div class="bc-row"><span class="bc-label">CPF</span> <span>${currentUserData.cpf || '---'}</span></div>
+                        <div class="bc-row"><span class="bc-label">TIPO SANG.</span> 
+                            <input type="text" class="bg-transparent text-right w-10 text-white outline-none focus:text-orange-500" placeholder="---" onchange="window.saveExtraData('blood', this.value)" value="${localStorage.getItem('user_blood') || ''}">
+                        </div>
+                    </div>
+                    <input type="file" id="profile-pic-input" class="hidden" accept="image/*" onchange="window.updateProfilePic(this)">
+                </div>
+                <div class="bc-card bc-back">
+                    <i class="fas fa-shield-alt watermark-bg"></i>
+                    <div class="bc-qr">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=Aluno:${currentUserData.name}|Valid:${validade}|Mat:${matricula}" width="70" height="70">
+                    </div>
+                    <p class="bc-legal">
+                        O portador deste documento concluiu os requisitos teóricos do Curso de Formação, conforme Lei 9394/96 e normas vigentes. Válido em todo território nacional mediante apresentação de documento oficial com foto.
+                    </p>
+                    <div class="bc-validity">VALIDADE: ${validade}</div>
+                </div>
+            </div>
+            <p class="text-center text-xs text-gray-500 mt-4"><i class="fas fa-camera mr-1"></i> Tire um print para salvar.</p>
+        `;
+    }
+
+    // --- FUNÇÕES DE ÁUDIO (LÓGICA) ---
     function initAudioLogic() {
         const playBtn = document.getElementById('audio-play-btn');
         const pauseBtn = document.getElementById('audio-pause-btn');
@@ -346,15 +500,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const playText = document.getElementById('audio-play-text');
         const pauseIcon = document.getElementById('audio-pause-icon');
 
-        if(!playBtn) return;
+        if(!playBtn || !pauseBtn) return;
 
         playBtn.addEventListener('click', () => {
             if (isSpeaking) {
+                // Parar
                 window.speechSynthesis.cancel();
                 isSpeaking = false;
                 isPaused = false;
                 updateAudioButtons(false, false);
             } else {
+                // Tocar
                 speakContent();
             }
         });
@@ -378,7 +534,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentSpeed = parseFloat(e.target.value);
                 if (isSpeaking) {
                     window.speechSynthesis.cancel();
-                    speakContent();
+                    speakContent(); // Reinicia com nova velocidade
                 }
             });
         }
@@ -397,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(pauseIcon) pauseIcon.className = paused ? "fas fa-play" : "fas fa-pause";
             } else {
                 playIcon.className = "fas fa-headphones";
-                playText.textContent = "Ouvir";
+                playText.textContent = "Ouvir Aula";
                 playBtn.classList.remove('bg-red-600', 'hover:bg-red-500');
                 playBtn.classList.add('bg-blue-600', 'hover:bg-blue-500');
                 
@@ -408,7 +564,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(pauseIcon) pauseIcon.className = "fas fa-pause";
             }
         }
-        // Expõe para uso global se necessário
         window.updateAudioUI = updateAudioButtons;
     }
 
@@ -416,7 +571,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentModuleId || !window.moduleContent[currentModuleId]) return;
         window.speechSynthesis.cancel();
 
-        // Extrai apenas o texto limpo do HTML
+        // Limpa HTML para ler apenas texto
         const div = document.createElement('div');
         div.innerHTML = window.moduleContent[currentModuleId].content;
         const cleanText = div.textContent || div.innerText || "";
@@ -445,95 +600,14 @@ document.addEventListener('DOMContentLoaded', () => {
         window.speechSynthesis.speak(speechUtterance);
     }
 
-    // --- MELHORIA 4 e 5: CARTEIRINHA DIGITAL (LAYOUT FIXO DARK) ---
-    function renderDigitalID() {
-        if (!currentUserData) return;
-        const container = document.getElementById('id-card-container');
-        if (!container) return;
+    // --- RENDERIZADORES ESPECIAIS (Simulado, Tools, RPG) ---
 
-        const savedPhoto = localStorage.getItem('user_profile_pic');
-        const defaultPhoto = "https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png"; 
-        const currentPhoto = savedPhoto || defaultPhoto;
-        const matricula = currentUserData.uid.substring(0, 8).toUpperCase();
-        const validade = new Date(currentUserData.acesso_ate).toLocaleDateString('pt-BR');
-
-        const style = `
-            <style>
-                .cards-wrapper { display: flex; flex-direction: column; gap: 20px; align-items: center; margin-top: 20px; }
-                @media(min-width: 768px) { .cards-wrapper { flex-direction: row; justify-content: center; align-items: flex-start; } }
-                .bc-card { width: 100%; max-width: 350px; aspect-ratio: 1.58/1; border-radius: 12px; overflow: hidden; position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.4); font-family: sans-serif; border: 1px solid #333; }
-                .bc-front { background: #111827; display: flex; color: white; }
-                .bc-sidebar { width: 35%; background: linear-gradient(180deg, #ea580c 0%, #c2410c 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; }
-                .bc-photo { width: 80px; height: 100px; background: white; object-fit: cover; border: 2px solid white; border-radius: 6px; margin-bottom: 8px; cursor: pointer; }
-                .bc-main { width: 65%; padding: 12px; display: flex; flex-direction: column; justify-content: center; }
-                .bc-header { font-size: 9px; text-transform: uppercase; color: #9ca3af; letter-spacing: 1px; margin-bottom: 4px; }
-                .bc-name { font-size: 14px; font-weight: bold; color: white; text-transform: uppercase; line-height: 1.2; margin-bottom: 12px; }
-                .bc-row { display: flex; justify-content: space-between; font-size: 9px; border-bottom: 1px solid #374151; padding-bottom: 2px; margin-bottom: 6px; }
-                .bc-label { color: #ea580c; font-weight: bold; }
-                .bc-back { background: #1f2937; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 15px; color: #d1d5db; position: relative; }
-                .bc-qr { background: white; padding: 4px; border-radius: 4px; margin-bottom: 8px; }
-                .bc-legal { font-size: 7px; line-height: 1.3; max-width: 90%; }
-                .bc-validity { background: #ea580c; color: white; font-size: 9px; font-weight: bold; padding: 3px 8px; border-radius: 4px; margin-top: 8px; }
-            </style>
-        `;
-
-        container.innerHTML = style + `
-            <div class="cards-wrapper animate-fade-in">
-                <!-- FRENTE -->
-                <div class="bc-card bc-front">
-                    <div class="bc-sidebar">
-                        <img src="${currentPhoto}" class="bc-photo" id="id-card-photo" onclick="document.getElementById('profile-pic-input').click()" title="Clique para alterar foto">
-                        <img src="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png" style="width: 35px; opacity: 0.9;">
-                    </div>
-                    <div class="bc-main">
-                        <div class="bc-header">Bombeiro Civil / Brigadista</div>
-                        <div class="bc-name">${currentUserData.name}</div>
-                        <div class="bc-row"><span class="bc-label">MATRÍCULA</span> <span>${matricula}</span></div>
-                        <div class="bc-row"><span class="bc-label">CPF</span> <span>${currentUserData.cpf || '---'}</span></div>
-                        <div class="bc-row"><span class="bc-label">TIPO SANG.</span> 
-                            <input type="text" class="bg-transparent text-right w-10 text-white outline-none focus:text-orange-500" placeholder="---" onchange="window.saveExtraData('blood', this.value)" value="${localStorage.getItem('user_blood') || ''}">
-                        </div>
-                    </div>
-                    <input type="file" id="profile-pic-input" class="hidden" accept="image/*" onchange="window.updateProfilePic(this)">
-                </div>
-
-                <!-- VERSO -->
-                <div class="bc-card bc-back">
-                    <div class="bc-qr">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=Aluno:${currentUserData.name}|Valid:${validade}|Mat:${matricula}" width="70" height="70">
-                    </div>
-                    <p class="bc-legal">
-                        O portador deste documento concluiu os requisitos teóricos do Curso de Formação, conforme Lei 9394/96 e normas vigentes. Válido em todo território nacional mediante apresentação de documento oficial com foto.
-                    </p>
-                    <div class="bc-validity">VALIDADE: ${validade}</div>
-                </div>
-            </div>
-            <p class="text-center text-xs text-gray-500 mt-4"><i class="fas fa-camera mr-1"></i> Tire um print para salvar.</p>
-        `;
-    }
-
-    // --- FUNÇÕES AUXILIARES ---
-    window.updateProfilePic = function(input) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('id-card-photo').src = e.target.result;
-                localStorage.setItem('user_profile_pic', e.target.result);
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-    };
-    window.saveExtraData = function(field, value) {
-        if(value) localStorage.setItem('user_' + field, value);
-    };
-
-    // --- SIMULADOS E FERRAMENTAS ---
     function renderSimuladoStart(d) {
         contentArea.innerHTML = `
             <h3 class="text-3xl mb-4 pb-4 border-b text-orange-600 dark:text-orange-500 flex items-center">
                 <i class="${d.iconClass} mr-3"></i> ${d.title}
             </h3>
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm mb-6 text-gray-700 dark:text-gray-300">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm mb-6 text-gray-700 dark:text-gray-300 leading-relaxed">
                 ${d.content}
             </div>
             <div class="text-center mt-8">
@@ -562,6 +636,8 @@ document.addEventListener('DOMContentLoaded', () => {
             window.ToolsApp.renderHealth(g);
         }
     }
+
+    // --- MODO SIMULADO (LÓGICA) ---
 
     async function startSimuladoMode(moduleData) {
         loadingSpinner.classList.remove('hidden');
@@ -656,7 +732,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.registerSimuladoAnswer = function(qId, answer) {
         userAnswers[qId] = answer;
-        // Atualiza UI imediatamente
+        // Atualiza UI visualmente sem recarregar
         const currentCard = document.querySelector('.bg-white.dark\\:bg-gray-900');
         if(currentCard) {
             currentCard.querySelectorAll('label').forEach(lbl => {
@@ -691,7 +767,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const m = Math.floor(simuladoTimeLeft / 60), s = simuladoTimeLeft % 60;
             display.textContent = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
             
-            // Alerta visual quando tempo está acabando
             if(simuladoTimeLeft < 60) display.classList.add('text-red-600', 'animate-pulse');
             
             if (simuladoTimeLeft <= 0) {
@@ -790,7 +865,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         window.scrollTo({top:0,behavior:'smooth'});
         
-        // Animação da barra
         setTimeout(() => {
             const bar = document.getElementById('score-bar');
             if(bar) bar.style.width = `${percentage}%`;
@@ -805,10 +879,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function generateSimuladoQuestions(config) {
         const allQuestions = []; const questionsByCategory = {};
-        
         for (const catKey in window.moduleCategories) {
-            questionsByCategory[catKey] = []; 
-            const cat = window.moduleCategories[catKey];
+            questionsByCategory[catKey] = []; const cat = window.moduleCategories[catKey];
             for (let i = cat.range[0]; i <= cat.range[1]; i++) {
                 const modId = `module${i}`;
                 if (window.QUIZ_DATA && window.QUIZ_DATA[modId]) {
@@ -816,7 +888,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
-        
         for (const [catKey, qty] of Object.entries(config.distribution)) {
             if (questionsByCategory[catKey] && questionsByCategory[catKey].length > 0) {
                 const available = questionsByCategory[catKey];
@@ -824,7 +895,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 allQuestions.push(...shuffleArray(available).slice(0, needed));
             }
         }
-        
         return shuffleArray(allQuestions);
     }
 
@@ -868,10 +938,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         quizContainer.innerHTML = quizHtml;
-        
         const concludeBtnDiv = contentArea.querySelector('.conclude-button')?.parentElement;
         if (concludeBtnDiv) contentArea.insertBefore(quizContainer, concludeBtnDiv); else contentArea.appendChild(quizContainer);
-        
         quizContainer.querySelectorAll('.quiz-option').forEach(btn => btn.addEventListener('click', handleEmbeddedQuizClick));
     }
 
@@ -906,7 +974,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- ADMIN ---
+    // =================================================================
+    // PAINEL ADMINISTRATIVO (LÓGICA)
+    // =================================================================
     window.openAdminPanel = async function() {
         const am = document.getElementById('admin-modal');
         const ao = document.getElementById('admin-modal-overlay');
@@ -921,7 +991,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Nenhum aluno encontrado.</td></tr>';
                 return;
             }
-            
             tbody.innerHTML = '';
             snapshot.forEach(doc => {
                 const u = doc.data();
@@ -989,7 +1058,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const now = new Date();
         let baseDate = new Date(currentExpiry);
-        // Se já venceu, adiciona a partir de hoje
         if (isNaN(baseDate.getTime()) || baseDate < now) baseDate = now;
         
         baseDate.setDate(baseDate.getDate() + parseInt(days));
@@ -1028,7 +1096,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- FUNÇÕES DE LAYOUT E HELPERS ---
+    // =================================================================
+    // FUNÇÕES DE LAYOUT E HELPERS
+    // =================================================================
     function setupHeaderScroll() { 
         window.addEventListener('scroll', () => { 
             const h = document.getElementById('main-header'); 
@@ -1072,7 +1142,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function setupAuthEventListeners() {
-        // Lógica de login
         const btnLogin = document.getElementById('login-button');
         if(btnLogin) btnLogin.addEventListener('click', async () => {
             const email = document.getElementById('email-input').value;
@@ -1091,7 +1160,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // Lógica de cadastro
         const btnSignup = document.getElementById('signup-button');
         if(btnSignup) btnSignup.addEventListener('click', async () => {
             const name = document.getElementById('name-input').value;
@@ -1116,7 +1184,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // Toggles de formulário
         document.getElementById('show-signup-button')?.addEventListener('click', () => { 
             document.getElementById('login-button-group').classList.add('hidden'); 
             document.getElementById('signup-button-group').classList.remove('hidden'); 
@@ -1133,14 +1200,12 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('auth-title').textContent = "Área do Aluno";
         });
         
-        // Botoes de abrir modal de pagamento
         const openPay = () => { document.getElementById('expired-modal').classList.add('show'); document.getElementById('name-modal-overlay').classList.add('show'); };
         document.getElementById('header-subscribe-btn')?.addEventListener('click', openPay);
         document.getElementById('mobile-subscribe-btn')?.addEventListener('click', openPay);
         document.getElementById('open-payment-login-btn')?.addEventListener('click', openPay);
         document.getElementById('close-payment-modal-btn')?.addEventListener('click', () => { 
             document.getElementById('expired-modal').classList.remove('show'); 
-            // Só fecha o overlay se o usuário já estiver logado (app ready)
             if(document.body.getAttribute('data-app-ready') === 'true') {
                 document.getElementById('name-modal-overlay').classList.remove('show'); 
             }
@@ -1155,7 +1220,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function getModuleListHTML() {
         let html = `<div class="module-accordion-container space-y-3">`;
-        
         for (const k in window.moduleCategories) {
             const cat = window.moduleCategories[k];
             const isLocked = cat.isPremium && (!currentUserData || currentUserData.status !== 'premium');
@@ -1199,7 +1263,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         html += `</div>`;
         
-        // Seção Conquistas
         html += `
         <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
             <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-white flex items-center">
@@ -1223,49 +1286,28 @@ document.addEventListener('DOMContentLoaded', () => {
         return html;
     }
     
-    function getCategoryProgress(cat) {
-        let total = 0;
-        let done = 0;
-        for(let i = cat.range[0]; i <= cat.range[1]; i++) {
-            if(window.moduleContent[`module${i}`]) {
-                total++;
-                if(completedModules.includes(`module${i}`)) done++;
-            }
-        }
-        return `${done}/${total}`;
-    }
+    function getCategoryProgress(cat) { let total = 0; let done = 0; for(let i = cat.range[0]; i <= cat.range[1]; i++) { if(window.moduleContent[`module${i}`]) { total++; if(completedModules.includes(`module${i}`)) done++; } } return `${done}/${total}`; }
 
     function updateProgress() {
         const p = totalModules > 0 ? (completedModules.length / totalModules) * 100 : 0;
         document.getElementById('progress-text').textContent = `${p.toFixed(0)}%`;
         document.getElementById('completed-modules-count').textContent = completedModules.length;
         if (document.getElementById('progress-bar-minimal')) document.getElementById('progress-bar-minimal').style.width = `${p}%`;
-        
-        // Atualiza visualmente os itens da lista
         document.querySelectorAll('.module-list-item').forEach(i => { 
             const isDone = completedModules.includes(i.dataset.module);
-            if(isDone && !i.innerHTML.includes('fa-check-circle')) {
-               i.querySelector('div > div').insertAdjacentHTML('afterend', '<i class="fas fa-check-circle text-green-500 text-lg"></i>');
-               i.classList.add('opacity-70');
-            }
+            if(isDone && !i.innerHTML.includes('fa-check-circle')) { i.querySelector('div > div').insertAdjacentHTML('afterend', '<i class="fas fa-check-circle text-green-500 text-lg"></i>'); i.classList.add('opacity-70'); }
         });
-        
-        if (totalModules > 0 && completedModules.length === totalModules) {
-            document.getElementById('congratulations-modal').classList.add('show');
-            document.getElementById('modal-overlay').classList.add('show');
-            if(typeof confetti === 'function') confetti();
-        }
+        if (totalModules > 0 && completedModules.length === totalModules) { document.getElementById('congratulations-modal').classList.add('show'); document.getElementById('modal-overlay').classList.add('show'); if(typeof confetti === 'function') confetti(); }
     }
 
     function updateActiveModuleInList() {
         document.querySelectorAll('.module-list-item').forEach(i => { 
             if (i.dataset.module === currentModuleId) {
                 i.classList.add('bg-white', 'dark:bg-gray-800', 'border-blue-500', 'dark:border-blue-500', 'shadow-sm', 'ring-1', 'ring-blue-500');
-                // Abre o acordeão pai
                 const panel = i.closest('.accordion-panel');
                 if(panel) {
                     panel.classList.remove('hidden');
-                    panel.style.maxHeight = "none"; // Deixa fluir
+                    panel.style.maxHeight = "none"; 
                     const btn = panel.previousElementSibling;
                     if(btn) btn.querySelector('.fa-chevron-down').classList.add('rotate-180');
                 }
@@ -1284,27 +1326,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(pushState) history.pushState(null, null, window.location.pathname);
         localStorage.removeItem('gateBombeiroLastModule'); currentModuleId = null;
         if (window.speechSynthesis) window.speechSynthesis.cancel();
-        
-        contentArea.innerHTML = `
-            <div class="text-center py-12 fade-in">
-                <div class="floating inline-block p-6 bg-blue-50 dark:bg-blue-900/20 rounded-full mb-6 shadow-inner">
-                    <i class="fas fa-shield-alt text-6xl text-blue-600 dark:text-blue-400"></i>
-                </div>
-                <h2 class="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white font-serif">Bem-vindo ao QG</h2>
-                <p class="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-8">
-                    Sua plataforma de formação de elite. Selecione um módulo no menu lateral para começar ou continuar seus estudos.
-                </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto">
-                    <button onclick="loadModuleContent('module1')" class="action-button pulse-button text-lg flex items-center justify-center shadow-lg">
-                        <i class="fas fa-play mr-3"></i> Começar Agora
-                    </button>
-                    <button onclick="loadModuleContent('module60')" class="bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform hover:scale-105 flex items-center justify-center">
-                        <i class="fas fa-skull mr-3"></i> Desafio Sobrevivência
-                    </button>
-                </div>
-            </div>
-        `;
-        
+        contentArea.innerHTML = `<div class="text-center py-12 fade-in"><div class="floating inline-block p-6 bg-blue-50 dark:bg-blue-900/20 rounded-full mb-6 shadow-inner"><i class="fas fa-shield-alt text-6xl text-blue-600 dark:text-blue-400"></i></div><h2 class="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white font-serif">Bem-vindo ao QG</h2><p class="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-8">Sua plataforma de formação de elite. Selecione um módulo no menu lateral para começar ou continuar seus estudos.</p><div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto"><button onclick="loadModuleContent('module1')" class="action-button pulse-button text-lg flex items-center justify-center shadow-lg"><i class="fas fa-play mr-3"></i> Começar Agora</button><button onclick="loadModuleContent('module60')" class="bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform hover:scale-105 flex items-center justify-center"><i class="fas fa-skull mr-3"></i> Desafio Sobrevivência</button></div></div>`;
         document.getElementById('module-nav').classList.add('hidden');
         closeSidebar(); 
         updateBreadcrumbs();
@@ -1465,8 +1487,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function toggleFocusMode() {
-        document.body.classList.toggle('focus-mode');
-        const isFocus = document.body.classList.contains('focus-mode');
+        document.body.classList.toggle('focus-mode'); const isFocus = document.body.classList.contains('focus-mode');
         if(isFocus) {
             document.getElementById('focus-nav-bar')?.classList.remove('hidden');
             document.getElementById('focus-menu-desktop')?.classList.remove('hidden');
@@ -1482,6 +1503,42 @@ document.addEventListener('DOMContentLoaded', () => {
     function hideAchievementModal() {
         achievementModal?.classList.remove('show');
         achievementOverlay?.classList.remove('show');
+    }
+
+    // === MODO RPG E SOBREVIVÊNCIA ===
+    async function initSurvivalGame() {
+        survivalLives = 3; survivalScore = 0; currentSurvivalIndex = 0; survivalQuestions = [];
+        const allQs = [];
+        for(let i=1; i<=totalModules; i++) { const modId = `module${i}`; if(window.QUIZ_DATA && window.QUIZ_DATA[modId]) allQs.push(...window.QUIZ_DATA[modId]); }
+        survivalQuestions = shuffleArray(allQs); renderSurvivalScreen();
+    }
+
+    function renderSurvivalScreen() {
+        if(survivalLives <= 0) { localStorage.setItem('lastSurvivalScore', survivalScore); contentArea.innerHTML = `<div class="text-center animate-slide-in p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl"><h2 class="text-4xl font-bold text-red-600 mb-4">GAME OVER</h2><div class="text-6xl mb-6 animate-bounce">💀</div><p class="text-2xl text-gray-800 dark:text-white mb-2">Sua Pontuação Final</p><div class="text-5xl font-extrabold text-orange-500 mb-8">${survivalScore}</div><button id="retry-survival" class="action-button pulse-button text-xl px-8">Tentar Novamente</button></div>`; document.getElementById('retry-survival').addEventListener('click', initSurvivalGame); return; }
+        const q = survivalQuestions[currentSurvivalIndex];
+        if(!q) { contentArea.innerHTML = `<h2 class="text-center text-2xl">Você zerou o banco de questões! Incrível!</h2>`; return; }
+        let hearts = ''; for(let i=0; i<survivalLives; i++) hearts += '<i class="fas fa-heart text-red-600 text-2xl mx-1 survival-life-heart"></i>';
+        contentArea.innerHTML = `<div class="flex justify-between items-center mb-6 bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow"><div class="flex items-center">${hearts}</div><div class="text-xl font-bold text-blue-600 dark:text-blue-400">Pontos: ${survivalScore}</div></div><div class="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg animate-fade-in"><p class="font-bold text-lg mb-6 text-gray-800 dark:text-white">Questão ${currentSurvivalIndex + 1}: ${q.question}</p><div class="space-y-3">${Object.keys(q.options).map(key => `<button class="w-full text-left p-4 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-gray-800 transition-all survival-option transform hover:scale-[1.01]" data-key="${key}"><span class="font-bold text-orange-500 mr-2">${key.toUpperCase()})</span> ${q.options[key]}</button>`).join('')}</div></div>`;
+        document.querySelectorAll('.survival-option').forEach(btn => { btn.addEventListener('click', (e) => handleSurvivalAnswer(e, q)); });
+    }
+
+    function handleSurvivalAnswer(e, q) {
+        const btn = e.currentTarget; const selected = btn.dataset.key; const isCorrect = selected === q.answer;
+        const btns = document.querySelectorAll('.survival-option');
+        btns.forEach(b => { b.disabled = true; if(b.dataset.key === q.answer) b.classList.add('bg-green-200', 'dark:bg-green-900', 'border-green-500'); else if(b.dataset.key === selected && !isCorrect) b.classList.add('bg-red-200', 'dark:bg-red-900', 'border-red-500'); });
+        if(isCorrect) { survivalScore += 10; if(typeof confetti === 'function') confetti({ particleCount: 30, spread: 60, origin: { y: 0.7 } }); } else { survivalLives--; if(navigator.vibrate) navigator.vibrate(200); }
+        setTimeout(() => { currentSurvivalIndex++; renderSurvivalScreen(); }, 1500);
+    }
+
+    async function initRPGGame(rpgData) { renderRPGScene(rpgData.start, rpgData); }
+    function renderRPGScene(sceneId, rpgData) {
+        const scene = rpgData.scenes[sceneId]; if(!scene) return;
+        let html = `<div class="max-w-3xl mx-auto animate-fade-in"><div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700">${scene.image ? `<img src="${scene.image}" class="w-full h-64 object-cover">` : ''}<div class="p-8"><p class="text-xl text-gray-800 dark:text-gray-200 mb-8 leading-relaxed font-serif">${scene.text}</p><div class="space-y-4">`;
+        scene.options.forEach(opt => { html += `<button class="rpg-choice-btn w-full text-left p-5 bg-gray-50 dark:bg-gray-800 border-l-4 border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all rounded shadow-sm mb-2 text-lg" data-next="${opt.next}"><i class="fas fa-chevron-right text-blue-500 mr-3"></i> ${opt.text}</button>`; });
+        html += `</div></div></div></div>`; contentArea.innerHTML = html;
+        const card = contentArea.querySelector('.bg-white');
+        if(scene.type === 'death') card.classList.add('border-red-500', 'border-4'); else if(scene.type === 'win') { card.classList.add('border-green-500', 'border-4'); if(typeof confetti === 'function') confetti(); }
+        document.querySelectorAll('.rpg-choice-btn').forEach(btn => { btn.addEventListener('click', () => { const next = btn.dataset.next; if(next === 'exit') loadModuleContent('module61'); else renderRPGScene(next, rpgData); }); });
     }
 
     // Inicializa
