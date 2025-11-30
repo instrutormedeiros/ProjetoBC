@@ -279,8 +279,6 @@ function onLoginSuccess(user, userData) {
         startOnboardingTour(false); 
     }
 
-        checkTrialStatus(userData.acesso_ate);
-
         // CORREÇÃO: Usando a variável global totalModules
         totalModules = Object.keys(window.moduleContent || {}).length;
         document.getElementById('total-modules').textContent = totalModules;
