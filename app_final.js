@@ -1039,29 +1039,33 @@ document.addEventListener('DOMContentLoaded', () => {
         simuladoTimeLeft = moduleData.simuladoConfig.timeLimit * 60; 
         currentSimuladoQuestionIndex = 0;
 
-        // --- INICIO HTML SIMULADO (TIMER FLUTUANTE) ---
+        // --- 4. TIMER FLUTUANTE (NO TOPO) ---
         contentArea.innerHTML = `
-            <div class="pt-2 pb-12">
+            <div class="pt-4 pb-12 relative">
+                
                 <div id="simulado-timer-bar" class="simulado-floating-timer">
-                    <div class="timer-text">
-                        <i class="fas fa-stopwatch mr-2"></i><span id="timer-display">--:--</span>
-                    </div>
-                    <div class="h-4 w-px bg-gray-500 mx-2"></div>
-                    <div class="question-counter">
-                        Q <span id="q-current">1</span> / ${activeSimuladoQuestions.length}
-                    </div>
+                    <i class="fas fa-clock text-orange-500"></i>
+                    <span id="timer-display" class="timer-text mx-2">--:--</span>
+                    <div class="h-4 w-px bg-gray-600 mx-2"></div>
+                    <span class="text-xs text-gray-300">Questão <span id="q-current">1</span>/${activeSimuladoQuestions.length}</span>
                 </div>
                 
-                <div class="mt-16 mb-8 text-center px-4">
-                     <h3 class="text-2xl font-bold text-blue-900 dark:text-white border-b-2 border-orange-500 inline-block pb-2">${moduleData.title}</h3>
-                     <p class="text-sm text-gray-500 mt-2">Modo Prova: Responda todas as questões. O gabarito aparece no final.</p>
+                <div class="mt-20 mb-8 text-center px-4">
+                     <h3 class="text-2xl md:text-3xl font-bold text-blue-900 dark:text-white border-b-2 border-orange-500 inline-block pb-2">
+                        ${moduleData.title}
+                     </h3>
+                     <p class="text-sm text-gray-500 mt-3"><i class="fas fa-info-circle"></i> Modo Prova: O resultado sai ao final.</p>
                 </div>
 
                 <div id="question-display-area" class="simulado-question-container"></div>
                 
                 <div class="mt-8 flex justify-between items-center px-2">
-                    <button id="sim-prev-btn" class="action-button bg-gray-600" style="visibility: hidden;"><i class="fas fa-arrow-left mr-2"></i> Anterior</button>
-                    <button id="sim-next-btn" class="action-button">Próxima <i class="fas fa-arrow-right ml-2"></i></button>
+                    <button id="sim-prev-btn" class="action-button bg-gray-600" style="visibility: hidden;">
+                        <i class="fas fa-arrow-left mr-2"></i> Anterior
+                    </button>
+                    <button id="sim-next-btn" class="action-button">
+                        Próxima <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
                 </div>
             </div>
         `;
