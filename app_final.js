@@ -279,17 +279,6 @@ function onLoginSuccess(user, userData) {
         startOnboardingTour(false); 
     }
 
-        // CORREÇÃO: Usando a variável global totalModules
-        totalModules = Object.keys(window.moduleContent || {}).length;
-        document.getElementById('total-modules').textContent = totalModules;
-        document.getElementById('course-modules-count').textContent = totalModules;
-        
-        populateModuleLists();
-        updateProgress();
-        addEventListeners(); 
-        handleInitialLoad();
-    }
-
     // --- FUNÇÕES ADMIN (ATUALIZADAS E LEGÍVEIS) ---
     window.openAdminPanel = async function() {
         if (!currentUserData || !currentUserData.isAdmin) return;
