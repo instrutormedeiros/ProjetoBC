@@ -240,13 +240,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function onLoginSuccess(user, userData) {
         currentUserData = userData; 
 
+        // Evita rodar duas vezes se o usuário já estiver logado na sessão
         if (document.body.getAttribute('data-app-ready') === 'true') return;
         document.body.setAttribute('data-app-ready', 'true');
         
+        // Fecha modais de login/pagamento se estiverem abertos
         document.getElementById('name-prompt-modal')?.classList.remove('show');
         document.getElementById('name-modal-overlay')?.classList.remove('show');
         document.getElementById('expired-modal')?.classList.remove('show');
         
+        // Atualiza saudação e marca d'água
         const greetingEl = document.getElementById('welcome-greeting');
         if(greetingEl) greetingEl.textContent = `Olá, ${userData.name.split(' ')[0]}!`;
         
@@ -254,19 +257,31 @@ document.addEventListener('DOMContentLoaded', () => {
             printWatermark.textContent = `Licenciado para ${userData.name} (CPF: ${userData.cpf || '...'}) - Proibida a Cópia`;
         }
 
+        // --- LÓGICA DE ADMIN (CORRIGIDA) ---
         if (userData.isAdmin === true) {
             if(adminBtn) adminBtn.classList.remove('hidden');
             if(mobileAdminBtn) mobileAdminBtn.classList.remove('hidden');
+        } // <--- O IF DO ADMIN TERMINA AQUI. O RESTO RODA PARA TODOS.
 
+        checkTrialStatus(userData.acesso_ate);
+
+        // --- INICIALIZAÇÃO DA PLATAFORMA ---
+        
+        // 1. Atualiza contagem de módulos
+        totalModules = Object.keys(window.moduleContent || {}).length;
+        const totalModEl = document.getElementById('total-modules');
+        const courseCountEl = document.getElementById('course-modules-count');
+        if(totalModEl) totalModEl.textContent = totalModules;
+        if(courseCountEl) courseCountEl.textContent = totalModules;
+        
+        // 2. Renderiza conteúdo e ativa eventos
         populateModuleLists();
         updateProgress();
         addEventListeners(); 
         handleInitialLoad();
 
-        // --- ADICIONE ESTA LINHA AQUI ---
-        // Inicia o tour apenas agora que o usuário entrou e o painel carregou
+        // 3. Inicia o Tour (Para todos os usuários)
         startOnboardingTour(); 
-    
     }
 
         checkTrialStatus(userData.acesso_ate);
