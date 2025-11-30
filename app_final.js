@@ -266,8 +266,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- ADICIONE ESTA LINHA AQUI ---
         // Inicia o tour apenas agora que o usuário entrou e o painel carregou
         startOnboardingTour(); 
+    
     }
-        }
 
         checkTrialStatus(userData.acesso_ate);
 
