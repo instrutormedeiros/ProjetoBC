@@ -1192,7 +1192,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let feedbackHtml = '<div class="space-y-6 mt-8">';
 
         activeSimuladoQuestions.forEach((q, i) => {
-            const selected = userAnswers[q.id];
+            const selected = userAnswers[i]; // 'i' é o índice do loop (0, 1, 2...)
             const isCorrect = selected === q.answer;
             if(isCorrect) correctCount++;
             
