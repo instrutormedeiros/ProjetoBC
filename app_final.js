@@ -1692,10 +1692,24 @@ function onLoginSuccess(user, userData) {
             const n = parseInt(currentModuleId.replace('module',''));
             if(n < totalModules) loadModuleContent(`module${n+1}`);
             nextButton?.classList.remove('blinking-button');
+            });
 
-            // Botão manual do Tour
-        document.getElementById('restart-tour-btn')?.addEventListener('click', () => startOnboardingTour(true));
-        });
+            // --- ADICIONE ISTO NO FINAL DA FUNÇÃO addEventListeners ---
+        
+        // Botão manual do Tour (Garante que funcione mesmo clicando várias vezes)
+        const tourBtn = document.getElementById('restart-tour-btn');
+        if (tourBtn) {
+            // Removemos clone para limpar ouvintes antigos e adicionamos o novo
+            const newTourBtn = tourBtn.cloneNode(true);
+            tourBtn.parentNode.replaceChild(newTourBtn, tourBtn);
+            
+            newTourBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log("Iniciando tour manual..."); 
+                startOnboardingTour(true);
+            });
+        }
+        
 
         // 2. Busca
         document.body.addEventListener('input', e => {
