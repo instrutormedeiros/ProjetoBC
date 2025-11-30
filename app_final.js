@@ -548,12 +548,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return questions;
     }
 
-   // --- FUNÇÃO 5: BANCO DE QUESTÕES (DEDUPLICAÇÃO POR CONTEÚDO) ---
+   // --- FUNÇÃO 5: BANCO DE QUESTÕES (CORREÇÃO TOTAL - PENEIRA DUPLA) ---
     async function generateSimuladoQuestions(config) {
         const finalExamQuestions = [];
         
-        // Este conjunto rastreia o TEXTO de todas as perguntas já escolhidas para a prova.
-        // Isso impede que a mesma pergunta apareça duas vezes, mesmo se tiver IDs diferentes.
+        // Controle global para não repetir pergunta entre matérias diferentes
         const globalSeenTexts = new Set();
 
         const map = {
@@ -564,43 +563,48 @@ document.addEventListener('DOMContentLoaded', () => {
             'aph_novo': [26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
         };
 
-        // Itera sobre cada categoria (Ex: RH, PCI...)
+        // Para cada matéria do simulado
         for (const [catKey, qtyNeeded] of Object.entries(config.distribution)) {
-            let categoryPool = [];
+            let rawList = [];
             const targetModules = map[catKey] || [];
 
-            // 1. COLETA ABSOLUTA: Pega tudo o que existe nos módulos alvo
+            // 1. COLETA BRUTA: Pega tudo o que existe
             targetModules.forEach(num => {
                 const modId = `module${num}`;
                 if (window.QUIZ_DATA && window.QUIZ_DATA[modId]) {
-                    categoryPool.push(...window.QUIZ_DATA[modId]);
+                    rawList.push(...window.QUIZ_DATA[modId]);
                 }
             });
 
-            // 2. EMBARALHA TUDO ANTES DE FILTRAR
-            // Isso garante que não pegaremos sempre as primeiras do módulo 1
-            categoryPool = shuffleArray(categoryPool);
+            // 2. PENEIRA: Cria uma lista APENAS com perguntas únicas dessa matéria
+            // Removemos qualquer duplicata interna ANTES de sortear
+            const uniqueList = [];
+            const localSeen = new Set();
 
-            // 3. SELEÇÃO CIRÚRGICA
-            let addedCount = 0;
-            
-            for (const q of categoryPool) {
-                if (addedCount >= qtyNeeded) break; // Já pegou o suficiente dessa matéria?
-
-                // Cria uma "assinatura" da pergunta (remove espaços e põe minúsculo)
-                // Ex: " O que é fogo? " vira "oqueéfogo?"
+            for (const q of rawList) {
+                // Assinatura: remove espaços e converte para minúsculo
                 const signature = q.question.replace(/\s+/g, '').toLowerCase();
 
-                // Verifica se essa assinatura JÁ EXISTE na prova inteira
-                if (!globalSeenTexts.has(signature)) {
-                    finalExamQuestions.push(q);
-                    globalSeenTexts.add(signature); // Bloqueia essa pergunta para o futuro
-                    addedCount++;
+                // Se essa pergunta ainda não apareceu na PROVA TODA e nem NESTA LISTA
+                if (!globalSeenTexts.has(signature) && !localSeen.has(signature)) {
+                    uniqueList.push(q);
+                    localSeen.add(signature); // Marca que já temos essa pergunta na lista limpa
                 }
+            }
+
+            // 3. SORTEIO: Agora sorteamos apenas da lista limpa
+            const shuffledUnique = shuffleArray(uniqueList);
+            const selected = shuffledUnique.slice(0, qtyNeeded);
+
+            // 4. REGISTRO FINAL: Adiciona as escolhidas e marca como usadas globalmente
+            for (const q of selected) {
+                const signature = q.question.replace(/\s+/g, '').toLowerCase();
+                finalExamQuestions.push(q);
+                globalSeenTexts.add(signature);
             }
         }
         
-        // Embaralha a prova final para misturar as matérias
+        // Embaralha a prova final
         return shuffleArray(finalExamQuestions);
     }
 
