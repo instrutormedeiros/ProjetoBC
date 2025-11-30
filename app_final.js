@@ -548,15 +548,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return questions;
     }
 
-   // --- FUNÇÃO 5: BANCO DE QUESTÕES (BLINDAGEM TOTAL CONTRA REPETIÇÃO) ---
+   // --- FUNÇÃO 5: BANCO DE QUESTÕES (DEDUPLICAÇÃO POR CONTEÚDO) ---
     async function generateSimuladoQuestions(config) {
-        const finalSelection = [];
+        const finalExamQuestions = [];
         
-        // Conjuntos GLOBAIS para rastrear o que já foi selecionado na prova inteira
-        const globalSeenIds = new Set();
+        // Este conjunto rastreia o TEXTO de todas as perguntas já escolhidas para a prova.
+        // Isso impede que a mesma pergunta apareça duas vezes, mesmo se tiver IDs diferentes.
         const globalSeenTexts = new Set();
 
-        // Mapeamento dos módulos (Seu banco de dados gigante)
         const map = {
             'rh': [1, 2, 3, 4, 5],
             'legislacao': [6, 7, 8, 9, 10],
@@ -565,48 +564,44 @@ document.addEventListener('DOMContentLoaded', () => {
             'aph_novo': [26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
         };
 
-        // Para cada categoria solicitada (Ex: RH = 15)
+        // Itera sobre cada categoria (Ex: RH, PCI...)
         for (const [catKey, qtyNeeded] of Object.entries(config.distribution)) {
-            let rawPool = [];
+            let categoryPool = [];
             const targetModules = map[catKey] || [];
 
-            // 1. Coleta TUDO o que existe nos módulos dessa matéria
+            // 1. COLETA ABSOLUTA: Pega tudo o que existe nos módulos alvo
             targetModules.forEach(num => {
                 const modId = `module${num}`;
                 if (window.QUIZ_DATA && window.QUIZ_DATA[modId]) {
-                    rawPool.push(...window.QUIZ_DATA[modId]);
+                    categoryPool.push(...window.QUIZ_DATA[modId]);
                 }
             });
 
-            // 2. Embaralha o pote bruto ANTES de filtrar
-            rawPool = shuffleArray(rawPool);
+            // 2. EMBARALHA TUDO ANTES DE FILTRAR
+            // Isso garante que não pegaremos sempre as primeiras do módulo 1
+            categoryPool = shuffleArray(categoryPool);
 
-            // 3. Seleciona preenchendo a cota, mas filtrando duplicatas
-            let count = 0;
-            for (const q of rawPool) {
-                // Se já enchemos a cota desta matéria, para.
-                if (count >= qtyNeeded) break;
+            // 3. SELEÇÃO CIRÚRGICA
+            let addedCount = 0;
+            
+            for (const q of categoryPool) {
+                if (addedCount >= qtyNeeded) break; // Já pegou o suficiente dessa matéria?
 
-                // Cria uma "assinatura" do texto da pergunta (sem espaços, minúsculo)
-                // Isso evita que "O que é fogo?" e "O que é fogo ?" sejam consideradas diferentes.
-                const textHash = q.question.trim().toLowerCase();
+                // Cria uma "assinatura" da pergunta (remove espaços e põe minúsculo)
+                // Ex: " O que é fogo? " vira "oqueéfogo?"
+                const signature = q.question.replace(/\s+/g, '').toLowerCase();
 
-                // Só adiciona se: 
-                // 1. O ID não saiu ainda
-                // 2. O TEXTO não saiu ainda
-                if (!globalSeenIds.has(q.id) && !globalSeenTexts.has(textHash)) {
-                    finalSelection.push(q);
-                    
-                    // Marca como usado
-                    globalSeenIds.add(q.id);
-                    globalSeenTexts.add(textHash);
-                    count++;
+                // Verifica se essa assinatura JÁ EXISTE na prova inteira
+                if (!globalSeenTexts.has(signature)) {
+                    finalExamQuestions.push(q);
+                    globalSeenTexts.add(signature); // Bloqueia essa pergunta para o futuro
+                    addedCount++;
                 }
             }
         }
         
-        // Embaralha o resultado final (para misturar as matérias se houver mais de uma)
-        return shuffleArray(finalSelection);
+        // Embaralha a prova final para misturar as matérias
+        return shuffleArray(finalExamQuestions);
     }
 
     // --- CARREGAMENTO DE MÓDULOS (ROTEADOR PRINCIPAL) ---
