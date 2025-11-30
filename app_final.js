@@ -410,6 +410,72 @@ function onLoginSuccess(user, userData) {
             alert("Erro ao atualizar: " + e.message);
         }
     };
+    // --- FUNÇÕES QUE FALTAVAM NO ADMIN (EDITAR, NOTA, RESET, EXCLUIR) ---
+
+    // 1. Editar Dados (Nome)
+    window.editUserData = async function(uid, oldName, oldCpf) {
+        const newName = prompt("Editar Nome do Aluno:", oldName);
+        if (newName === null || newName === oldName) return;
+        
+        try {
+            await window.__fbDB.collection('users').doc(uid).update({ name: newName });
+            alert("Nome atualizado com sucesso!");
+            openAdminPanel(); // Atualiza a tabela
+        } catch (e) {
+            alert("Erro ao atualizar: " + e.message);
+        }
+    };
+
+    // 2. Nota do Admin (Obs)
+    window.editUserNote = async function(uid, currentNote) {
+        // Remove escape chars se houver
+        const cleanNote = currentNote === 'undefined' ? '' : currentNote;
+        const note = prompt("Nota do Admin (Ex: 'Pagamento pendente', 'VIP'):", cleanNote);
+        if (note === null) return;
+
+        try {
+            await window.__fbDB.collection('users').doc(uid).update({ adminNote: note });
+            openAdminPanel(); // Atualiza a tabela
+        } catch (e) {
+            alert("Erro ao salvar nota: " + e.message);
+        }
+    };
+
+    // 3. Resetar Senha (Envia E-mail)
+    window.sendResetEmail = async function(email) {
+        if (!confirm(`Deseja enviar um e-mail de redefinição de senha para ${email}?`)) return;
+        
+        try {
+            await window.__fbAuth.sendPasswordResetEmail(email);
+            alert(`E-mail de redefinição enviado para ${email}. Peça para o aluno verificar a caixa de entrada/spam.`);
+        } catch (e) {
+            alert("Erro ao enviar e-mail: " + e.message);
+        }
+    };
+
+    // 4. Excluir Usuário (Do Banco de Dados)
+    window.deleteUser = async function(uid, name, cpf) {
+        const confirm1 = confirm(`TEM CERTEZA que deseja excluir os dados de ${name}?`);
+        if (!confirm1) return;
+        
+        const confirm2 = confirm("ATENÇÃO: Esta ação apagará o progresso e o cadastro do banco de dados.\n(Nota: Para segurança, o login da conta deve ser removido manualmente no Console do Firebase, mas o acesso será revogado aqui). Continuar?");
+        if (!confirm2) return;
+
+        try {
+            // Remove da coleção de usuários
+            await window.__fbDB.collection('users').doc(uid).delete();
+            
+            // Remove da coleção de CPFs (para liberar o CPF)
+            if (cpf && cpf !== 'undefined' && cpf !== 'Sem CPF') {
+                await window.__fbDB.collection('cpfs').doc(cpf).delete();
+            }
+
+            alert("Usuário removido do banco de dados.");
+            openAdminPanel(); // Atualiza a tabela
+        } catch (e) {
+            alert("Erro ao excluir: " + e.message);
+        }
+    };
     
     function checkTrialStatus(expiryDateString) {
         const expiryDate = new Date(expiryDateString);
