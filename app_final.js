@@ -1044,7 +1044,7 @@ document.addEventListener('DOMContentLoaded', () => {
         simuladoTimeLeft = moduleData.simuladoConfig.timeLimit * 60; 
         currentSimuladoQuestionIndex = 0;
 
-        // --- 4. TIMER FLUTUANTE (NO TOPO) ---
+        // --- 4. TIMER STICKY (HTML ATUALIZADO) ---
         contentArea.innerHTML = `
             <div class="pt-4 pb-12 relative">
                 
@@ -1055,7 +1055,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="text-xs text-gray-300">Questão <span id="q-current">1</span>/${activeSimuladoQuestions.length}</span>
                 </div>
                 
-                <div class="mt-20 mb-8 text-center px-4">
+                <div class="mt-4 mb-8 text-center px-4">
                      <h3 class="text-2xl md:text-3xl font-bold text-blue-900 dark:text-white border-b-2 border-orange-500 inline-block pb-2">
                         ${moduleData.title}
                      </h3>
