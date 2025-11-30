@@ -1777,6 +1777,32 @@ document.addEventListener('DOMContentLoaded', () => {
         closeAchButton?.addEventListener('click', hideAchievementModal);
         achievementOverlay?.addEventListener('click', hideAchievementModal);
     }
+// ... (restante do código anterior) ...
 
+    // --- 6. LIMITE IA (BRAVOGPT) - COLE AQUI ---
+    function initVoiceflowLimit() {
+        if (!window.voiceflow || !window.voiceflow.chat) return;
+
+        window.voiceflow.chat.on('user:message', () => {
+            const today = new Date().toLocaleDateString();
+            const key = `ai_usage_${today}`;
+            let count = parseInt(localStorage.getItem(key) || '0') + 1;
+            localStorage.setItem(key, count);
+
+            const isPremium = currentUserData && currentUserData.status === 'premium';
+            const limit = isPremium ? 50 : 5; // 50 Premium, 5 Free
+
+            if (count > limit) {
+                alert(`⚠️ Limite diário de IA atingido (${count-1}/${limit}).\nVolte amanhã ou assine o Premium para mais interações.`);
+                // Oculta o chat forçadamente
+                const chatDiv = document.getElementById('voiceflow-chat');
+                if(chatDiv) chatDiv.style.display = 'none';
+            }
+        });
+    }
+    // Tenta iniciar o monitoramento após 5 segundos
+    setTimeout(initVoiceflowLimit, 5000);
+
+    // --- INICIALIZAÇÃO ---
     init();
 });
