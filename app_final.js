@@ -237,19 +237,18 @@ document.addEventListener('DOMContentLoaded', () => {
         setupRippleEffects();
     }
     
-    function onLoginSuccess(user, userData) {
+function onLoginSuccess(user, userData) {
         currentUserData = userData; 
 
-        // Evita rodar duas vezes se o usuário já estiver logado na sessão
         if (document.body.getAttribute('data-app-ready') === 'true') return;
         document.body.setAttribute('data-app-ready', 'true');
         
-        // Fecha modais de login/pagamento se estiverem abertos
+        // Fecha modais
         document.getElementById('name-prompt-modal')?.classList.remove('show');
         document.getElementById('name-modal-overlay')?.classList.remove('show');
         document.getElementById('expired-modal')?.classList.remove('show');
         
-        // Atualiza saudação e marca d'água
+        // Saudação
         const greetingEl = document.getElementById('welcome-greeting');
         if(greetingEl) greetingEl.textContent = `Olá, ${userData.name.split(' ')[0]}!`;
         
@@ -257,31 +256,27 @@ document.addEventListener('DOMContentLoaded', () => {
             printWatermark.textContent = `Licenciado para ${userData.name} (CPF: ${userData.cpf || '...'}) - Proibida a Cópia`;
         }
 
-        // --- LÓGICA DE ADMIN (CORRIGIDA) ---
+        // Botões Admin
         if (userData.isAdmin === true) {
             if(adminBtn) adminBtn.classList.remove('hidden');
             if(mobileAdminBtn) mobileAdminBtn.classList.remove('hidden');
-        } // <--- O IF DO ADMIN TERMINA AQUI. O RESTO RODA PARA TODOS.
+        }
 
         checkTrialStatus(userData.acesso_ate);
 
-        // --- INICIALIZAÇÃO DA PLATAFORMA ---
-        
-        // 1. Atualiza contagem de módulos
+        // Inicializa contadores
         totalModules = Object.keys(window.moduleContent || {}).length;
-        const totalModEl = document.getElementById('total-modules');
-        const courseCountEl = document.getElementById('course-modules-count');
-        if(totalModEl) totalModEl.textContent = totalModules;
-        if(courseCountEl) courseCountEl.textContent = totalModules;
+        document.getElementById('total-modules').textContent = totalModules;
+        document.getElementById('course-modules-count').textContent = totalModules;
         
-        // 2. Renderiza conteúdo e ativa eventos
+        // Carrega listas e eventos
         populateModuleLists();
         updateProgress();
         addEventListeners(); 
         handleInitialLoad();
 
-        // 3. Inicia o Tour (Para todos os usuários)
-        startOnboardingTour(); 
+        // Inicia Tour Automático (se nunca viu)
+        startOnboardingTour(false); 
     }
 
         checkTrialStatus(userData.acesso_ate);
@@ -1710,6 +1705,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const n = parseInt(currentModuleId.replace('module',''));
             if(n < totalModules) loadModuleContent(`module${n+1}`);
             nextButton?.classList.remove('blinking-button');
+
+            // Botão manual do Tour
+        document.getElementById('restart-tour-btn')?.addEventListener('click', () => startOnboardingTour(true));
         });
 
         // 2. Busca
@@ -1854,74 +1852,81 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(initVoiceflowLimit, 5000);
 
     // --- 7. TOUR GUIADO (ONBOARDING) ---
-    function startOnboardingTour() {
-        // Verifica se o usuário já viu o tour (localStorage)
-        if (localStorage.getItem('bravo_tour_completed') === 'true') return;
+    // isManual = true se o usuário clicou no botão "Ver Tutorial"
+    function startOnboardingTour(isManual = false) {
+        // Se for automático e já tiver visto, cancela
+        if (!isManual && localStorage.getItem('bravo_tour_completed') === 'true') return;
 
-        // Aguarda um pouco para garantir que tudo carregou
+        // Aguarda renderização
         setTimeout(() => {
+            if (!window.driver || !window.driver.js || !window.driver.js.driver) return;
+
             const driver = window.driver.js.driver;
             
-            // Verifica qual botão de instalação está visível (Desktop ou Mobile)
+            // Verifica botões de instalação
             const installBtnDesktop = document.getElementById('install-app-btn');
             const installBtnMobile = document.getElementById('install-app-btn-mobile');
             
-            // Define passos dinamicamente
             const steps = [
                 { 
                     element: '#accessibility-fab', 
                     popover: { 
-                        title: 'Acessibilidade Total', 
-                        description: 'Clique aqui para ajustar o tamanho da fonte, contraste e espaçamento. O Bravo Charlie é para todos.', 
+                        title: 'Acessibilidade', 
+                        description: 'Ajuste o tamanho da fonte, contraste e espaçamento aqui.', 
                         side: "left", 
                         align: 'end' 
                     } 
                 },
-                // Tenta focar na IA (o ID pode variar dependendo de como o widget carrega, usamos uma posição genérica se falhar)
                 { 
                     element: '#voiceflow-chat', 
                     popover: { 
-                        title: 'BravoGPT: Sua IA Especialista', 
-                        description: 'Dúvidas técnicas? Pergunte ao nosso Agente de IA. Ele foi treinado com todos os manuais de bombeiro.', 
-                        side: "top", 
+                        title: 'BravoGPT: IA Especialista', 
+                        description: 'Dúvidas? Nossa IA treinada nos manuais responde tudo.', 
+                        // MUDANÇA: 'left' força o balão a ficar à esquerda do chat (que é direita)
+                        side: "left", 
                         align: 'end' 
                     } 
                 }
             ];
 
-            // Adiciona o passo de instalação se o botão estiver visível
+            // Adiciona passo de instalação se o botão estiver visível
             if (installBtnDesktop && !installBtnDesktop.classList.contains('hidden')) {
                 steps.push({ 
                     element: '#install-app-btn', 
-                    popover: { title: 'Instale no Computador', description: 'Tenha acesso rápido instalando o App direto no seu navegador.', side: "bottom" } 
+                    popover: { 
+                        title: 'Instale o App', 
+                        description: 'Clique aqui para instalar o Bravo Charlie no seu computador e acessar mais rápido.', 
+                        side: "bottom" 
+                    } 
                 });
             } else if (installBtnMobile && !installBtnMobile.classList.contains('hidden')) {
-                // Se for mobile, precisamos abrir o menu lateral primeiro para mostrar o botão
                 steps.push({ 
                     element: '#mobile-menu-button', 
-                    popover: { title: 'Menu & Instalação', description: 'Toque aqui para acessar o menu e a opção de <strong>Instalar App</strong>.', side: "bottom" } 
+                    popover: { 
+                        title: 'Menu & Instalação', 
+                        description: 'Abra o menu para encontrar a opção <strong>Instalar App</strong>.', 
+                        side: "bottom" 
+                    } 
                 });
             }
 
-            // Configuração do Tour
             const driverObj = driver({
                 showProgress: true,
                 animate: true,
-                popoverClass: 'driverjs-theme', // Nossa classe CSS personalizada
+                popoverClass: 'driverjs-theme',
                 steps: steps,
                 onDestroyed: () => {
-                    // Marca como visto quando o usuário termina ou fecha
-                    localStorage.setItem('bravo_tour_completed', 'true');
+                    // Só marca como concluído se foi o tour automático
+                    if (!isManual) localStorage.setItem('bravo_tour_completed', 'true');
                 },
-                nextBtnText: 'Próximo →',
-                prevBtnText: '← Anterior',
-                doneBtnText: 'Entendi, vamos lá!',
+                nextBtnText: 'Próximo',
+                prevBtnText: 'Voltar',
+                doneBtnText: 'Concluir'
             });
 
             driverObj.drive();
-        }, 2500); // Inicia 2.5s após carregar para não conflitar com animações iniciais
+        }, 1500);
     }
-
 
     init();
 });
