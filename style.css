@@ -765,3 +765,59 @@ body.focus-mode #main-wrapper { padding-bottom: 2rem; }
     color: #1f2937;
 }
 :root:not(.dark) .rpg-card-btn:hover { background-color: #f8fafc; }
+/* ==========================================================================
+   8. NOVOS ESTILOS (TIMER FLUTUANTE & AUDIO CONTROLS) - ADICIONADO AGORA
+   ========================================================================== */
+
+/* Timer Flutuante Moderno (Não cobre o título) */
+.simulado-floating-timer {
+    position: fixed;
+    top: 1rem; /* Fica no topo da tela */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999; /* Garante que fique acima de tudo */
+    background: rgba(17, 24, 39, 0.85); /* Fundo escuro translúcido */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 0.5rem 1.25rem;
+    border-radius: 999px;
+    border: 1px solid rgba(249, 115, 22, 0.5); /* Borda laranja suave */
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: white;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+/* Ajuste para celular: Timer vai para baixo para não atrapalhar a leitura */
+@media (max-width: 768px) {
+    .simulado-floating-timer {
+        top: auto;
+        bottom: 1rem; 
+        width: 90%;
+        justify-content: center;
+    }
+}
+
+.timer-text {
+    font-size: 1.2rem;
+    color: #fb923c; /* Laranja */
+}
+
+.question-counter {
+    font-size: 0.8rem;
+    color: #9ca3af; /* Cinza claro */
+    background: rgba(255,255,255,0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+/* Ajuste para os botões do player de áudio ficarem alinhados */
+.audio-controls-group {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
