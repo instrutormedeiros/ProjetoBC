@@ -65,23 +65,35 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.toggle('high-spacing');
     });
 
-    // --- AUDIOBOOK (ATUALIZADO COM VELOCIDADE E BOTÃO PARAR) ---
+    // --- AUDIOBOOK (COM PAUSE, RESUME E STOP) ---
     window.speakContent = function() {
         if (!currentModuleId || !moduleContent[currentModuleId]) return;
         
         const speedSelect = document.getElementById('audio-speed');
-        const rate = speedSelect ? parseFloat(speedSelect.value) : 0.8;
+        const rate = speedSelect ? parseFloat(speedSelect.value) : 1.0;
         const btnIcon = document.getElementById('audio-btn-icon');
         const btnText = document.getElementById('audio-btn-text');
         const mainBtn = document.getElementById('audio-main-btn');
+        const synth = window.speechSynthesis;
 
-        if (window.speechSynthesis.speaking) {
-            window.speechSynthesis.cancel();
-            if(btnIcon) { btnIcon.classList.remove('fa-stop'); btnIcon.classList.add('fa-headphones'); }
-            if(btnText) btnText.textContent = 'Ouvir Aula';
-            if(mainBtn) mainBtn.classList.remove('playing');
+        // Cenario 1: Está falando -> PAUSAR
+        if (synth.speaking && !synth.paused) {
+            synth.pause();
+            if(btnIcon) { btnIcon.className = 'fas fa-play'; } // Ícone muda para Play
+            if(btnText) btnText.textContent = 'Continuar';
             return;
         }
+
+        // Cenario 2: Está pausado -> RETOMAR
+        if (synth.paused) {
+            synth.resume();
+            if(btnIcon) { btnIcon.className = 'fas fa-pause'; } // Ícone muda para Pause
+            if(btnText) btnText.textContent = 'Pausar';
+            return;
+        }
+
+        // Cenario 3: Não está falando -> INICIAR (Ou reiniciar se houver lixo na memória)
+        if(synth.speaking) synth.cancel(); 
 
         const div = document.createElement('div');
         div.innerHTML = moduleContent[currentModuleId].content;
@@ -89,21 +101,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const utterance = new SpeechSynthesisUtterance(cleanText);
         utterance.lang = 'pt-BR';
-        utterance.rate = rate; 
+        utterance.rate = rate;
 
         utterance.onstart = () => {
-            if(btnIcon) { btnIcon.classList.remove('fa-headphones'); btnIcon.classList.add('fa-stop'); }
-            if(btnText) btnText.textContent = 'PARAR NARRAÇÃO';
+            if(btnIcon) btnIcon.className = 'fas fa-pause';
+            if(btnText) btnText.textContent = 'Pausar';
             if(mainBtn) mainBtn.classList.add('playing');
-        };
-        
-        utterance.onend = () => {
-            if(btnIcon) { btnIcon.classList.remove('fa-stop'); btnIcon.classList.add('fa-headphones'); }
-            if(btnText) btnText.textContent = 'Ouvir Aula';
-            if(mainBtn) mainBtn.classList.remove('playing');
+            
+            // Cria o botão de STOP (Quadrado Vermelho) dinamicamente se não existir
+            if (!document.getElementById('audio-stop-btn')) {
+                const stopBtn = document.createElement('button');
+                stopBtn.id = 'audio-stop-btn';
+                stopBtn.className = 'audio-icon-btn bg-red-600 hover:bg-red-500 text-white ml-2';
+                stopBtn.innerHTML = '<i class="fas fa-stop"></i>';
+                stopBtn.title = "Parar e Resetar";
+                stopBtn.onclick = (e) => {
+                    e.stopPropagation(); // Evita clicar no container
+                    synth.cancel();
+                    stopBtn.remove();
+                    // Reseta o botão principal
+                    if(btnIcon) btnIcon.className = 'fas fa-headphones';
+                    if(btnText) btnText.textContent = 'Ouvir Aula';
+                    if(mainBtn) mainBtn.classList.remove('playing');
+                };
+                // Insere o botão de stop ao lado do select de velocidade
+                const playerContainer = document.querySelector('.modern-audio-player');
+                if(playerContainer) playerContainer.appendChild(stopBtn);
+            }
         };
 
-        window.speechSynthesis.speak(utterance);
+        utterance.onend = () => {
+            if(btnIcon) btnIcon.className = 'fas fa-headphones';
+            if(btnText) btnText.textContent = 'Ouvir Aula';
+            if(mainBtn) mainBtn.classList.remove('playing');
+            const stopBtn = document.getElementById('audio-stop-btn');
+            if(stopBtn) stopBtn.remove();
+        };
+
+        synth.speak(utterance);
     };
 
     // --- INSTALL PWA ---
