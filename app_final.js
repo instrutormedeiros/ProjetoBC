@@ -548,7 +548,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return questions;
     }
 
-   // --- FUNÇÃO 5: BANCO DE QUESTÕES (VERSÃO DEBUG / BLINDADA) ---
+  // --- FUNÇÃO 5: BANCO DE QUESTÕES (VERSÃO DEBUG / BLINDADA) ---
     async function generateSimuladoQuestions(config) {
         console.log("Iniciando geração de simulado...");
         const finalExamQuestions = [];
@@ -597,15 +597,10 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log(`Categoria ${catKey}: ${addedCount} questões únicas adicionadas.`);
         }
         
-        function shuffleArray(array) {
-        let newArray = [...array];
-        for (let i = newArray.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-        }
-        return newArray;
+        // Embaralha o resultado final
+        return shuffleArray(finalExamQuestions);
     }
-
+      
     // --- CARREGAMENTO DE MÓDULOS (ROTEADOR PRINCIPAL) ---
     async function loadModuleContent(id) {
         if (!id || !moduleContent[id]) return;
@@ -1421,10 +1416,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function shuffleArray(array) {
-        let newArray = [...array]; 
+        let newArray = [...array];
         for (let i = newArray.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [newArray[i], newArray[j]] = [newArray[i], newArray[i]];
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
         }
         return newArray;
     }
