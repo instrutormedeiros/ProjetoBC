@@ -548,62 +548,57 @@ document.addEventListener('DOMContentLoaded', () => {
         return questions;
     }
 
-   // --- FUNÇÃO 5: BANCO DE QUESTÕES (VERSÃO BLINDADA CONTRA DUPLICATAS) ---
+   // --- FUNÇÃO 5: BANCO DE QUESTÕES (CORREÇÃO DEFINITIVA DE REPETIÇÃO) ---
     async function generateSimuladoQuestions(config) {
         const finalSelection = [];
         
-        // Mapeamento dos módulos por área
+        // Mapeamento EXATO dos seus módulos por área
         const map = {
-            'rh': [1, 2, 3, 4, 5],
-            'legislacao': [6, 7, 8, 9, 10],
-            'salvamento': [11, 12, 13, 14, 15],
-            'pci': [16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
-            'aph_novo': [26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
+            'rh': [1, 2, 3, 4, 5],                  // ~60 questões disponíveis
+            'legislacao': [6, 7, 8, 9, 10],         // ~60 questões disponíveis
+            'salvamento': [11, 12, 13, 14, 15],     // ~60 questões disponíveis
+            'pci': [16, 17, 18, 19, 20, 21, 22, 23, 24, 25], // ~120 questões disponíveis
+            'aph_novo': [26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40] // ~180 questões disponíveis
         };
 
-        // Para cada categoria exigida no simulado (ex: RH, PCI)
+        // Para cada categoria exigida no simulado
         for (const [catKey, qtyNeeded] of Object.entries(config.distribution)) {
-            let rawPool = [];
+            let pool = [];
             const targetModules = map[catKey] || [];
 
-            // 1. Coleta BRUTA: Pega tudo o que existe nos módulos
+            // 1. COLETA: Varre TODOS os módulos da categoria
             targetModules.forEach(num => {
                 const modId = `module${num}`;
+                // Verifica se o módulo existe no seu arquivo gigante
                 if (window.QUIZ_DATA && window.QUIZ_DATA[modId]) {
-                    rawPool.push(...window.QUIZ_DATA[modId]);
+                    // Adiciona TODAS as questões desse módulo ao pote
+                    pool.push(...window.QUIZ_DATA[modId]);
                 }
             });
 
-            // 2. LIMPEZA TOTAL: Remove duplicatas por ID e por TEXTO da pergunta
-            const uniquePool = [];
+            // 2. EMBARALHAMENTO INICIAL: Mistura as ~60 questões antes de filtrar
+            pool = shuffleArray(pool);
+
+            // 3. SELEÇÃO ÚNICA: Garante que não pegamos a mesma questão duas vezes
+            const selectedForCategory = [];
             const seenIds = new Set();
-            const seenTexts = new Set();
 
-            for (const q of rawPool) {
-                // Normaliza o texto para evitar duplicata por espaço extra ou maiúscula
-                const cleanText = q.question.trim().toLowerCase();
+            for (const q of pool) {
+                // Se já pegamos a quantidade necessária, para.
+                if (selectedForCategory.length >= qtyNeeded) break;
 
-                if (!seenIds.has(q.id) && !seenTexts.has(cleanText)) {
-                    uniquePool.push(q);
+                // Se essa questão ainda não foi usada (baseado no ID), adiciona.
+                if (!seenIds.has(q.id)) {
+                    selectedForCategory.push(q);
                     seenIds.add(q.id);
-                    seenTexts.add(cleanText);
                 }
             }
-
-            // 3. VERIFICAÇÃO DE SEGURANÇA
-            // Se não tiver perguntas suficientes (ex: pede 15, mas só tem 10 únicas), avisa no console
-            if (uniquePool.length < qtyNeeded) {
-                console.warn(`Atenção: A categoria ${catKey} pediu ${qtyNeeded} questões, mas só existem ${uniquePool.length} únicas.`);
-            }
-
-            // 4. EMBARALHAR E CORTAR
-            const shuffled = shuffleArray(uniquePool);
-            const selected = shuffled.slice(0, qtyNeeded);
             
-            finalSelection.push(...selected);
+            // Adiciona a seleção dessa categoria ao simulado final
+            finalSelection.push(...selectedForCategory);
         }
         
-        // Embaralha o resultado final (misturando as matérias, se houver mais de uma)
+        // Embaralha a prova final para que as questões não fiquem agrupadas por matéria
         return shuffleArray(finalSelection);
     }
 
