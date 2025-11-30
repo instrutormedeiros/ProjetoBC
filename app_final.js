@@ -1852,18 +1852,17 @@ function onLoginSuccess(user, userData) {
     // Tenta iniciar o monitoramento após 5 segundos
     setTimeout(initVoiceflowLimit, 5000);
 
-   // --- 7. TOUR GUIADO (ONBOARDING - CORRIGIDO V2) ---
+   // --- 7. TOUR GUIADO (ONBOARDING - AJUSTE FINAL MOBILE/DESKTOP) ---
     function startOnboardingTour(isManual = false) {
         // Se for automático e já tiver visto, cancela
         if (!isManual && localStorage.getItem('bravo_tour_completed') === 'true') return;
 
-        // Aguarda renderização
         setTimeout(() => {
             if (!window.driver || !window.driver.js || !window.driver.js.driver) return;
 
             const driver = window.driver.js.driver;
+            const isMobile = window.innerWidth < 768; // Detecta se é celular
             
-            // Verifica botões de instalação
             const installBtnDesktop = document.getElementById('install-app-btn');
             const installBtnMobile = document.getElementById('install-app-btn-mobile');
             
@@ -1872,8 +1871,7 @@ function onLoginSuccess(user, userData) {
                     element: '#accessibility-fab', 
                     popover: { 
                         title: '1. Acessibilidade', 
-                        description: 'Ajuste o tamanho da fonte e contraste aqui no canto inferior direito.', 
-                        // Como o botão está na Direita, o texto fica na Esquerda
+                        description: 'Ajuste o tamanho da fonte e contraste aqui.', 
                         side: "left", 
                         align: 'end' 
                     } 
@@ -1882,31 +1880,34 @@ function onLoginSuccess(user, userData) {
                     element: '#voiceflow-chat', 
                     popover: { 
                         title: '2. BravoGPT (IA)', 
-                        description: 'Tire dúvidas técnicas com nossa IA aqui no canto inferior esquerdo.', 
-                        // Como o botão está na Esquerda, o texto fica na Direita
-                        side: "right", 
-                        align: 'end' 
+                        description: 'Tire dúvidas técnicas com nossa IA.', 
+                        // AJUSTE 1: No celular, o balão fica EM CIMA (top) para não cobrir o rodapé
+                        // No desktop, fica à DIREITA (right)
+                        side: isMobile ? "top" : "right", 
+                        align: isMobile ? "center" : "end" 
                     } 
                 }
             ];
 
-            // Adiciona passo de instalação se o botão estiver visível
+            // Passo da Instalação (Condicional)
             if (installBtnDesktop && !installBtnDesktop.classList.contains('hidden')) {
+                // VERSÃO DESKTOP
                 steps.push({ 
                     element: '#install-app-btn', 
                     popover: { 
-                        title: '3. Instale o App', 
-                        description: 'Instale no seu computador para acesso rápido.', 
+                        title: '3. Instale no Computador', 
+                        description: 'Tenha acesso rápido instalando o App no seu navegador.', 
                         side: "bottom",
                         align: 'center'
                     } 
                 });
             } else if (installBtnMobile && !installBtnMobile.classList.contains('hidden')) {
+                // AJUSTE 2: VERSÃO MOBILE (Texto corrigido)
                 steps.push({ 
                     element: '#mobile-menu-button', 
                     popover: { 
-                        title: '3. Menu & Instalação', 
-                        description: 'Abra o menu para encontrar a opção <strong>Instalar App</strong>.', 
+                        title: '3. Instale o App', 
+                        description: 'Abra o menu e clique em <strong>Instalar App</strong> para ter o Bravo Charlie no seu celular.', 
                         side: "bottom",
                         align: 'end'
                     } 
@@ -1916,7 +1917,6 @@ function onLoginSuccess(user, userData) {
             const driverObj = driver({
                 showProgress: true,
                 animate: true,
-                // Espaçamento para não grudar no elemento
                 stagePadding: 5,
                 popoverClass: 'driverjs-theme',
                 steps: steps,
