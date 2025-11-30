@@ -452,13 +452,20 @@
   (function(d, t) {
       var v = d.createElement(t), s = d.getElementsByTagName(t)[0];
       v.onload = function() {
+        // Início da configuração (Baseado no Código Novo)
         window.voiceflow.chat.load({
           verify: { projectID: '69247d068e3b774e5660d59d' },
           url: 'https://general-runtime.voiceflow.com',
           versionID: 'production',
+          // Mantive o 'render' pois seu CSS depende das classes do modo overlay
           render: { mode: 'overlay' }, 
-          voice: { url: "https://runtime-api.voiceflow.com" }
+          voice: {
+            url: "https://runtime-api.voiceflow.com"
+          }
         }).then(() => {
+            // --- INÍCIO DA SUA PERSONALIZAÇÃO (CSS INJETADO) ---
+            // Esta parte garante que suas regras de responsividade sejam aplicadas
+            // assim que o Shadow DOM do chat for carregado.
             const checkChat = setInterval(() => {
                 const chatHost = document.getElementById('voiceflow-chat');
                 if (chatHost && chatHost.shadowRoot) {
@@ -494,6 +501,7 @@
                     chatHost.shadowRoot.appendChild(style);
                 }
             }, 500);
+            // --- FIM DA SUA PERSONALIZAÇÃO ---
         });
       }
       v.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs"; v.type = "text/javascript"; s.parentNode.insertBefore(v, s);
