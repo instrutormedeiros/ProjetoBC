@@ -548,12 +548,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return questions;
     }
 
-   // --- FUNÇÃO 5: BANCO DE QUESTÕES (CORRIGIDA - SEM REPETIÇÃO) ---
+   // --- FUNÇÃO 5: BANCO DE QUESTÕES (VERSÃO BLINDADA CONTRA DUPLICATAS) ---
     async function generateSimuladoQuestions(config) {
-        const allQuestions = [];
-        const globalUsedIds = new Set(); // Rastreia IDs usados em TODA a prova para não repetir
-
-        // Mapeamento dos módulos (mantido)
+        const finalSelection = [];
+        
+        // Mapeamento dos módulos por área
         const map = {
             'rh': [1, 2, 3, 4, 5],
             'legislacao': [6, 7, 8, 9, 10],
@@ -562,36 +561,50 @@ document.addEventListener('DOMContentLoaded', () => {
             'aph_novo': [26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
         };
 
-        for (const [catKey, qty] of Object.entries(config.distribution)) {
-            let pool = [];
+        // Para cada categoria exigida no simulado (ex: RH, PCI)
+        for (const [catKey, qtyNeeded] of Object.entries(config.distribution)) {
+            let rawPool = [];
             const targetModules = map[catKey] || [];
 
-            // Coleta questões
+            // 1. Coleta BRUTA: Pega tudo o que existe nos módulos
             targetModules.forEach(num => {
                 const modId = `module${num}`;
                 if (window.QUIZ_DATA && window.QUIZ_DATA[modId]) {
-                    pool.push(...window.QUIZ_DATA[modId]);
+                    rawPool.push(...window.QUIZ_DATA[modId]);
                 }
             });
 
-            // Embaralha o pote da categoria
-            pool = shuffleArray(pool);
+            // 2. LIMPEZA TOTAL: Remove duplicatas por ID e por TEXTO da pergunta
+            const uniquePool = [];
+            const seenIds = new Set();
+            const seenTexts = new Set();
 
-            // Seleciona garantindo que o ID nunca foi usado antes nesta prova
-            let addedCount = 0;
-            for (const q of pool) {
-                if (addedCount >= qty) break;
-                
-                // Só adiciona se o ID ainda não existe no set global
-                if (!globalUsedIds.has(q.id)) {
-                    allQuestions.push(q);
-                    globalUsedIds.add(q.id); // Marca como usado
-                    addedCount++;
+            for (const q of rawPool) {
+                // Normaliza o texto para evitar duplicata por espaço extra ou maiúscula
+                const cleanText = q.question.trim().toLowerCase();
+
+                if (!seenIds.has(q.id) && !seenTexts.has(cleanText)) {
+                    uniquePool.push(q);
+                    seenIds.add(q.id);
+                    seenTexts.add(cleanText);
                 }
             }
+
+            // 3. VERIFICAÇÃO DE SEGURANÇA
+            // Se não tiver perguntas suficientes (ex: pede 15, mas só tem 10 únicas), avisa no console
+            if (uniquePool.length < qtyNeeded) {
+                console.warn(`Atenção: A categoria ${catKey} pediu ${qtyNeeded} questões, mas só existem ${uniquePool.length} únicas.`);
+            }
+
+            // 4. EMBARALHAR E CORTAR
+            const shuffled = shuffleArray(uniquePool);
+            const selected = shuffled.slice(0, qtyNeeded);
+            
+            finalSelection.push(...selected);
         }
         
-        return shuffleArray(allQuestions);
+        // Embaralha o resultado final (misturando as matérias, se houver mais de uma)
+        return shuffleArray(finalSelection);
     }
 
     // --- CARREGAMENTO DE MÓDULOS (ROTEADOR PRINCIPAL) ---
