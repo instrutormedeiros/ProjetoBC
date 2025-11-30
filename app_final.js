@@ -257,6 +257,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (userData.isAdmin === true) {
             if(adminBtn) adminBtn.classList.remove('hidden');
             if(mobileAdminBtn) mobileAdminBtn.classList.remove('hidden');
+
+        populateModuleLists();
+        updateProgress();
+        addEventListeners(); 
+        handleInitialLoad();
+
+        // --- ADICIONE ESTA LINHA AQUI ---
+        // Inicia o tour apenas agora que o usuário entrou e o painel carregou
+        startOnboardingTour(); 
+    }
         }
 
         checkTrialStatus(userData.acesso_ate);
@@ -1897,8 +1907,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 2500); // Inicia 2.5s após carregar para não conflitar com animações iniciais
     }
 
-    // Adiciona a chamada do Tour na inicialização
-    setTimeout(startOnboardingTour, 3000);
-    
+
     init();
 });
