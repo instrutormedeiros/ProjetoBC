@@ -548,57 +548,64 @@ document.addEventListener('DOMContentLoaded', () => {
         return questions;
     }
 
-   // --- FUNÇÃO 5: BANCO DE QUESTÕES (CORREÇÃO DEFINITIVA DE REPETIÇÃO) ---
+   // --- FUNÇÃO 5: BANCO DE QUESTÕES (BLINDAGEM TOTAL CONTRA REPETIÇÃO) ---
     async function generateSimuladoQuestions(config) {
         const finalSelection = [];
         
-        // Mapeamento EXATO dos seus módulos por área
+        // Conjuntos GLOBAIS para rastrear o que já foi selecionado na prova inteira
+        const globalSeenIds = new Set();
+        const globalSeenTexts = new Set();
+
+        // Mapeamento dos módulos (Seu banco de dados gigante)
         const map = {
-            'rh': [1, 2, 3, 4, 5],                  // ~60 questões disponíveis
-            'legislacao': [6, 7, 8, 9, 10],         // ~60 questões disponíveis
-            'salvamento': [11, 12, 13, 14, 15],     // ~60 questões disponíveis
-            'pci': [16, 17, 18, 19, 20, 21, 22, 23, 24, 25], // ~120 questões disponíveis
-            'aph_novo': [26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40] // ~180 questões disponíveis
+            'rh': [1, 2, 3, 4, 5],
+            'legislacao': [6, 7, 8, 9, 10],
+            'salvamento': [11, 12, 13, 14, 15],
+            'pci': [16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
+            'aph_novo': [26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
         };
 
-        // Para cada categoria exigida no simulado
+        // Para cada categoria solicitada (Ex: RH = 15)
         for (const [catKey, qtyNeeded] of Object.entries(config.distribution)) {
-            let pool = [];
+            let rawPool = [];
             const targetModules = map[catKey] || [];
 
-            // 1. COLETA: Varre TODOS os módulos da categoria
+            // 1. Coleta TUDO o que existe nos módulos dessa matéria
             targetModules.forEach(num => {
                 const modId = `module${num}`;
-                // Verifica se o módulo existe no seu arquivo gigante
                 if (window.QUIZ_DATA && window.QUIZ_DATA[modId]) {
-                    // Adiciona TODAS as questões desse módulo ao pote
-                    pool.push(...window.QUIZ_DATA[modId]);
+                    rawPool.push(...window.QUIZ_DATA[modId]);
                 }
             });
 
-            // 2. EMBARALHAMENTO INICIAL: Mistura as ~60 questões antes de filtrar
-            pool = shuffleArray(pool);
+            // 2. Embaralha o pote bruto ANTES de filtrar
+            rawPool = shuffleArray(rawPool);
 
-            // 3. SELEÇÃO ÚNICA: Garante que não pegamos a mesma questão duas vezes
-            const selectedForCategory = [];
-            const seenIds = new Set();
+            // 3. Seleciona preenchendo a cota, mas filtrando duplicatas
+            let count = 0;
+            for (const q of rawPool) {
+                // Se já enchemos a cota desta matéria, para.
+                if (count >= qtyNeeded) break;
 
-            for (const q of pool) {
-                // Se já pegamos a quantidade necessária, para.
-                if (selectedForCategory.length >= qtyNeeded) break;
+                // Cria uma "assinatura" do texto da pergunta (sem espaços, minúsculo)
+                // Isso evita que "O que é fogo?" e "O que é fogo ?" sejam consideradas diferentes.
+                const textHash = q.question.trim().toLowerCase();
 
-                // Se essa questão ainda não foi usada (baseado no ID), adiciona.
-                if (!seenIds.has(q.id)) {
-                    selectedForCategory.push(q);
-                    seenIds.add(q.id);
+                // Só adiciona se: 
+                // 1. O ID não saiu ainda
+                // 2. O TEXTO não saiu ainda
+                if (!globalSeenIds.has(q.id) && !globalSeenTexts.has(textHash)) {
+                    finalSelection.push(q);
+                    
+                    // Marca como usado
+                    globalSeenIds.add(q.id);
+                    globalSeenTexts.add(textHash);
+                    count++;
                 }
             }
-            
-            // Adiciona a seleção dessa categoria ao simulado final
-            finalSelection.push(...selectedForCategory);
         }
         
-        // Embaralha a prova final para que as questões não fiquem agrupadas por matéria
+        // Embaralha o resultado final (para misturar as matérias se houver mais de uma)
         return shuffleArray(finalSelection);
     }
 
