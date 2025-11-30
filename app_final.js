@@ -1895,7 +1895,7 @@ function onLoginSuccess(user, userData) {
                     element: '#accessibility-fab', 
                     popover: { 
                         title: '1. Acessibilidade', 
-                        description: 'Ajuste o tamanho da fonte e contraste aqui.', 
+                        description: 'Ajuste o tamanho, a fonte e o espaçamento aqui.', 
                         side: "left", 
                         align: 'end' 
                     } 
@@ -1904,7 +1904,7 @@ function onLoginSuccess(user, userData) {
                     element: '#voiceflow-chat', 
                     popover: { 
                         title: '2. BravoGPT (IA)', 
-                        description: 'Tire dúvidas técnicas com nossa IA.', 
+                        description: 'Tire dúvidas com nossa Inteligência Artificial, dedicada a você.', 
                         // AJUSTE 1: No celular, o balão fica EM CIMA (top) para não cobrir o rodapé
                         // No desktop, fica à DIREITA (right)
                         side: isMobile ? "top" : "right", 
@@ -1920,7 +1920,7 @@ function onLoginSuccess(user, userData) {
                     element: '#install-app-btn', 
                     popover: { 
                         title: '3. Instale no Computador', 
-                        description: 'Tenha acesso rápido instalando o App no seu navegador.', 
+                        description: 'Tenha acesso rápido instalando o App no seu Celular ou Computador.', 
                         side: "bottom",
                         align: 'center'
                     } 
