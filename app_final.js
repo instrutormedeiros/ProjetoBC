@@ -1852,8 +1852,7 @@ function onLoginSuccess(user, userData) {
     // Tenta iniciar o monitoramento após 5 segundos
     setTimeout(initVoiceflowLimit, 5000);
 
-    // --- 7. TOUR GUIADO (ONBOARDING) ---
-    // isManual = true se o usuário clicou no botão "Ver Tutorial"
+   // --- 7. TOUR GUIADO (ONBOARDING - CORRIGIDO V2) ---
     function startOnboardingTour(isManual = false) {
         // Se for automático e já tiver visto, cancela
         if (!isManual && localStorage.getItem('bravo_tour_completed') === 'true') return;
@@ -1872,8 +1871,9 @@ function onLoginSuccess(user, userData) {
                 { 
                     element: '#accessibility-fab', 
                     popover: { 
-                        title: 'Acessibilidade', 
-                        description: 'Ajuste o tamanho da fonte, contraste e espaçamento aqui.', 
+                        title: '1. Acessibilidade', 
+                        description: 'Ajuste o tamanho da fonte e contraste aqui no canto inferior direito.', 
+                        // Como o botão está na Direita, o texto fica na Esquerda
                         side: "left", 
                         align: 'end' 
                     } 
@@ -1881,10 +1881,10 @@ function onLoginSuccess(user, userData) {
                 { 
                     element: '#voiceflow-chat', 
                     popover: { 
-                        title: 'BravoGPT: IA Especialista', 
-                        description: 'Dúvidas? Nossa IA treinada nos manuais responde tudo.', 
-                        // MUDANÇA: 'left' força o balão a ficar à esquerda do chat (que é direita)
-                        side: "left", 
+                        title: '2. BravoGPT (IA)', 
+                        description: 'Tire dúvidas técnicas com nossa IA aqui no canto inferior esquerdo.', 
+                        // Como o botão está na Esquerda, o texto fica na Direita
+                        side: "right", 
                         align: 'end' 
                     } 
                 }
@@ -1895,18 +1895,20 @@ function onLoginSuccess(user, userData) {
                 steps.push({ 
                     element: '#install-app-btn', 
                     popover: { 
-                        title: 'Instale o App', 
-                        description: 'Clique aqui para instalar o Bravo Charlie no seu computador e acessar mais rápido.', 
-                        side: "bottom" 
+                        title: '3. Instale o App', 
+                        description: 'Instale no seu computador para acesso rápido.', 
+                        side: "bottom",
+                        align: 'center'
                     } 
                 });
             } else if (installBtnMobile && !installBtnMobile.classList.contains('hidden')) {
                 steps.push({ 
                     element: '#mobile-menu-button', 
                     popover: { 
-                        title: 'Menu & Instalação', 
+                        title: '3. Menu & Instalação', 
                         description: 'Abra o menu para encontrar a opção <strong>Instalar App</strong>.', 
-                        side: "bottom" 
+                        side: "bottom",
+                        align: 'end'
                     } 
                 });
             }
@@ -1914,10 +1916,11 @@ function onLoginSuccess(user, userData) {
             const driverObj = driver({
                 showProgress: true,
                 animate: true,
+                // Espaçamento para não grudar no elemento
+                stagePadding: 5,
                 popoverClass: 'driverjs-theme',
                 steps: steps,
                 onDestroyed: () => {
-                    // Só marca como concluído se foi o tour automático
                     if (!isManual) localStorage.setItem('bravo_tour_completed', 'true');
                 },
                 nextBtnText: 'Próximo',
