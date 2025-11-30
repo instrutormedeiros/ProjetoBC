@@ -548,42 +548,47 @@ document.addEventListener('DOMContentLoaded', () => {
         return questions;
     }
 
-   // --- 5. SORTEIO DE QUESTÕES DO BANCO GRANDE ---
+   // --- FUNÇÃO 5: BANCO DE QUESTÕES (CORRIGIDA - SEM REPETIÇÃO) ---
     async function generateSimuladoQuestions(config) {
         const allQuestions = [];
-        
-        // Mapeamento: Quais módulos do seu arquivo alimentam qual simulado
-        // ATENÇÃO: NR33 e NR35 continuam no seu arquivo (módulos 41-52), mas não estão listados aqui pois você não pediu simulado deles.
+        const globalUsedIds = new Set(); // Rastreia IDs usados em TODA a prova para não repetir
+
+        // Mapeamento dos módulos (mantido)
         const map = {
-            'rh': [1, 2, 3, 4, 5],                  // Pega do module1 ao module5
-            'legislacao': [6, 7, 8, 9, 10],         // Pega do module6 ao module10
-            'salvamento': [11, 12, 13, 14, 15],     // Pega do module11 ao module15
-            'pci': [16, 17, 18, 19, 20, 21, 22, 23, 24, 25], // Módulos de Incêndio
-            'aph_novo': [26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40] // Módulos de APH
+            'rh': [1, 2, 3, 4, 5],
+            'legislacao': [6, 7, 8, 9, 10],
+            'salvamento': [11, 12, 13, 14, 15],
+            'pci': [16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
+            'aph_novo': [26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
         };
 
-        // Percorre a configuração do simulado (ex: RH = 15 questões)
         for (const [catKey, qty] of Object.entries(config.distribution)) {
             let pool = [];
             const targetModules = map[catKey] || [];
 
-            // Varre o seu arquivo QUIZ_DATA procurando os módulos
+            // Coleta questões
             targetModules.forEach(num => {
                 const modId = `module${num}`;
                 if (window.QUIZ_DATA && window.QUIZ_DATA[modId]) {
-                    pool.push(...window.QUIZ_DATA[modId]); // Adiciona todas as questões do módulo no pote
+                    pool.push(...window.QUIZ_DATA[modId]);
                 }
             });
 
-            // Embaralha o pote gigante
+            // Embaralha o pote da categoria
             pool = shuffleArray(pool);
 
-            // Pega apenas a quantidade que você pediu (ex: 15 de RH)
-            // Se tiver repetida no pote, removemos duplicatas pelo ID
-            const uniquePool = Array.from(new Set(pool.map(q => q.id)))
-                .map(id => pool.find(q => q.id === id));
-            
-            allQuestions.push(...uniquePool.slice(0, qty));
+            // Seleciona garantindo que o ID nunca foi usado antes nesta prova
+            let addedCount = 0;
+            for (const q of pool) {
+                if (addedCount >= qty) break;
+                
+                // Só adiciona se o ID ainda não existe no set global
+                if (!globalUsedIds.has(q.id)) {
+                    allQuestions.push(q);
+                    globalUsedIds.add(q.id); // Marca como usado
+                    addedCount++;
+                }
+            }
         }
         
         return shuffleArray(allQuestions);
@@ -1082,10 +1087,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('sim-prev-btn').addEventListener('click', () => navigateSimulado(-1, moduleData.id));
     }
     
+    // --- FUNÇÃO AUXILIAR: EXIBIR QUESTÃO (CORRIGIDA - USO DE INDEX) ---
     function showSimuladoQuestion(index) {
         const q = activeSimuladoQuestions[index];
         const container = document.getElementById('question-display-area');
-        const savedAnswer = userAnswers[q.id] || null;
+        
+        // CORREÇÃO: Usa o INDEX para recuperar a resposta, não o ID
+        // Isso impede que a resposta da Q1 apareça na Q3 se elas tiverem o mesmo ID
+        const savedAnswer = userAnswers[index] || null; 
         
         let html = `
             <div class="bg-gray-100 dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-800 animate-slide-in">
@@ -1100,8 +1109,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         for (const key in q.options) {
             const isSelected = savedAnswer === key ? 'selected' : '';
+            // CORREÇÃO: Passamos o INDEX na função onclick
             html += `
-                <div class="quiz-card-option ${isSelected}" onclick="selectSimuladoOption('${q.id}', '${key}', this)">
+                <div class="quiz-card-option ${isSelected}" onclick="selectSimuladoOption(${index}, '${key}', this)">
                     <div class="quiz-letter-box">${key.toUpperCase()}</div>
                     <div class="font-medium flex-1">${q.options[key]}</div>
                 </div>
@@ -1125,15 +1135,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Função auxiliar para selecionar a opção visualmente no simulado moderno
-    window.selectSimuladoOption = function(qId, key, element) {
+    // Função auxiliar para selecionar a opção visualmente
+    window.selectSimuladoOption = function(index, key, element) {
         // Remove seleção anterior
         const parent = element.parentElement;
         parent.querySelectorAll('.quiz-card-option').forEach(el => el.classList.remove('selected'));
         // Adiciona à atual
         element.classList.add('selected');
-        // Salva resposta
-        registerSimuladoAnswer(qId, key);
+        // Salva resposta usando o ÍNDICE
+        registerSimuladoAnswer(index, key);
+    };
+
+    window.registerSimuladoAnswer = function(index, answer) {
+        userAnswers[index] = answer; // Salva na posição 0, 1, 2...
     };
 
     function navigateSimulado(direction, moduleId) {
