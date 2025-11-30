@@ -1828,6 +1828,77 @@ document.addEventListener('DOMContentLoaded', () => {
     // Tenta iniciar o monitoramento após 5 segundos
     setTimeout(initVoiceflowLimit, 5000);
 
-    // --- INICIALIZAÇÃO ---
+    // --- 7. TOUR GUIADO (ONBOARDING) ---
+    function startOnboardingTour() {
+        // Verifica se o usuário já viu o tour (localStorage)
+        if (localStorage.getItem('bravo_tour_completed') === 'true') return;
+
+        // Aguarda um pouco para garantir que tudo carregou
+        setTimeout(() => {
+            const driver = window.driver.js.driver;
+            
+            // Verifica qual botão de instalação está visível (Desktop ou Mobile)
+            const installBtnDesktop = document.getElementById('install-app-btn');
+            const installBtnMobile = document.getElementById('install-app-btn-mobile');
+            
+            // Define passos dinamicamente
+            const steps = [
+                { 
+                    element: '#accessibility-fab', 
+                    popover: { 
+                        title: 'Acessibilidade Total', 
+                        description: 'Clique aqui para ajustar o tamanho da fonte, contraste e espaçamento. O Bravo Charlie é para todos.', 
+                        side: "left", 
+                        align: 'end' 
+                    } 
+                },
+                // Tenta focar na IA (o ID pode variar dependendo de como o widget carrega, usamos uma posição genérica se falhar)
+                { 
+                    element: '#voiceflow-chat', 
+                    popover: { 
+                        title: 'BravoGPT: Sua IA Especialista', 
+                        description: 'Dúvidas técnicas? Pergunte ao nosso Agente de IA. Ele foi treinado com todos os manuais de bombeiro.', 
+                        side: "top", 
+                        align: 'end' 
+                    } 
+                }
+            ];
+
+            // Adiciona o passo de instalação se o botão estiver visível
+            if (installBtnDesktop && !installBtnDesktop.classList.contains('hidden')) {
+                steps.push({ 
+                    element: '#install-app-btn', 
+                    popover: { title: 'Instale no Computador', description: 'Tenha acesso rápido instalando o App direto no seu navegador.', side: "bottom" } 
+                });
+            } else if (installBtnMobile && !installBtnMobile.classList.contains('hidden')) {
+                // Se for mobile, precisamos abrir o menu lateral primeiro para mostrar o botão
+                steps.push({ 
+                    element: '#mobile-menu-button', 
+                    popover: { title: 'Menu & Instalação', description: 'Toque aqui para acessar o menu e a opção de <strong>Instalar App</strong>.', side: "bottom" } 
+                });
+            }
+
+            // Configuração do Tour
+            const driverObj = driver({
+                showProgress: true,
+                animate: true,
+                popoverClass: 'driverjs-theme', // Nossa classe CSS personalizada
+                steps: steps,
+                onDestroyed: () => {
+                    // Marca como visto quando o usuário termina ou fecha
+                    localStorage.setItem('bravo_tour_completed', 'true');
+                },
+                nextBtnText: 'Próximo →',
+                prevBtnText: '← Anterior',
+                doneBtnText: 'Entendi, vamos lá!',
+            });
+
+            driverObj.drive();
+        }, 2500); // Inicia 2.5s após carregar para não conflitar com animações iniciais
+    }
+
+    // Adiciona a chamada do Tour na inicialização
+    setTimeout(startOnboardingTour, 3000);
+    
     init();
 });
