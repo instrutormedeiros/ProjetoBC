@@ -726,13 +726,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const isSpecialModule = ['module53', 'module54', 'module55', 'module56', 'module57', 'module58', 'module59', 'module60', 'module61', 'module62'].includes(id);
 
-                if (d.driveLink) {
-                    if (userIsNotPremium) {
-                        html += `<div class="mt-10 mb-8"><button onclick="document.getElementById('expired-modal').classList.add('show'); document.getElementById('name-modal-overlay').classList.add('show');" class="drive-button opacity-75 hover:opacity-100 relative overflow-hidden"><div class="absolute inset-0 bg-black/30 flex items-center justify-center z-10"><i class="fas fa-lock text-2xl mr-2"></i></div><span class="blur-[2px] flex items-center"><i class="fab fa-google-drive mr-3"></i> VER FOTOS E VÍDEOS (PREMIUM)</span></button><p class="text-xs text-center mt-2 text-gray-500"><i class="fas fa-lock text-yellow-500"></i> Recurso exclusivo para assinantes</p></div>`;
-                    } else {
-                        html += `<div class="mt-10 mb-8"><a href="${d.driveLink}" target="_blank" class="drive-button"><i class="fab fa-google-drive"></i>VER FOTOS E VÍDEOS DESTA MATÉRIA</a></div>`;
-                    }
-                }
+                // --- INICIO BLOCO DRIVE LINK (ATUALIZADO) ---
+        // Verifica se o link existe, não é vazio, e não é o placeholder "EM_BREVE"
+        if (d.driveLink && d.driveLink !== "" && d.driveLink !== "EM_BREVE" && d.driveLink !== "SEU_LINK_DO_DRIVE_AQUI") {
+            if (userIsNotPremium) {
+                html += `<div class="mt-10 mb-8"><button onclick="document.getElementById('expired-modal').classList.add('show'); document.getElementById('name-modal-overlay').classList.add('show');" class="drive-button opacity-75 hover:opacity-100 relative overflow-hidden"><div class="absolute inset-0 bg-black/30 flex items-center justify-center z-10"><i class="fas fa-lock text-2xl mr-2"></i></div><span class="blur-[2px] flex items-center"><i class="fab fa-google-drive mr-3"></i> VER FOTOS E VÍDEOS (PREMIUM)</span></button><p class="text-xs text-center mt-2 text-gray-500"><i class="fas fa-lock text-yellow-500"></i> Recurso exclusivo para assinantes</p></div>`;
+            } else {
+                html += `<div class="mt-10 mb-8"><a href="${d.driveLink}" target="_blank" class="drive-button"><i class="fab fa-google-drive"></i> VER FOTOS E VÍDEOS DESTA MATÉRIA</a></div>`;
+            }
+        } else {
+            // Se não tiver link ou for "EM_BREVE", mostra botão que avisa sem abrir aba
+            html += `<div class="mt-10 mb-8"><button onclick="alert('🚧 Conteúdo em produção! As fotos e vídeos desta matéria estarão disponíveis em breve.')" class="drive-button opacity-70 cursor-wait"><i class="fab fa-google-drive"></i> VER FOTOS E VÍDEOS (EM BREVE)</button></div>`;
+        }
+        // --- FIM BLOCO DRIVE LINK ---
 
                 const savedNote = localStorage.getItem('note-' + id) || '';
 
@@ -1034,21 +1040,22 @@ document.addEventListener('DOMContentLoaded', () => {
         simuladoTimeLeft = moduleData.simuladoConfig.timeLimit * 60; 
         currentSimuladoQuestionIndex = 0;
 
-        // Header do Simulado (Sem sobreposição)
+        // --- INICIO HTML SIMULADO (TIMER FLUTUANTE) ---
         contentArea.innerHTML = `
             <div class="pt-2 pb-12">
-                <div id="simulado-timer-bar" class="simulado-header-modern">
-                    <div class="sim-timer-box">
-                        <i class="fas fa-clock"></i>
-                        <span id="timer-display">--:--</span>
+                <div id="simulado-timer-bar" class="simulado-floating-timer">
+                    <div class="timer-text">
+                        <i class="fas fa-stopwatch mr-2"></i><span id="timer-display">--:--</span>
                     </div>
-                    <div class="sim-count-badge">
-                        Questão <span id="q-current">1</span> / ${activeSimuladoQuestions.length}
+                    <div class="h-4 w-px bg-gray-500 mx-2"></div>
+                    <div class="question-counter">
+                        Q <span id="q-current">1</span> / ${activeSimuladoQuestions.length}
                     </div>
                 </div>
                 
-                <div class="mt-6 mb-8 text-center px-4">
+                <div class="mt-16 mb-8 text-center px-4">
                      <h3 class="text-2xl font-bold text-blue-900 dark:text-white border-b-2 border-orange-500 inline-block pb-2">${moduleData.title}</h3>
+                     <p class="text-sm text-gray-500 mt-2">Modo Prova: Responda todas as questões. O gabarito aparece no final.</p>
                 </div>
 
                 <div id="question-display-area" class="simulado-question-container"></div>
@@ -1059,6 +1066,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
         `;
+        // --- FIM HTML SIMULADO ---
         
         contentArea.classList.remove('hidden');
         loadingSpinner.classList.add('hidden');
