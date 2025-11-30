@@ -769,50 +769,40 @@ body.focus-mode #main-wrapper { padding-bottom: 2rem; }
    8. NOVOS ESTILOS (TIMER FLUTUANTE & AUDIO CONTROLS) - ADICIONADO AGORA
    ========================================================================== */
 
-/* Timer Flutuante Moderno (Não cobre o título) */
+/* Timer "Sticky" (Cola no topo, mas respeita o layout) */
 .simulado-floating-timer {
-    position: fixed;
-    top: 1rem; /* Fica no topo da tela */
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 9999; /* Garante que fique acima de tudo */
-    background: rgba(17, 24, 39, 0.85); /* Fundo escuro translúcido */
+    position: -webkit-sticky; /* Safari */
+    position: sticky;
+    top: 1rem; /* Distância do teto quando "grudar" */
+    z-index: 40;
+    
+    /* Centralização usando margens automáticas (já que não é mais fixed) */
+    margin: 0 auto 2rem auto; 
+    width: fit-content;
+    
+    background: rgba(17, 24, 39, 0.95);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    padding: 0.5rem 1.25rem;
+    padding: 0.5rem 1.5rem;
     border-radius: 999px;
-    border: 1px solid rgba(249, 115, 22, 0.5); /* Borda laranja suave */
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    border: 1px solid #ea580c;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    
     display: flex;
     align-items: center;
     gap: 1rem;
     color: white;
-    font-family: 'Courier New', monospace;
+    font-family: monospace;
     font-weight: bold;
-    transition: all 0.3s ease;
+    font-size: 1.1rem;
 }
 
-/* Ajuste para celular: Timer vai para baixo para não atrapalhar a leitura */
+/* No mobile, mantemos ele no topo (sticky) para não atrapalhar botões embaixo */
 @media (max-width: 768px) {
     .simulado-floating-timer {
-        top: auto;
-        bottom: 1rem; 
-        width: 90%;
-        justify-content: center;
+        top: 0.5rem;
+        margin-bottom: 1.5rem;
     }
-}
-
-.timer-text {
-    font-size: 1.2rem;
-    color: #fb923c; /* Laranja */
-}
-
-.question-counter {
-    font-size: 0.8rem;
-    color: #9ca3af; /* Cinza claro */
-    background: rgba(255,255,255,0.1);
-    padding: 2px 8px;
-    border-radius: 4px;
 }
 
 /* Ajuste para os botões do player de áudio ficarem alinhados */
@@ -821,3 +811,4 @@ body.focus-mode #main-wrapper { padding-bottom: 2rem; }
     gap: 0.5rem;
     align-items: center;
 }
+
