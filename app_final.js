@@ -548,43 +548,42 @@ document.addEventListener('DOMContentLoaded', () => {
         return questions;
     }
 
-   async function generateSimuladoQuestions(config) {
+   // --- 5. SORTEIO DE QUESTÕES DO BANCO GRANDE ---
+    async function generateSimuladoQuestions(config) {
         const allQuestions = [];
-        const questionsByCategory = {};
-        const addedIds = new Set();
-        const addedTexts = new Set(); // Dupla verificação (Texto)
         
-        // 1. Coleta todas as questões disponíveis
-        for (const catKey in moduleCategories) {
-            questionsByCategory[catKey] = [];
-            const cat = moduleCategories[catKey];
-            for (let i = cat.range[0]; i <= cat.range[1]; i++) {
-                const modId = `module${i}`;
-                if (typeof QUIZ_DATA !== 'undefined' && QUIZ_DATA[modId]) {
-                    questionsByCategory[catKey].push(...QUIZ_DATA[modId]);
-                }
-            }
-        }
+        // Mapeamento: Quais módulos do seu arquivo alimentam qual simulado
+        // ATENÇÃO: NR33 e NR35 continuam no seu arquivo (módulos 41-52), mas não estão listados aqui pois você não pediu simulado deles.
+        const map = {
+            'rh': [1, 2, 3, 4, 5],                  // Pega do module1 ao module5
+            'legislacao': [6, 7, 8, 9, 10],         // Pega do module6 ao module10
+            'salvamento': [11, 12, 13, 14, 15],     // Pega do module11 ao module15
+            'pci': [16, 17, 18, 19, 20, 21, 22, 23, 24, 25], // Módulos de Incêndio
+            'aph_novo': [26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40] // Módulos de APH
+        };
 
-        // 2. Seleciona aleatoriamente sem repetir
+        // Percorre a configuração do simulado (ex: RH = 15 questões)
         for (const [catKey, qty] of Object.entries(config.distribution)) {
-            if (questionsByCategory[catKey]) {
-                const shuffled = shuffleArray(questionsByCategory[catKey]);
-                let addedCount = 0;
-                
-                for (const q of shuffled) {
-                    if (addedCount >= qty) break;
-                    
-                    // Verifica ID e TEXTO (para garantir 100%)
-                    const qText = q.question.trim().toLowerCase();
-                    if (!addedIds.has(q.id) && !addedTexts.has(qText)) {
-                        allQuestions.push(q);
-                        addedIds.add(q.id);
-                        addedTexts.add(qText);
-                        addedCount++;
-                    }
+            let pool = [];
+            const targetModules = map[catKey] || [];
+
+            // Varre o seu arquivo QUIZ_DATA procurando os módulos
+            targetModules.forEach(num => {
+                const modId = `module${num}`;
+                if (window.QUIZ_DATA && window.QUIZ_DATA[modId]) {
+                    pool.push(...window.QUIZ_DATA[modId]); // Adiciona todas as questões do módulo no pote
                 }
-            }
+            });
+
+            // Embaralha o pote gigante
+            pool = shuffleArray(pool);
+
+            // Pega apenas a quantidade que você pediu (ex: 15 de RH)
+            // Se tiver repetida no pote, removemos duplicatas pelo ID
+            const uniquePool = Array.from(new Set(pool.map(q => q.id)))
+                .map(id => pool.find(q => q.id === id));
+            
+            allQuestions.push(...uniquePool.slice(0, qty));
         }
         
         return shuffleArray(allQuestions);
