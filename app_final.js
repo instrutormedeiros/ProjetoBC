@@ -548,12 +548,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return questions;
     }
 
-   // --- FUNÇÃO 5: BANCO DE QUESTÕES (CORREÇÃO TOTAL - PENEIRA DUPLA) ---
+   // --- FUNÇÃO 5: BANCO DE QUESTÕES (VERSÃO DEBUG / BLINDADA) ---
     async function generateSimuladoQuestions(config) {
+        console.log("Iniciando geração de simulado...");
         const finalExamQuestions = [];
-        
-        // Controle global para não repetir pergunta entre matérias diferentes
-        const globalSeenTexts = new Set();
+        const globalSeenSignatures = new Set(); // Rastreia Texto + Opções para unicidade absoluta
 
         const map = {
             'rh': [1, 2, 3, 4, 5],
@@ -563,49 +562,48 @@ document.addEventListener('DOMContentLoaded', () => {
             'aph_novo': [26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
         };
 
-        // Para cada matéria do simulado
         for (const [catKey, qtyNeeded] of Object.entries(config.distribution)) {
-            let rawList = [];
+            let pool = [];
             const targetModules = map[catKey] || [];
 
-            // 1. COLETA BRUTA: Pega tudo o que existe
+            // 1. Coleta TUDO
             targetModules.forEach(num => {
                 const modId = `module${num}`;
                 if (window.QUIZ_DATA && window.QUIZ_DATA[modId]) {
-                    rawList.push(...window.QUIZ_DATA[modId]);
+                    pool.push(...window.QUIZ_DATA[modId]);
                 }
             });
 
-            // 2. PENEIRA: Cria uma lista APENAS com perguntas únicas dessa matéria
-            // Removemos qualquer duplicata interna ANTES de sortear
-            const uniqueList = [];
-            const localSeen = new Set();
+            console.log(`Categoria ${catKey}: ${pool.length} questões encontradas no total.`);
 
-            for (const q of rawList) {
-                // Assinatura: remove espaços e converte para minúsculo
-                const signature = q.question.replace(/\s+/g, '').toLowerCase();
+            // 2. Embaralha MUITO BEM
+            pool = shuffleArray(pool); // Mistura 1
+            pool = shuffleArray(pool); // Mistura 2 (Garantia)
 
-                // Se essa pergunta ainda não apareceu na PROVA TODA e nem NESTA LISTA
-                if (!globalSeenTexts.has(signature) && !localSeen.has(signature)) {
-                    uniqueList.push(q);
-                    localSeen.add(signature); // Marca que já temos essa pergunta na lista limpa
+            // 3. Seleciona ÚNICAS
+            let addedCount = 0;
+            for (const q of pool) {
+                if (addedCount >= qtyNeeded) break;
+
+                // Assinatura única: Texto da pergunta + Texto da primeira opção (para diferenciar perguntas parecidas)
+                const signature = (q.question + (q.options['a'] || '')).replace(/\s+/g, '').toLowerCase();
+
+                if (!globalSeenSignatures.has(signature)) {
+                    finalExamQuestions.push(q);
+                    globalSeenSignatures.add(signature);
+                    addedCount++;
                 }
             }
-
-            // 3. SORTEIO: Agora sorteamos apenas da lista limpa
-            const shuffledUnique = shuffleArray(uniqueList);
-            const selected = shuffledUnique.slice(0, qtyNeeded);
-
-            // 4. REGISTRO FINAL: Adiciona as escolhidas e marca como usadas globalmente
-            for (const q of selected) {
-                const signature = q.question.replace(/\s+/g, '').toLowerCase();
-                finalExamQuestions.push(q);
-                globalSeenTexts.add(signature);
-            }
+            console.log(`Categoria ${catKey}: ${addedCount} questões únicas adicionadas.`);
         }
         
-        // Embaralha a prova final
-        return shuffleArray(finalExamQuestions);
+        function shuffleArray(array) {
+        let newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        return newArray;
     }
 
     // --- CARREGAMENTO DE MÓDULOS (ROTEADOR PRINCIPAL) ---
