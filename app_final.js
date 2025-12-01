@@ -239,14 +239,37 @@ document.addEventListener('DOMContentLoaded', () => {
     
 function onLoginSuccess(user, userData) {
         currentUserData = userData; 
-
-        if (document.body.getAttribute('data-app-ready') === 'true') return;
-        document.body.setAttribute('data-app-ready', 'true');
         
         // Fecha modais
         document.getElementById('name-prompt-modal')?.classList.remove('show');
         document.getElementById('name-modal-overlay')?.classList.remove('show');
-        document.getElementById('expired-modal')?.classList.remove('show');
+
+        // --- O PORTEIRO (DECISÃO B2B) ---
+        // Se o usuário tiver o cargo 'manager' OU for Admin, ele vê o painel de gestor
+        if (userData.role === 'manager' || userData.isAdmin === true) {
+            console.log("Login de Gestor detectado");
+            
+            // Esconde o site do aluno
+            document.getElementById('student-app').classList.add('hidden');
+            
+            // Mostra o painel do gestor
+            document.getElementById('manager-app').classList.remove('hidden');
+            
+            // Preenche o nome do gestor no topo
+            if(document.getElementById('manager-name')) {
+                document.getElementById('manager-name').textContent = userData.name;
+            }
+            
+            // Carrega os dados (Vou te dar essa função no próximo passo)
+            loadManagerDashboard(userData);
+            
+            return; // PARA TUDO AQUI. Não carrega mais nada de aluno.
+        } else {
+            // Se for aluno normal
+            document.getElementById('manager-app').classList.add('hidden');
+            document.getElementById('student-app').classList.remove('hidden');
+        }
+        // --- FIM DO PORTEIRO ---
         
         // Saudação
         const greetingEl = document.getElementById('welcome-greeting');
@@ -1997,6 +2020,61 @@ function onLoginSuccess(user, userData) {
             alert("Erro ao enviar e-mail: " + e.message);
         }
     };
+
+    // --- FUNÇÃO: CARREGAR DASHBOARD DO GESTOR (B2B) ---
+    async function loadManagerDashboard(managerData) {
+        const tbody = document.getElementById('manager-users-table');
+        if(!tbody) return;
+        
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i> Carregando dados...</td></tr>';
+
+        try {
+            // Busca todos os usuários
+            // (No futuro, filtraremos por "companyId == managerData.companyId")
+            const snapshot = await window.__fbDB.collection('users').get();
+            
+            let total = 0;
+            let premium = 0;
+            let expired = 0;
+            let html = '';
+
+            snapshot.forEach(doc => {
+                const u = doc.data();
+                // Lógica simples: conta todos. No futuro, filtraremos pela empresa.
+                
+                total++;
+                if(u.status === 'premium') premium++;
+                
+                const validade = u.acesso_ate ? new Date(u.acesso_ate) : null;
+                const isExpired = validade && new Date() > validade;
+                if(isExpired) expired++;
+
+                const statusBadge = isExpired 
+                    ? '<span class="bg-red-100 text-red-800 text-xs font-bold px-2 py-1 rounded">VENCIDO</span>'
+                    : (u.status === 'premium' ? '<span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">ATIVO</span>' : '<span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded">TRIAL</span>');
+
+                html += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="px-4 py-3 font-medium text-gray-900">${u.name}<br><span class="text-xs text-gray-500">${u.email}</span></td>
+                        <td class="px-4 py-3">${statusBadge}</td>
+                        <td class="px-4 py-3 text-xs text-gray-500">Em andamento</td>
+                        <td class="px-4 py-3 text-sm">${validade ? validade.toLocaleDateString() : '-'}</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+            
+            // Atualiza Cards
+            document.getElementById('dash-total-users').innerText = total;
+            document.getElementById('dash-active-users').innerText = premium;
+            document.getElementById('dash-expired').innerText = expired;
+
+        } catch (error) {
+            console.error(error);
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-red-500 py-4">Erro ao carregar dados.</td></tr>';
+        }
+    }
     
     init();
 });
