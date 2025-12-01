@@ -2034,7 +2034,7 @@ function onLoginSuccess(user, userData) {
         }
     };
 
-    // --- FUNÇÃO: CARREGAR DASHBOARD DO GESTOR (B2B) ---
+   // --- FUNÇÃO: CARREGAR DASHBOARD DO GESTOR (B2B - CORRIGIDA) ---
     async function loadManagerDashboard(managerData) {
         const tbody = document.getElementById('manager-users-table');
         if(!tbody) return;
@@ -2042,8 +2042,6 @@ function onLoginSuccess(user, userData) {
         tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i> Carregando dados...</td></tr>';
 
         try {
-            // Busca todos os usuários
-            // (No futuro, filtraremos por "companyId == managerData.companyId")
             const snapshot = await window.__fbDB.collection('users').get();
             
             let total = 0;
@@ -2053,7 +2051,7 @@ function onLoginSuccess(user, userData) {
 
             snapshot.forEach(doc => {
                 const u = doc.data();
-                // Lógica simples: conta todos. No futuro, filtraremos pela empresa.
+                const uid = doc.id; // Precisamos do ID para os botões
                 
                 total++;
                 if(u.status === 'premium') premium++;
@@ -2066,12 +2064,17 @@ function onLoginSuccess(user, userData) {
                     ? '<span class="bg-red-100 text-red-800 text-xs font-bold px-2 py-1 rounded">VENCIDO</span>'
                     : (u.status === 'premium' ? '<span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">ATIVO</span>' : '<span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded">TRIAL</span>');
 
+                // ADICIONADO: Botões de Ação na tabela do Gestor
                 html += `
                     <tr class="border-b hover:bg-gray-50">
                         <td class="px-4 py-3 font-medium text-gray-900">${u.name}<br><span class="text-xs text-gray-500">${u.email}</span></td>
                         <td class="px-4 py-3">${statusBadge}</td>
                         <td class="px-4 py-3 text-xs text-gray-500">Em andamento</td>
                         <td class="px-4 py-3 text-sm">${validade ? validade.toLocaleDateString() : '-'}</td>
+                        <td class="px-4 py-3 flex gap-2">
+                             <button onclick="editUserData('${uid}', '${u.name}', '${u.cpf || ''}')" class="text-blue-500 hover:text-blue-700" title="Editar"><i class="fas fa-pen"></i></button>
+                             <button onclick="deleteUser('${uid}', '${u.name}', '${u.cpf || ''}')" class="text-red-500 hover:text-red-700" title="Excluir"><i class="fas fa-trash"></i></button>
+                        </td>
                     </tr>
                 `;
             });
