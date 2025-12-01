@@ -1875,26 +1875,39 @@ function onLoginSuccess(user, userData) {
     }
 // ... (restante do código anterior) ...
 
-    // --- 6. LIMITE IA (BRAVOGPT) - COLE AQUI ---
+    // --- 6. LIMITE IA (VERSÃO SEGURA ANTI-ERRO) ---
     function initVoiceflowLimit() {
+        // Verifica se a API existe antes de tentar usar
         if (!window.voiceflow || !window.voiceflow.chat) return;
 
-        window.voiceflow.chat.on('user:message', () => {
-            const today = new Date().toLocaleDateString();
-            const key = `ai_usage_${today}`;
-            let count = parseInt(localStorage.getItem(key) || '0') + 1;
-            localStorage.setItem(key, count);
-
-            const isPremium = currentUserData && currentUserData.status === 'premium';
-            const limit = isPremium ? 50 : 5; // 50 Premium, 5 Free
-
-            if (count > limit) {
-                alert(`⚠️ Limite diário de IA atingido (${count-1}/${limit}).\nVolte amanhã ou assine o Premium para mais interações.`);
-                // Oculta o chat forçadamente
-                const chatDiv = document.getElementById('voiceflow-chat');
-                if(chatDiv) chatDiv.style.display = 'none';
+        try {
+            // Tenta usar o método antigo ou novo com segurança
+            if (typeof window.voiceflow.chat.on === 'function') {
+                window.voiceflow.chat.on('user:message', () => {
+                    trackAIUsage();
+                });
+            } else {
+                console.log("Voiceflow API: Monitoramento de limite indisponível nesta versão.");
             }
-        });
+        } catch (e) {
+            console.log("Voiceflow API não carregada totalmente ainda.");
+        }
+    }
+
+    function trackAIUsage() {
+        const today = new Date().toLocaleDateString();
+        const key = `ai_usage_${today}`;
+        let count = parseInt(localStorage.getItem(key) || '0') + 1;
+        localStorage.setItem(key, count);
+
+        const isPremium = currentUserData && currentUserData.status === 'premium';
+        const limit = isPremium ? 50 : 5; 
+
+        if (count > limit) {
+            alert(`⚠️ Limite diário de IA atingido (${count-1}/${limit}).\nVolte amanhã ou assine o Premium.`);
+            const chatDiv = document.getElementById('voiceflow-chat');
+            if(chatDiv) chatDiv.style.display = 'none';
+        }
     }
     // Tenta iniciar o monitoramento após 5 segundos
     setTimeout(initVoiceflowLimit, 5000);
