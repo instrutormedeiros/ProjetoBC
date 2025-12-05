@@ -877,4 +877,30 @@ body.focus-mode #main-wrapper { padding-bottom: 2rem; }
     max-width: 250px; /* Evita que fique muito largo no mobile */
 }
 
+/* Animação de Entrada dos Elementos */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 60px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* Background fixo para efeito Parallax no mobile */
+.bg-fixed {
+    background-attachment: fixed;
+}
+
+/* Scrollbar invisível na capa para elegância */
+#landing-hero::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
 
