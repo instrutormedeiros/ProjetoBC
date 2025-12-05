@@ -903,4 +903,25 @@ body.focus-mode #main-wrapper { padding-bottom: 2rem; }
   width: 0px;
   background: transparent;
 }
+/* CORREÇÃO DE ROLAGEM DA LANDING PAGE */
+#landing-hero {
+    position: fixed;
+    inset: 0;
+    z-index: 100000; /* Garante que fique acima de tudo */
+    overflow-y: auto !important; /* FORÇA a rolagem vertical */
+    height: 100vh; /* Garante altura total */
+    background-color: #050a14;
+    -webkit-overflow-scrolling: touch; /* Rolagem suave no iPhone */
+}
+
+/* Garante que o conteúdo dentro não trave */
+#landing-hero > div {
+    height: auto !important;
+    min-height: 100vh;
+}
+
+/* Esconde a barra de rolagem do BODY principal enquanto a landing estiver ativa */
+body.landing-active {
+    overflow: hidden;
+}
 
