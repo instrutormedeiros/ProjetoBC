@@ -207,6 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 function init() {
+    document.body.classList.add('landing-active'); // Trava o fundo, libera a landing
         setupProtection();
         setupTheme();
         
@@ -2045,7 +2046,10 @@ window.scrollToStory = function() {
 }
 
 // Entra no sistema e verifica login
-window.enterSystem = function() {
+    window.enterSystem = function() {
+        
+    document.body.classList.remove('landing-active'); // Destrava o fundo
+    // ... resto do código igual ...
     const landing = document.getElementById('landing-hero');
     
     // 1. Efeito visual de "subir a cortina"
