@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return; 
     }
 
-    function init() {
+function init() {
         setupProtection();
         setupTheme();
         
@@ -228,44 +228,71 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('logout-expired-button')?.addEventListener('click', FirebaseCourse.signOutUser);
             document.getElementById('logout-button-header')?.addEventListener('click', FirebaseCourse.signOutUser);
 
-            // ---> COLE O CÓDIGO NOVO AQUI <---
+            // === CORREÇÃO CRÍTICA: LÓGICA DE LOGIN VS CAPA ===
+            
+            // 1. Garante que o modal de login comece FECHADO para exibir a capa
+            const loginModal = document.getElementById('name-prompt-modal');
+            const loginOverlay = document.getElementById('name-modal-overlay');
+            if(loginModal) loginModal.classList.remove('show');
+            if(loginOverlay) loginOverlay.classList.remove('show');
+
+            // 2. Verifica se o usuário JÁ estava logado antes (Sessão salva)
             const isLogged = localStorage.getItem('my_session_id');
 
             if (isLogged) {
-                // Se já tem sessão, verifica no background silenciosamente
+                // Se já tem sessão, faz a verificação silenciosa no fundo
+                // O usuário vê a Capa, mas o sistema já vai logando por trás
                 FirebaseCourse.checkAuth((user, userData) => {
                     onLoginSuccess(user, userData);
                 });
-            }
-            // Se NÃO tem sessão, não faz nada. O enterSystem() vai abrir o modal depois.
+            } 
+            // SE NÃO TIVER SESSÃO, NÃO FAZ NADA! 
+            // O modal só abrirá quando o usuário clicar em "ACESSAR PLATAFORMA" na capa.
         }
-      
-function onLoginSuccess(user, userData) {
+        
+        setupHeaderScroll();
+        setupRippleEffects();
+    }
+
+    function onLoginSuccess(user, userData) {
         currentUserData = userData; 
 
         if (document.body.getAttribute('data-app-ready') === 'true') return;
         document.body.setAttribute('data-app-ready', 'true');
         
-        // Fecha modais
+        // Fecha modais e overlays para liberar a tela
         document.getElementById('name-prompt-modal')?.classList.remove('show');
         document.getElementById('name-modal-overlay')?.classList.remove('show');
         document.getElementById('expired-modal')?.classList.remove('show');
         
-        // Saudação
+        // Saudação personalizada
         const greetingEl = document.getElementById('welcome-greeting');
         if(greetingEl) greetingEl.textContent = `Olá, ${userData.name.split(' ')[0]}!`;
         
+        // Marca d'água de segurança
+        const printWatermark = document.getElementById('print-watermark');
         if (printWatermark) {
             printWatermark.textContent = `Licenciado para ${userData.name} (CPF: ${userData.cpf || '...'}) - Proibida a Cópia`;
         }
 
-        // Botões Admin
+        // Libera Botões Admin (se for admin)
+        const adminBtn = document.getElementById('admin-panel-btn');
+        const mobileAdminBtn = document.getElementById('mobile-admin-btn');
         if (userData.isAdmin === true) {
             if(adminBtn) adminBtn.classList.remove('hidden');
             if(mobileAdminBtn) mobileAdminBtn.classList.remove('hidden');
         }
 
         checkTrialStatus(userData.acesso_ate);
+
+        // --- PROGRESSO SINCRONIZADO NA NUVEM ---
+        // Se o usuário tem progresso salvo no banco de dados, usamos ele.
+        if (userData.completedModules && Array.isArray(userData.completedModules)) {
+            completedModules = userData.completedModules;
+            // Atualiza o local para garantir sincronia
+            localStorage.setItem('gateBombeiroCompletedModules_v3', JSON.stringify(completedModules));
+            console.log("Progresso recuperado da nuvem.");
+        }
 
         // Inicializa contadores
         totalModules = Object.keys(window.moduleContent || {}).length;
