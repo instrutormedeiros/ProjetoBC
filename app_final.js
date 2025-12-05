@@ -239,37 +239,14 @@ document.addEventListener('DOMContentLoaded', () => {
     
 function onLoginSuccess(user, userData) {
         currentUserData = userData; 
+
+        if (document.body.getAttribute('data-app-ready') === 'true') return;
+        document.body.setAttribute('data-app-ready', 'true');
         
         // Fecha modais
         document.getElementById('name-prompt-modal')?.classList.remove('show');
         document.getElementById('name-modal-overlay')?.classList.remove('show');
-
-        // --- O PORTEIRO (DECISÃO B2B) ---
-        // Se o usuário tiver o cargo 'manager' OU for Admin, ele vê o painel de gestor
-        if (userData.role === 'manager' || userData.isAdmin === true) {
-            console.log("Login de Gestor detectado");
-            
-            // Esconde o site do aluno
-            document.getElementById('student-app').classList.add('hidden');
-            
-            // Mostra o painel do gestor
-            document.getElementById('manager-app').classList.remove('hidden');
-            
-            // Preenche o nome do gestor no topo
-            if(document.getElementById('manager-name')) {
-                document.getElementById('manager-name').textContent = userData.name;
-            }
-            
-            // Carrega os dados (Vou te dar essa função no próximo passo)
-            loadManagerDashboard(userData);
-            
-            return; // PARA TUDO AQUI. Não carrega mais nada de aluno.
-        } else {
-            // Se for aluno normal
-            document.getElementById('manager-app').classList.add('hidden');
-            document.getElementById('student-app').classList.remove('hidden');
-        }
-        // --- FIM DO PORTEIRO ---
+        document.getElementById('expired-modal')?.classList.remove('show');
         
         // Saudação
         const greetingEl = document.getElementById('welcome-greeting');
@@ -1875,39 +1852,26 @@ function onLoginSuccess(user, userData) {
     }
 // ... (restante do código anterior) ...
 
-    // --- 6. LIMITE IA (VERSÃO SEGURA ANTI-ERRO) ---
+    // --- 6. LIMITE IA (BRAVOGPT) - COLE AQUI ---
     function initVoiceflowLimit() {
-        // Verifica se a API existe antes de tentar usar
         if (!window.voiceflow || !window.voiceflow.chat) return;
 
-        try {
-            // Tenta usar o método antigo ou novo com segurança
-            if (typeof window.voiceflow.chat.on === 'function') {
-                window.voiceflow.chat.on('user:message', () => {
-                    trackAIUsage();
-                });
-            } else {
-                console.log("Voiceflow API: Monitoramento de limite indisponível nesta versão.");
+        window.voiceflow.chat.on('user:message', () => {
+            const today = new Date().toLocaleDateString();
+            const key = `ai_usage_${today}`;
+            let count = parseInt(localStorage.getItem(key) || '0') + 1;
+            localStorage.setItem(key, count);
+
+            const isPremium = currentUserData && currentUserData.status === 'premium';
+            const limit = isPremium ? 50 : 5; // 50 Premium, 5 Free
+
+            if (count > limit) {
+                alert(`⚠️ Limite diário de IA atingido (${count-1}/${limit}).\nVolte amanhã ou assine o Premium para mais interações.`);
+                // Oculta o chat forçadamente
+                const chatDiv = document.getElementById('voiceflow-chat');
+                if(chatDiv) chatDiv.style.display = 'none';
             }
-        } catch (e) {
-            console.log("Voiceflow API não carregada totalmente ainda.");
-        }
-    }
-
-    function trackAIUsage() {
-        const today = new Date().toLocaleDateString();
-        const key = `ai_usage_${today}`;
-        let count = parseInt(localStorage.getItem(key) || '0') + 1;
-        localStorage.setItem(key, count);
-
-        const isPremium = currentUserData && currentUserData.status === 'premium';
-        const limit = isPremium ? 50 : 5; 
-
-        if (count > limit) {
-            alert(`⚠️ Limite diário de IA atingido (${count-1}/${limit}).\nVolte amanhã ou assine o Premium.`);
-            const chatDiv = document.getElementById('voiceflow-chat');
-            if(chatDiv) chatDiv.style.display = 'none';
-        }
+        });
     }
     // Tenta iniciar o monitoramento após 5 segundos
     setTimeout(initVoiceflowLimit, 5000);
@@ -2033,64 +1997,14 @@ function onLoginSuccess(user, userData) {
             alert("Erro ao enviar e-mail: " + e.message);
         }
     };
-
-   // --- FUNÇÃO: CARREGAR DASHBOARD DO GESTOR (B2B - CORRIGIDA) ---
-    async function loadManagerDashboard(managerData) {
-        const tbody = document.getElementById('manager-users-table');
-        if(!tbody) return;
-        
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i> Carregando dados...</td></tr>';
-
-        try {
-            const snapshot = await window.__fbDB.collection('users').get();
-            
-            let total = 0;
-            let premium = 0;
-            let expired = 0;
-            let html = '';
-
-            snapshot.forEach(doc => {
-                const u = doc.data();
-                const uid = doc.id; // Precisamos do ID para os botões
-                
-                total++;
-                if(u.status === 'premium') premium++;
-                
-                const validade = u.acesso_ate ? new Date(u.acesso_ate) : null;
-                const isExpired = validade && new Date() > validade;
-                if(isExpired) expired++;
-
-                const statusBadge = isExpired 
-                    ? '<span class="bg-red-100 text-red-800 text-xs font-bold px-2 py-1 rounded">VENCIDO</span>'
-                    : (u.status === 'premium' ? '<span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">ATIVO</span>' : '<span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded">TRIAL</span>');
-
-                // ADICIONADO: Botões de Ação na tabela do Gestor
-                html += `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-3 font-medium text-gray-900">${u.name}<br><span class="text-xs text-gray-500">${u.email}</span></td>
-                        <td class="px-4 py-3">${statusBadge}</td>
-                        <td class="px-4 py-3 text-xs text-gray-500">Em andamento</td>
-                        <td class="px-4 py-3 text-sm">${validade ? validade.toLocaleDateString() : '-'}</td>
-                        <td class="px-4 py-3 flex gap-2">
-                             <button onclick="editUserData('${uid}', '${u.name}', '${u.cpf || ''}')" class="text-blue-500 hover:text-blue-700" title="Editar"><i class="fas fa-pen"></i></button>
-                             <button onclick="deleteUser('${uid}', '${u.name}', '${u.cpf || ''}')" class="text-red-500 hover:text-red-700" title="Excluir"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            tbody.innerHTML = html;
-            
-            // Atualiza Cards
-            document.getElementById('dash-total-users').innerText = total;
-            document.getElementById('dash-active-users').innerText = premium;
-            document.getElementById('dash-expired').innerText = expired;
-
-        } catch (error) {
-            console.error(error);
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-red-500 py-4">Erro ao carregar dados.</td></tr>';
-        }
-    }
+    // --- FUNÇÃO PIX ---
+    window.copyPixKey = function(key) {
+        navigator.clipboard.writeText(key).then(() => {
+            alert("Chave PIX copiada: " + key);
+        }).catch(err => {
+            prompt("Copie a chave manualmente:", key);
+        });
+    };
     
     init();
 });
