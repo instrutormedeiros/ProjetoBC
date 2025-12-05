@@ -228,9 +228,16 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('logout-expired-button')?.addEventListener('click', FirebaseCourse.signOutUser);
             document.getElementById('logout-button-header')?.addEventListener('click', FirebaseCourse.signOutUser);
 
-            FirebaseCourse.checkAuth((user, userData) => {
-                onLoginSuccess(user, userData);
-            });
+            // ---> COLE O CÓDIGO NOVO AQUI <---
+            const isLogged = localStorage.getItem('my_session_id');
+
+            if (isLogged) {
+                // Se já tem sessão, verifica no background silenciosamente
+                FirebaseCourse.checkAuth((user, userData) => {
+                    onLoginSuccess(user, userData);
+                });
+            }
+            // Se NÃO tem sessão, não faz nada. O enterSystem() vai abrir o modal depois.
         }
         
         setupHeaderScroll();
