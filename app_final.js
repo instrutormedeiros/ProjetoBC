@@ -2005,6 +2005,46 @@ function onLoginSuccess(user, userData) {
             prompt("Copie a chave manualmente:", key);
         });
     };
+
+    // --- LÓGICA DA LANDING PAGE PROFISSIONAL ---
+
+// Rola suavemente até a história
+window.scrollToStory = function() {
+    const section = document.getElementById('story-section');
+    if (section) section.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Entra no sistema e verifica login
+window.enterSystem = function() {
+    const landing = document.getElementById('landing-hero');
+    
+    // 1. Efeito visual de "subir a cortina"
+    if (landing) {
+        landing.style.transform = 'translateY(-100%)';
+        landing.style.opacity = '0';
+    }
+
+    // 2. Aguarda a animação (800ms) e libera o sistema real
+    setTimeout(() => {
+        if (landing) landing.classList.add('hidden'); // Remove do DOM
+        
+        // 3. Verifica autenticação apenas AGORA
+        // Se não tiver usuário logado, o Firebase vai disparar o modal de login
+        if (!currentUserData) {
+            if (typeof FirebaseCourse !== 'undefined' && FirebaseCourse.checkAuth) {
+                // Força a verificação que abre o modal
+                const loginModal = document.getElementById('name-prompt-modal');
+                const loginOverlay = document.getElementById('name-modal-overlay');
+                
+                // Se não tem sessão salva, abre o login
+                if (!localStorage.getItem('my_session_id')) {
+                    if(loginModal) loginModal.classList.add('show');
+                    if(loginOverlay) loginOverlay.classList.add('show');
+                }
+            }
+        }
+    }, 800);
+}
     
     init();
 });
