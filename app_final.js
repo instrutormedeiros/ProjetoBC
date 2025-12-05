@@ -239,11 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             // Se NÃO tem sessão, não faz nada. O enterSystem() vai abrir o modal depois.
         }
-        
-        setupHeaderScroll();
-        setupRippleEffects();
-    }
-    
+      
 function onLoginSuccess(user, userData) {
         currentUserData = userData; 
 
