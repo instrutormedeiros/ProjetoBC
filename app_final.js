@@ -207,7 +207,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 function init() {
-    document.body.classList.add('landing-active'); // Trava o fundo, libera a landing
+    document.body.classList.add('landing-active');
+    
+    // ---> ADICIONE ISSO AQUI:
+    setTimeout(initScrollReveal, 100); // Inicia os observadores de animação
+    
         setupProtection();
         setupTheme();
         
@@ -2076,6 +2080,29 @@ window.enterSystem = function() {
         }
     }, 800);
 }
-    
+    // --- SISTEMA DE ANIMAÇÃO AO ROLAR (SCROLL REVEAL) ---
+function initScrollReveal() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                // Quando o elemento entra na tela:
+                entry.target.classList.remove('opacity-0', 'translate-y-10', 'translate-x-10', 'scale-90');
+                observer.unobserve(entry.target); // Para de observar depois que animou
+            }
+        });
+    }, {
+        threshold: 0.15 // Dispara quando 15% do elemento estiver visível
+    });
+
+    document.querySelectorAll('.reveal-on-scroll').forEach(el => {
+        observer.observe(el);
+    });
+}
+
+// Rolar para a próxima seção
+window.scrollToNextSection = function() {
+    const section = document.getElementById('features-section');
+    if(section) section.scrollIntoView({ behavior: 'smooth' });
+}
     init();
 });
