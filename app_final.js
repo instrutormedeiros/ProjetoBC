@@ -516,6 +516,22 @@ function init() {
         const closePayModal = document.getElementById('close-payment-modal-btn');
         const loginModalOverlay = document.getElementById('name-modal-overlay');
         const loginModal = document.getElementById('name-prompt-modal');
+        // ... (Logo após as definições das variáveis dentro de setupAuthEventListeners)
+
+        // --- LÓGICA DO ENTER PARA LOGIN ---
+        // Se apertar Enter no campo de senha, clica no botão de entrar
+        passwordInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                btnLogin.click();
+            }
+        });
+
+        // (Opcional) Se apertar Enter no email, pula para a senha
+        emailInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                passwordInput.focus();
+            }
+        });
 
         function openPaymentModal() {
             expiredModal.classList.add('show');
