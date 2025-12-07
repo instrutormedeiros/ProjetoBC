@@ -2081,24 +2081,38 @@ window.enterSystem = function() {
     }, 800);
 }
     // --- SISTEMA DE ANIMAÇÃO AO ROLAR (SCROLL REVEAL) ---
+// --- SISTEMA DE ANIMAÇÃO AO ROLAR (SCROLL REVEAL & LAPTOP) ---
 function initScrollReveal() {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                // Quando o elemento entra na tela:
-                entry.target.classList.remove('opacity-0', 'translate-y-10', 'translate-x-10', 'scale-90');
-                observer.unobserve(entry.target); // Para de observar depois que animou
+                
+                // Animação Padrão (Texto subindo)
+                if (entry.target.classList.contains('reveal-on-scroll')) {
+                    entry.target.classList.remove('opacity-0', 'translate-y-10', 'translate-x-10', '-translate-x-10', 'scale-95');
+                }
+
+                // Animação do Notebook (Abrir Tampa)
+                if (entry.target.id === 'laptop-lid') {
+                    entry.target.classList.add('open');
+                }
+
+                observer.unobserve(entry.target);
             }
         });
     }, {
         threshold: 0.15 // Dispara quando 15% do elemento estiver visível
     });
 
+    // Observa elementos padrão
     document.querySelectorAll('.reveal-on-scroll').forEach(el => {
         observer.observe(el);
     });
-}
 
+    // Observa o notebook especificamente
+    const laptop = document.getElementById('laptop-lid');
+    if(laptop) observer.observe(laptop);
+}
 // Rolar para a próxima seção
 window.scrollToNextSection = function() {
     const section = document.getElementById('features-section');
