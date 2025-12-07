@@ -929,4 +929,43 @@ body.landing-active {
     clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
     border-radius: 4px;
 }
+/* --- CORREÇÃO DO CORTE DE TEXTO --- */
+.fix-text-clip {
+    padding-right: 0.2em; /* Dá um respiro para a fonte itálica não cortar */
+}
+
+/* --- EFEITO NOTEBOOK 3D --- */
+.laptop-wrapper {
+    perspective: 1000px; /* Cria o ambiente 3D */
+    perspective-origin: 50% 100%;
+}
+
+.laptop-lid {
+    transform-origin: bottom;
+    transform-style: preserve-3d;
+    transition: transform 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    /* Começa fechado (inclinado para frente) */
+    transform: rotateX(-90deg); 
+}
+
+/* Classe que será adicionada via JS para abrir */
+.laptop-lid.open {
+    transform: rotateX(0deg);
+}
+
+/* Detalhes do Accordion (FAQ) */
+details > summary {
+    list-style: none;
+}
+details > summary::-webkit-details-marker {
+    display: none;
+}
+details[open] summary ~ * {
+    animation: sweep .5s ease-in-out;
+}
+
+@keyframes sweep {
+    0%    {opacity: 0; transform: translateY(-10px)}
+    100%  {opacity: 1; transform: translateY(0)}
+}
 
