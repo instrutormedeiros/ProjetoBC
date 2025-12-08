@@ -295,13 +295,16 @@ function init() {
 
         checkTrialStatus(userData.acesso_ate);
 
-        // --- PROGRESSO SINCRONIZADO NA NUVEM ---
-        // Se o usuário tem progresso salvo no banco de dados, usamos ele.
-        if (userData.completedModules && Array.isArray(userData.completedModules)) {
+        // --- PROGRESSO SINCRONIZADO (BIDIRECIONAL) ---
+        if (userData.completedModules && Array.isArray(userData.completedModules) && userData.completedModules.length > 0) {
+            // Se o banco tem dados, usa o banco (prioridade nuvem)
             completedModules = userData.completedModules;
-            // Atualiza o local para garantir sincronia
             localStorage.setItem('gateBombeiroCompletedModules_v3', JSON.stringify(completedModules));
             console.log("Progresso recuperado da nuvem.");
+        } else if (completedModules.length > 0) {
+            // Se o banco está vazio, mas o aluno tem progresso local, ENVIA para o banco
+            console.log("Sincronizando progresso local para a nuvem...");
+            saveProgressToCloud();
         }
 
         // Inicializa contadores
@@ -337,7 +340,12 @@ function init() {
                 }
             }, 1500); 
         }
+    // --- TRAVA DE SEGURANÇA (ADICIONE ISTO AQUI) ---
+        // Isso impede que os botões sejam duplicados quando o banco atualiza
+        document.body.setAttribute('data-app-ready', 'true');
+
     }
+    
     // --- FUNÇÕES ADMIN (ATUALIZADAS E LEGÍVEIS) ---
     window.openAdminPanel = async function() {
         if (!currentUserData || !currentUserData.isAdmin) return;
@@ -1397,6 +1405,10 @@ function init() {
         if (!completedModules.includes(moduleId)) {
             completedModules.push(moduleId);
             localStorage.setItem('gateBombeiroCompletedModules_v3', JSON.stringify(completedModules));
+            
+            // ADICIONADO: Salva no banco de dados
+            saveProgressToCloud();
+            
             updateProgress();
         }
     }
@@ -1718,6 +1730,10 @@ function init() {
         if (id && !completedModules.includes(id)) {
             completedModules.push(id);
             localStorage.setItem('gateBombeiroCompletedModules_v3', JSON.stringify(completedModules));
+            
+            // ADICIONADO: Salva no banco de dados agora
+            saveProgressToCloud();
+
             updateProgress();
             b.disabled = true;
             b.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Concluído';
@@ -2212,6 +2228,7 @@ window.startManagerLogin = function() {
 let managerCachedUsers = [];
 
 // --- LÓGICA DO PAINEL DO GESTOR (B2B) - VERSÃO 2.0 (COM FILTRO E EDIÇÃO) ---
+// --- LÓGICA DO PAINEL DO GESTOR (B2B) - VERSÃO 3.0 (COM BOTÃO SYNC) ---
 window.openManagerPanel = async function() {
     // 1. Verificações de Segurança
     if (!currentUserData) { enterSystem(); return; }
@@ -2226,6 +2243,36 @@ window.openManagerPanel = async function() {
     modal.classList.add('show');
     overlay.classList.add('show');
     
+    // --- NOVO: Botão de Sincronizar Manual ---
+    const headerTitleDiv = modal.querySelector('.bg-blue-900 > div');
+    if (headerTitleDiv && !document.getElementById('mgr-force-sync-btn')) {
+        const btn = document.createElement('button');
+        btn.id = 'mgr-force-sync-btn';
+        btn.className = 'mt-2 bg-green-600 hover:bg-green-500 text-white text-[10px] font-bold py-1 px-3 rounded shadow flex items-center gap-1 transition-colors';
+        btn.innerHTML = '<i class="fas fa-sync"></i> Forçar Sincronização';
+        btn.onclick = async function() {
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+            btn.disabled = true;
+            await window.saveProgressToCloud();
+            
+            // Recarrega a tabela após 1 segundo
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> Atualizado!';
+                btn.className = 'mt-2 bg-blue-600 text-white text-[10px] font-bold py-1 px-3 rounded shadow flex items-center gap-1';
+                // Recarrega os dados da tabela
+                window.openManagerPanel();
+                
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-sync"></i> Forçar Sincronização';
+                    btn.className = 'mt-2 bg-green-600 hover:bg-green-500 text-white text-[10px] font-bold py-1 px-3 rounded shadow flex items-center gap-1 transition-colors';
+                }, 2000);
+            }, 1000);
+        };
+        headerTitleDiv.appendChild(btn);
+    }
+    // ------------------------------------------
+
     document.getElementById('close-manager-modal').onclick = () => {
         modal.classList.remove('show');
         overlay.classList.remove('show');
@@ -2237,27 +2284,24 @@ window.openManagerPanel = async function() {
     tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500"><div class="loader"></div> Carregando...</td></tr>';
 
     try {
-        // Busca usuários no banco
         const snapshot = await window.__fbDB.collection('users').orderBy('name').get();
         
-        managerCachedUsers = []; // Limpa cache
-        let uniqueTurmas = new Set(); // Para guardar nomes únicos de turmas
+        managerCachedUsers = []; 
+        let uniqueTurmas = new Set(); 
 
         snapshot.forEach(doc => {
             const u = doc.data();
-            u.uid = doc.id; // Guarda o ID para edição
-            u.company = u.company || 'Particular'; // Garante valor padrão
+            u.uid = doc.id; 
+            u.company = u.company || 'Particular'; 
             managerCachedUsers.push(u);
             uniqueTurmas.add(u.company);
         });
 
-        // Popula o Filtro de Turmas
         filterSelect.innerHTML = '<option value="TODOS">Todas as Turmas</option>';
         uniqueTurmas.forEach(turma => {
             filterSelect.innerHTML += `<option value="${turma}">${turma}</option>`;
         });
 
-        // Renderiza a tabela inicial (Todos)
         renderManagerTable(managerCachedUsers);
 
     } catch (error) {
@@ -2269,7 +2313,7 @@ window.openManagerPanel = async function() {
 // FUNÇÃO AUXILIAR: RENDERIZA A TABELA (USADA NO INÍCIO E NO FILTRO)
 window.renderManagerTable = function(usersList) {
     const tbody = document.getElementById('manager-table-body');
-    const totalCourseModules = 52;
+    const totalCourseModules = Object.keys(window.moduleContent || {}).length || 62;
     let html = '';
     let stats = { total: 0, completed: 0, progress: 0, pending: 0 };
 
@@ -2313,8 +2357,13 @@ window.renderManagerTable = function(usersList) {
                     <div class="text-xs text-gray-500">${u.email}</div>
                 </td>
                 <td class="px-4 py-3 text-gray-600 text-xs">
-                    <i class="fab fa-whatsapp text-green-500 mr-1"></i> ${phone}
-                </td>
+    <div class="flex items-center gap-2">
+        <span><i class="fab fa-whatsapp text-green-500 mr-1"></i> ${phone}</span>
+        <button onclick="editUserPhone('${u.uid}', '${phone}')" class="text-gray-400 hover:text-green-600 transition-colors opacity-0 group-hover:opacity-100" title="Editar WhatsApp">
+            <i class="fas fa-pencil-alt"></i>
+        </button>
+    </div>
+</td>
                 <td class="px-4 py-3">
                     <div class="flex items-center gap-2">
                         <span class="px-2 py-1 bg-blue-50 text-blue-700 text-[10px] rounded font-bold border border-blue-100">${u.company}</span>
@@ -2374,6 +2423,32 @@ window.editUserClass = async function(uid, oldClass) {
         }
     }
 };
+    // FUNÇÃO DE EDITAR TELEFONE (NOVO)
+window.editUserPhone = async function(uid, oldPhone) {
+    // Se for "Não informado", limpa o campo para digitar do zero
+    const cleanPhone = oldPhone === 'Não informado' ? '' : oldPhone;
+    
+    const newPhone = prompt("Digite o novo WhatsApp/Telefone:", cleanPhone);
+    
+    // Verifica se digitou algo e se é diferente do anterior
+    if (newPhone !== null && newPhone !== cleanPhone) {
+        try {
+            await window.__fbDB.collection('users').doc(uid).update({ 
+                phone: newPhone 
+            });
+            alert("Telefone atualizado com sucesso!");
+            // Recarrega o painel para mostrar a mudança
+            if(typeof openManagerPanel === 'function') {
+                openManagerPanel(); 
+            } else {
+                // Fallback caso esteja no painel admin geral
+                openAdminPanel(); 
+            }
+        } catch (e) {
+            alert("Erro ao atualizar: " + e.message);
+        }
+    }
+};
     // Função para dar/tirar poder de Gestor
 window.toggleManagerRole = async function(uid, currentStatus) {
     const novoStatus = !currentStatus; // Inverte (se era true vira false, e vice-versa)
@@ -2391,5 +2466,32 @@ window.toggleManagerRole = async function(uid, currentStatus) {
         }
     }
 };
+ // --- FUNÇÃO NOVA: SALVAR PROGRESSO NO FIREBASE (VERSÃO BLINDADA) ---
+window.saveProgressToCloud = function() {
+    if (currentUserData && currentUserData.uid) {
+        // 1. Tenta pegar da variável global
+        let modulesToSave = completedModules;
+        
+        // 2. BLINDAGEM: Se estiver vazia, pega direto da memória física do navegador
+        if (!modulesToSave || modulesToSave.length === 0) {
+            const localData = localStorage.getItem('gateBombeiroCompletedModules_v3');
+            if (localData) {
+                modulesToSave = JSON.parse(localData);
+                completedModules = modulesToSave; // Atualiza a global também
+            }
+        }
+
+        console.log("Enviando para nuvem:", modulesToSave); // <--- SE NÃO APARECER ISSO NO CONSOLE, O CÓDIGO TÁ VELHO
+
+        return window.__fbDB.collection('users').doc(currentUserData.uid).update({
+            completedModules: modulesToSave
+        }).then(() => {
+            console.log("Progresso salvo com sucesso!");
+            // Atualiza o objeto local para o painel ler na hora
+            currentUserData.completedModules = modulesToSave;
+        }).catch(err => console.error("Erro ao salvar progresso:", err));
+    }
+    return Promise.resolve();
+}
     init();
 });
