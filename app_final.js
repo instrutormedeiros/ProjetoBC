@@ -318,6 +318,13 @@ function init() {
         // Inicia Tour Automático (se nunca viu)
         startOnboardingTour(false); 
     }
+    // --- CORREÇÃO B2B: ABRE O PAINEL SE FOI SOLICITADO ---
+        if (localStorage.getItem('open_manager_after_login') === 'true') {
+            localStorage.removeItem('open_manager_after_login'); // Limpa a memória para não abrir sempre
+            setTimeout(() => {
+                openManagerPanel(); // Abre o painel automaticamente
+            }, 1000); // Pequeno delay para garantir que a tela carregou
+        }
 
     // --- FUNÇÕES ADMIN (ATUALIZADAS E LEGÍVEIS) ---
     window.openAdminPanel = async function() {
