@@ -103,7 +103,7 @@ h1, h2, h3 { font-family: 'Lora', serif; }
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    animation: shine-gold 4s linear infinite;
+    animation: shine-gold 8s linear infinite;
     font-weight: 800;
     letter-spacing: 0.5px;
 }
@@ -970,5 +970,6 @@ details[open] summary ~ * {
     0%    {opacity: 0; transform: translateY(-10px)}
     100%  {opacity: 1; transform: translateY(0)}
 }
+
 
 
