@@ -2179,136 +2179,170 @@ window.startManagerLogin = function() {
     // 2. Chama a função que abre o modal de login
     enterSystem();
 };
-   // --- LÓGICA DO PAINEL DO GESTOR (B2B) ---
+  // VARIÁVEL GLOBAL PARA ARMAZENAR DADOS DO GESTOR TEMPORARIAMENTE
+let managerCachedUsers = [];
+
+// --- LÓGICA DO PAINEL DO GESTOR (B2B) - VERSÃO 2.0 (COM FILTRO E EDIÇÃO) ---
 window.openManagerPanel = async function() {
-    
-    // 1. Verifica se está logado
-    if (!currentUserData) {
-        // Se não estiver logado, manda para a tela de login
-        // (A função startManagerLogin já cuidou de salvar a intenção)
-        enterSystem(); 
+    // 1. Verificações de Segurança
+    if (!currentUserData) { enterSystem(); return; }
+    if (currentUserData.isAdmin !== true && currentUserData.isManager !== true) {
+        alert("⛔ ACESSO NEGADO\n\nSua conta não possui permissão de Gestor.");
         return;
     }
 
-    // 2. TRAVA DE SEGURANÇA (AQUI ESTÁ O SEGREDO)
-    // Se o usuário NÃO for admin E NÃO tiver a flag 'isManager', bloqueia.
-    if (currentUserData.isAdmin !== true && currentUserData.isManager !== true) {
-        alert("⛔ ACESSO NEGADO\n\nSua conta não possui permissão de Gestor.\nEntre em contato com o suporte para validar seu cadastro corporativo.");
-        return; // PARA TUDO AQUI. Não carrega dados, não abre modal.
-    }
-
-    // 3. Se passou pela trava, abre o painel...
     const modal = document.getElementById('manager-modal');
-    const overlay = document.getElementById('admin-modal-overlay'); // Reutilizamos o overlay do admin
-    const tbody = document.getElementById('manager-table-body');
+    const overlay = document.getElementById('admin-modal-overlay');
     
-    // Mostra o modal
     modal.classList.add('show');
     overlay.classList.add('show');
     
-    // Botão de fechar
     document.getElementById('close-manager-modal').onclick = () => {
         modal.classList.remove('show');
         overlay.classList.remove('show');
     };
 
-    // Pega o código da empresa do gestor logado (Simulação: vamos pegar TODOS por enquanto ou filtrar se tiver o campo)
-    // NOTA: Para produção real, filtraríamos: .where("company", "==", currentUserData.company)
+    const tbody = document.getElementById('manager-table-body');
+    const filterSelect = document.getElementById('mgr-filter-turma');
     
+    tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500"><div class="loader"></div> Carregando...</td></tr>';
+
     try {
         // Busca usuários no banco
         const snapshot = await window.__fbDB.collection('users').orderBy('name').get();
         
-        let html = '';
-        let stats = { total: 0, completed: 0, progress: 0, pending: 0 };
-        const totalCourseModules = 52; // Total aproximado de módulos do curso
+        managerCachedUsers = []; // Limpa cache
+        let uniqueTurmas = new Set(); // Para guardar nomes únicos de turmas
 
-snapshot.forEach(doc => {
+        snapshot.forEach(doc => {
             const u = doc.data();
-            
-            // Dados Básicos
-            const phone = u.phone || 'Não informado';
-            const company = u.company || 'Particular';
-            const modulesDone = u.completedModules ? u.completedModules.length : 0;
-            
-            // --- NOVO: STATUS E DATA ---
-            let statusBadge = '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-[10px] rounded-full font-bold uppercase">TRIAL</span>';
-            if (u.status === 'premium') {
-                statusBadge = '<span class="px-2 py-1 bg-green-100 text-green-800 text-[10px] rounded-full font-bold uppercase">PREMIUM</span>';
-            }
-            
-            // Formata a data (DD/MM/AAAA)
-            let validadeStr = '-';
-            if (u.acesso_ate) {
-                const dataValidade = new Date(u.acesso_ate);
-                validadeStr = dataValidade.toLocaleDateString('pt-BR');
-                
-                // Se venceu, marca em vermelho
-                if (new Date() > dataValidade) {
-                    validadeStr = `<span class="text-red-500 font-bold">${validadeStr} (Exp)</span>`;
-                }
-            }
-            // ---------------------------
-
-            // Cálculo de Progresso
-            const percent = Math.min(100, Math.round((modulesDone / totalCourseModules) * 100));
-            
-            // Estatísticas
-            stats.total++;
-            if (percent >= 100) stats.completed++;
-            else if (percent > 0) stats.progress++;
-            else stats.pending++;
-
-            let progressColor = 'bg-red-500';
-            if (percent > 30) progressColor = 'bg-yellow-500';
-            if (percent > 80) progressColor = 'bg-green-500';
-
-            // HTML DA LINHA (ATUALIZADO COM NOVAS COLUNAS)
-            html += `
-                <tr class="hover:bg-gray-50 border-b border-gray-100">
-                    <td class="px-4 py-3">
-                        <div class="font-bold text-gray-800">${u.name}</div>
-                        <div class="text-xs text-gray-500">${u.email}</div>
-                    </td>
-                    <td class="px-4 py-3 text-gray-600 text-xs">
-                        <i class="fab fa-whatsapp text-green-500 mr-1"></i> ${phone}
-                    </td>
-                    <td class="px-4 py-3">
-                        <span class="px-2 py-1 bg-blue-50 text-blue-700 text-[10px] rounded font-bold border border-blue-100">${company}</span>
-                    </td>
-                    <td class="px-4 py-3">
-                        <div class="flex items-center">
-                            <div class="w-16 bg-gray-200 rounded-full h-1.5 mr-2">
-                                <div class="${progressColor} h-1.5 rounded-full" style="width: ${percent}%"></div>
-                            </div>
-                            <span class="text-xs font-bold text-gray-600">${percent}%</span>
-                        </div>
-                    </td>
-                    <td class="px-4 py-3">
-                        ${statusBadge}
-                    </td>
-                    <td class="px-4 py-3 text-xs font-mono text-gray-600">
-                        ${validadeStr}
-                    </td>
-                </tr>
-            `;
+            u.uid = doc.id; // Guarda o ID para edição
+            u.company = u.company || 'Particular'; // Garante valor padrão
+            managerCachedUsers.push(u);
+            uniqueTurmas.add(u.company);
         });
 
-        if (stats.total === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center">Nenhum aluno encontrado.</td></tr>';
-        } else {
-            tbody.innerHTML = html;
-        }
+        // Popula o Filtro de Turmas
+        filterSelect.innerHTML = '<option value="TODOS">Todas as Turmas</option>';
+        uniqueTurmas.forEach(turma => {
+            filterSelect.innerHTML += `<option value="${turma}">${turma}</option>`;
+        });
 
-        // Atualiza Cards de Estatística
-        document.getElementById('mgr-total-users').innerText = stats.total;
-        document.getElementById('mgr-completed').innerText = stats.completed;
-        document.getElementById('mgr-progress').innerText = stats.progress;
-        document.getElementById('mgr-pending').innerText = stats.pending;
+        // Renderiza a tabela inicial (Todos)
+        renderManagerTable(managerCachedUsers);
 
     } catch (error) {
         console.error(error);
-        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-red-500">Erro ao carregar dados.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-red-500">Erro ao carregar dados.</td></tr>';
+    }
+};
+
+// FUNÇÃO AUXILIAR: RENDERIZA A TABELA (USADA NO INÍCIO E NO FILTRO)
+window.renderManagerTable = function(usersList) {
+    const tbody = document.getElementById('manager-table-body');
+    const totalCourseModules = 52;
+    let html = '';
+    let stats = { total: 0, completed: 0, progress: 0, pending: 0 };
+
+    if (usersList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Nenhum aluno encontrado neste filtro.</td></tr>';
+        return;
+    }
+
+    usersList.forEach(u => {
+        // Dados
+        const phone = u.phone || 'Não informado';
+        const modulesDone = u.completedModules ? u.completedModules.length : 0;
+        
+        // Status e Validade
+        let statusBadge = '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-[10px] rounded-full font-bold uppercase">TRIAL</span>';
+        if (u.status === 'premium') statusBadge = '<span class="px-2 py-1 bg-green-100 text-green-800 text-[10px] rounded-full font-bold uppercase">PREMIUM</span>';
+        
+        let validadeStr = '-';
+        if (u.acesso_ate) {
+            const dataValidade = new Date(u.acesso_ate);
+            validadeStr = dataValidade.toLocaleDateString('pt-BR');
+            if (new Date() > dataValidade) validadeStr = `<span class="text-red-500 font-bold">${validadeStr} (Exp)</span>`;
+        }
+
+        // Progresso
+        const percent = Math.min(100, Math.round((modulesDone / totalCourseModules) * 100));
+        let progressColor = 'bg-red-500';
+        if (percent > 30) progressColor = 'bg-yellow-500';
+        if (percent > 80) progressColor = 'bg-green-500';
+
+        // Estatísticas
+        stats.total++;
+        if (percent >= 100) stats.completed++;
+        else if (percent > 0) stats.progress++;
+        else stats.pending++;
+
+        html += `
+            <tr class="hover:bg-gray-50 border-b border-gray-100 group">
+                <td class="px-4 py-3">
+                    <div class="font-bold text-gray-800">${u.name}</div>
+                    <div class="text-xs text-gray-500">${u.email}</div>
+                </td>
+                <td class="px-4 py-3 text-gray-600 text-xs">
+                    <i class="fab fa-whatsapp text-green-500 mr-1"></i> ${phone}
+                </td>
+                <td class="px-4 py-3">
+                    <div class="flex items-center gap-2">
+                        <span class="px-2 py-1 bg-blue-50 text-blue-700 text-[10px] rounded font-bold border border-blue-100">${u.company}</span>
+                        <button onclick="editUserClass('${u.uid}', '${u.company}')" class="text-gray-400 hover:text-blue-600 transition-colors opacity-0 group-hover:opacity-100" title="Mudar Turma">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                    </div>
+                </td>
+                <td class="px-4 py-3">
+                    <div class="flex items-center">
+                        <div class="w-16 bg-gray-200 rounded-full h-1.5 mr-2">
+                            <div class="${progressColor} h-1.5 rounded-full" style="width: ${percent}%"></div>
+                        </div>
+                        <span class="text-xs font-bold text-gray-600">${percent}%</span>
+                    </div>
+                </td>
+                <td class="px-4 py-3">${statusBadge}</td>
+                <td class="px-4 py-3 text-xs font-mono text-gray-600">${validadeStr}</td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+
+    // Atualiza Cards de Estatística
+    document.getElementById('mgr-total-users').innerText = stats.total;
+    document.getElementById('mgr-completed').innerText = stats.completed;
+    document.getElementById('mgr-progress').innerText = stats.progress;
+    document.getElementById('mgr-pending').innerText = stats.pending;
+};
+
+// FUNÇÃO DE FILTRO (ACIONADA PELO SELECT)
+window.filterManagerTable = function() {
+    const selectedTurma = document.getElementById('mgr-filter-turma').value;
+    
+    if (selectedTurma === 'TODOS') {
+        renderManagerTable(managerCachedUsers);
+    } else {
+        const filtered = managerCachedUsers.filter(u => u.company === selectedTurma);
+        renderManagerTable(filtered);
+    }
+};
+
+// FUNÇÃO DE EDITAR TURMA
+window.editUserClass = async function(uid, oldClass) {
+    const newClass = prompt("Digite o novo nome da Turma/Empresa:", oldClass);
+    
+    if (newClass && newClass !== oldClass) {
+        try {
+            await window.__fbDB.collection('users').doc(uid).update({ 
+                company: newClass.toUpperCase() 
+            });
+            alert("Turma atualizada com sucesso!");
+            openManagerPanel(); // Recarrega para atualizar dados e filtros
+        } catch (e) {
+            alert("Erro ao atualizar: " + e.message);
+        }
     }
 };
     // Função para dar/tirar poder de Gestor
