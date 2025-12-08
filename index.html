@@ -47,18 +47,26 @@
     
     <nav class="fixed top-0 left-0 w-full z-50 py-3 px-4 md:py-4 md:px-12 flex justify-between items-center bg-gradient-to-b from-black/90 to-transparent backdrop-blur-sm border-b border-white/5">
         <div class="flex items-center gap-3 md:gap-4">
-            <div class="leading-tight">
-                <span class="block font-serif font-black italic text-xl md:text-2xl tracking-tight leading-none">
-                    <span class="text-white">FOCO.</span><span class="text-orange-600">AÇÃO.</span><span class="text-white">RESULTADO.</span>
+            <div class="leading-none">
+                <span class="block font-serif font-black italic text-xl md:text-2xl tracking-tight">
+                    <span class="text-white">FOCO.</span><span class="text-orange-600">AÇÃO.</span>
                 </span>
-                <span class="block text-[9px] md:text-[10px] text-gray-400 tracking-[0.3em] uppercase mt-1">Training Division</span>
+                <span class="block font-serif font-black italic text-xl md:text-2xl tracking-tight text-white mt-1">
+                    RESULTADO.
+                </span>
             </div>
         </div>
         
-        <button onclick="enterSystem()" class="group flex items-center gap-2 bg-white/5 hover:bg-orange-600 text-white px-4 py-2 md:px-6 md:py-2 rounded border border-white/10 hover:border-orange-500 transition-all duration-300 backdrop-blur-md">
-            <span class="text-[10px] md:text-xs font-bold uppercase tracking-widest">Área do Aluno</span>
-            <i class="fas fa-lock text-[10px] md:text-xs text-orange-500 group-hover:text-white transition-colors"></i>
-        </button>
+        <div class="flex items-center gap-3">
+            <button onclick="openManagerPanel()" class="hidden md:flex items-center gap-2 text-gray-300 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors mr-2">
+                <i class="fas fa-building text-orange-500"></i> Sou Gestor
+            </button>
+
+            <button onclick="enterSystem()" class="group flex items-center gap-2 bg-white/5 hover:bg-orange-600 text-white px-4 py-2 md:px-6 md:py-2 rounded border border-white/10 hover:border-orange-500 transition-all duration-300 backdrop-blur-md">
+                <span class="text-[10px] md:text-xs font-bold uppercase tracking-widest">Área do Aluno</span>
+                <i class="fas fa-lock text-[10px] md:text-xs text-orange-500 group-hover:text-white transition-colors"></i>
+            </button>
+        </div>
     </nav>
 
     <section class="relative min-h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden pt-20">
