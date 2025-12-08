@@ -2194,6 +2194,7 @@ function initScrollReveal() {
             wrapper.addEventListener('touchstart', openLaptop, {passive: true});
         }
     }
+}
         });
     }, {
         threshold: 0.1, // Basta 10% do objeto aparecer
