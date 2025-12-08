@@ -315,17 +315,29 @@ function init() {
         addEventListeners(); 
         handleInitialLoad();
 
-        // Inicia Tour Automático (se nunca viu)
+       // Inicia Tour Automático (se nunca viu)
         startOnboardingTour(false); 
-    }
-    // --- CORREÇÃO B2B: ABRE O PAINEL SE FOI SOLICITADO ---
-        if (localStorage.getItem('open_manager_after_login') === 'true') {
-            localStorage.removeItem('open_manager_after_login'); // Limpa a memória para não abrir sempre
-            setTimeout(() => {
-                openManagerPanel(); // Abre o painel automaticamente
-            }, 1000); // Pequeno delay para garantir que a tela carregou
-        }
 
+        // --- CORREÇÃO BLINDADA B2B ---
+        // Verifica se a intenção de abrir o painel existe
+        if (localStorage.getItem('open_manager_after_login') === 'true') {
+            localStorage.removeItem('open_manager_after_login'); // Limpa a memória
+            
+            // Tenta abrir o painel após 1.5 segundos
+            setTimeout(() => {
+                const modal = document.getElementById('manager-modal');
+                if (modal && typeof openManagerPanel === 'function') {
+                    openManagerPanel();
+                } else {
+                    // Se falhar (elemento não existe ainda), tenta de novo em 3 segundos
+                    console.log("Tentativa 1 falhou, tentando novamente...");
+                    setTimeout(() => {
+                        if(typeof openManagerPanel === 'function') openManagerPanel();
+                    }, 3000);
+                }
+            }, 1500); 
+        }
+    }
     // --- FUNÇÕES ADMIN (ATUALIZADAS E LEGÍVEIS) ---
     window.openAdminPanel = async function() {
         if (!currentUserData || !currentUserData.isAdmin) return;
