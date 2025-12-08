@@ -909,11 +909,22 @@ body.focus-mode #main-wrapper { padding-bottom: 2rem; }
 #landing-hero {
     position: fixed;
     inset: 0;
-    z-index: 100000; /* Garante que fique acima de tudo */
-    overflow-y: auto !important; /* FORÇA a rolagem vertical */
-    height: 100vh; /* Garante altura total */
+    z-index: 10000; /* Garante que fique acima de tudo */
+    overflow-y: auto !important; /* Rolagem vertical */
+    height: 100vh; /* Altura total da tela */
     background-color: #050a14;
-    -webkit-overflow-scrolling: touch; /* Rolagem suave no iPhone */
+    -webkit-overflow-scrolling: touch; /* Suavidade no iPhone */
+    
+    /* O SEGREDO PARA PARAR NO FINAL: */
+    overscroll-behavior-y: none; /* Impede o efeito elástico (bouncing) */
+    scroll-behavior: smooth;
+}
+
+/* Garante que o conteúdo pare no lugar certo */
+#landing-hero > div {
+    height: auto !important;
+    min-height: 100vh;
+    padding-bottom: 0 !important; /* Remove espaços extras no final */
 }
 
 /* Garante que o conteúdo dentro não trave */
@@ -971,6 +982,12 @@ details[open] summary ~ * {
 @keyframes sweep {
     0%    {opacity: 0; transform: translateY(-10px)}
     100%  {opacity: 1; transform: translateY(0)}
+}
+
+/* Remove espaço extra do corpo quando a capa está ativa */
+body.landing-active {
+    overflow: hidden; /* O corpo não rola, só a capa rola */
+    padding-bottom: 0 !important;
 }
 
 
