@@ -600,6 +600,57 @@
             </div>
         </div>
     </div>
+                <div id="manager-modal" class="modal w-[95%] max-w-7xl mx-auto overflow-hidden flex flex-col max-h-[90vh]" style="background: #f8f9fa; border: 1px solid #e2e8f0; color: #1a202c; z-index: 20002 !important;">
+        <div class="bg-blue-900 p-4 border-b border-blue-800 flex justify-between items-center flex-shrink-0">
+            <div>
+                <h2 class="text-xl font-bold text-white flex items-center">
+                    <i class="fas fa-building mr-2 text-orange-500"></i> Painel da Empresa
+                </h2>
+                <p class="text-xs text-blue-200" id="manager-company-name">Gestão de Equipe</p>
+            </div>
+            <button id="close-manager-modal" class="text-white hover:text-orange-500 text-2xl transition-colors"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <div class="p-4 bg-gray-100 overflow-y-auto flex-grow custom-scrollbar">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-4 rounded shadow border-l-4 border-blue-500">
+                    <p class="text-xs text-gray-500 uppercase font-bold">Total de Alunos</p>
+                    <p class="text-2xl font-bold text-gray-800" id="mgr-total-users">0</p>
+                </div>
+                <div class="bg-white p-4 rounded shadow border-l-4 border-green-500">
+                    <p class="text-xs text-gray-500 uppercase font-bold">Concluídos</p>
+                    <p class="text-2xl font-bold text-gray-800" id="mgr-completed">0</p>
+                </div>
+                <div class="bg-white p-4 rounded shadow border-l-4 border-yellow-500">
+                    <p class="text-xs text-gray-500 uppercase font-bold">Em Andamento</p>
+                    <p class="text-2xl font-bold text-gray-800" id="mgr-progress">0</p>
+                </div>
+                <div class="bg-white p-4 rounded shadow border-l-4 border-red-500">
+                    <p class="text-xs text-gray-500 uppercase font-bold">Pendentes (Início)</p>
+                    <p class="text-2xl font-bold text-gray-800" id="mgr-pending">0</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Nome do Aluno</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Contato</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Turma</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Progresso</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="manager-table-body" class="bg-white divide-y divide-gray-200 text-sm">
+                            <tr><td colspan="5" class="p-4 text-center text-gray-500">Carregando dados da equipe...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="admin-modal" class="modal w-[95%] max-w-6xl mx-auto overflow-hidden flex flex-col max-h-[90vh]" style="background: #f8f9fa; border: 1px solid #e2e8f0; color: #1a202c; z-index: 20002 !important;">
         <div class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
             <h2 class="text-xl font-bold text-white flex items-center">
