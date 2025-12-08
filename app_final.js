@@ -2195,8 +2195,7 @@ function initScrollReveal() {
         }
     }
 }
-        });
-    }, {
+     , {
         threshold: 0.1, // Basta 10% do objeto aparecer
         root: heroContainer // Avisa que a rolagem ocorre DENTRO da capa
     });
