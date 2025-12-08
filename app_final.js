@@ -496,6 +496,8 @@ function init() {
     function setupAuthEventListeners() {
         const nameField = document.getElementById('name-field-container');
         const cpfField = document.getElementById('cpf-field-container'); 
+        const companyField = document.getElementById('company-field-container'); // NOVO
+        const companyInput = document.getElementById('company-input'); // NOVO
         const nameInput = document.getElementById('name-input');
         const cpfInput = document.getElementById('cpf-input'); 
         const emailInput = document.getElementById('email-input');
@@ -562,6 +564,7 @@ function init() {
             signupGroup.classList.remove('hidden');
             nameField.classList.remove('hidden');
             cpfField.classList.remove('hidden'); 
+            companyField.classList.remove('hidden');
             authTitle.textContent = "Criar Nova Conta";
             authMsg.textContent = "Cadastre-se para o Período de Experiência.";
             feedback.textContent = "";
@@ -571,6 +574,7 @@ function init() {
             signupGroup.classList.add('hidden');
             nameField.classList.add('hidden');
             cpfField.classList.add('hidden'); 
+            companyField.classList.add('hidden');
             authTitle.textContent = "Área do Aluno";
             authMsg.textContent = "Acesso Restrito";
             feedback.textContent = "";
@@ -595,6 +599,7 @@ function init() {
             }
         });
         btnSignup?.addEventListener('click', async () => {
+            const company = companyInput.value; // NOVO
             const name = nameInput.value;
             const email = emailInput.value;
             const password = passwordInput.value;
@@ -607,7 +612,7 @@ function init() {
             feedback.textContent = "Criando conta...";
             feedback.className = "text-center text-sm mt-4 text-blue-400 font-semibold";
             try {
-                await FirebaseCourse.signUpWithEmail(name, email, password, cpf);
+                await FirebaseCourse.signUpWithEmail(name, email, password, cpf, company);
                 feedback.textContent = "Sucesso! Iniciando...";
             } catch (error) {
                 feedback.className = "text-center text-sm mt-4 text-red-400 font-semibold";
