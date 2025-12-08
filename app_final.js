@@ -2144,5 +2144,103 @@ window.scrollToNextSection = function() {
     const section = document.getElementById('features-section');
     if(section) section.scrollIntoView({ behavior: 'smooth' });
 }
+    // --- LÓGICA DO PAINEL DO GESTOR (B2B) ---
+window.openManagerPanel = async function() {
+    const modal = document.getElementById('manager-modal');
+    const overlay = document.getElementById('admin-modal-overlay'); // Reutilizamos o overlay do admin
+    const tbody = document.getElementById('manager-table-body');
+    
+    // Mostra o modal
+    modal.classList.add('show');
+    overlay.classList.add('show');
+    
+    // Botão de fechar
+    document.getElementById('close-manager-modal').onclick = () => {
+        modal.classList.remove('show');
+        overlay.classList.remove('show');
+    };
+
+    // Pega o código da empresa do gestor logado (Simulação: vamos pegar TODOS por enquanto ou filtrar se tiver o campo)
+    // NOTA: Para produção real, filtraríamos: .where("company", "==", currentUserData.company)
+    
+    try {
+        // Busca usuários no banco
+        const snapshot = await window.__fbDB.collection('users').orderBy('name').get();
+        
+        let html = '';
+        let stats = { total: 0, completed: 0, progress: 0, pending: 0 };
+        const totalCourseModules = 52; // Total aproximado de módulos do curso
+
+        snapshot.forEach(doc => {
+            const u = doc.data();
+            
+            // FILTRO B2B: Aqui você verá todos. Se quiser filtrar só a turma "Coca-Cola", 
+            // você usaria: if (u.company !== 'Coca-Cola') return;
+            
+            // Dados
+            const phone = u.phone || 'Não informado';
+            const company = u.company || 'Particular';
+            const modulesDone = u.completedModules ? u.completedModules.length : 0;
+            
+            // Cálculo de Progresso
+            const percent = Math.min(100, Math.round((modulesDone / totalCourseModules) * 100));
+            
+            // Estatísticas
+            stats.total++;
+            if (percent >= 100) stats.completed++;
+            else if (percent > 0) stats.progress++;
+            else stats.pending++;
+
+            // Barra de Progresso Visual
+            let progressColor = 'bg-red-500';
+            if (percent > 30) progressColor = 'bg-yellow-500';
+            if (percent > 80) progressColor = 'bg-green-500';
+
+            html += `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3">
+                        <div class="font-bold text-gray-800">${u.name}</div>
+                        <div class="text-xs text-gray-500">${u.email}</div>
+                    </td>
+                    <td class="px-4 py-3 text-gray-600">
+                        <i class="fab fa-whatsapp text-green-500 mr-1"></i> ${phone}
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-bold">${company}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="flex items-center">
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 mr-2 max-w-[100px]">
+                                <div class="${progressColor} h-2.5 rounded-full" style="width: ${percent}%"></div>
+                            </div>
+                            <span class="text-xs font-bold text-gray-600">${percent}%</span>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="text-xs font-bold ${percent === 100 ? 'text-green-600' : 'text-gray-500'}">
+                            ${percent === 100 ? 'CONCLUÍDO' : 'EM CURSO'}
+                        </span>
+                    </td>
+                </tr>
+            `;
+        });
+
+        if (stats.total === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center">Nenhum aluno encontrado.</td></tr>';
+        } else {
+            tbody.innerHTML = html;
+        }
+
+        // Atualiza Cards de Estatística
+        document.getElementById('mgr-total-users').innerText = stats.total;
+        document.getElementById('mgr-completed').innerText = stats.completed;
+        document.getElementById('mgr-progress').innerText = stats.progress;
+        document.getElementById('mgr-pending').innerText = stats.pending;
+
+    } catch (error) {
+        console.error(error);
+        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-red-500">Erro ao carregar dados.</td></tr>';
+    }
+};
     init();
 });
