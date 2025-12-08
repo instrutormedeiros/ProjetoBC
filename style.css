@@ -946,15 +946,17 @@ body.landing-active {
     transform-origin: bottom;
     transform-style: preserve-3d;
     transition: transform 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    /* Começa fechado (inclinado para frente) */
-    transform: rotateX(-90deg); 
+    /* Começa fechado */
+    transform: rotateX(-90deg);
+    /* Força a GPU do celular a renderizar isso */
+    will-change: transform; 
+    -webkit-backface-visibility: hidden; /* Ajuda no Safari/iOS */
 }
 
-/* Classe que será adicionada via JS para abrir */
+/* Classe que abre a tampa */
 .laptop-lid.open {
-    transform: rotateX(0deg);
+    transform: rotateX(0deg) !important; /* O !important garante que nada sobrescreva */
 }
-
 /* Detalhes do Accordion (FAQ) */
 details > summary {
     list-style: none;
@@ -970,6 +972,7 @@ details[open] summary ~ * {
     0%    {opacity: 0; transform: translateY(-10px)}
     100%  {opacity: 1; transform: translateY(0)}
 }
+
 
 
 
