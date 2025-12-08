@@ -2133,45 +2133,53 @@ window.enterSystem = function() {
         }
     }, 800); // Tempo sincronizado com a transição (0.8s)
 }
-// --- SISTEMA DE ANIMAÇÃO AO ROLAR (CORRIGIDO PARA MOBILE) ---
+// --- SISTEMA DE ANIMAÇÃO E NOTEBOOK (BLINDADO PARA MOBILE) ---
 function initScrollReveal() {
-    // Detecta se a rolagem acontece dentro do Hero (Capa) ou na Janela
+    const laptop = document.getElementById('laptop-lid');
     const heroContainer = document.getElementById('landing-hero');
-    
-    // Se a capa estiver fixa, ela é quem rola. Se não, é a janela.
-    const isFixed = heroContainer && window.getComputedStyle(heroContainer).position === 'fixed';
-    const observerRoot = isFixed ? heroContainer : null;
 
+    // 1. O OBSERVADOR DE ROLAGEM (Método Principal)
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                
-                // Animação Padrão (Texto subindo)
+                // Anima elementos de texto
                 if (entry.target.classList.contains('reveal-on-scroll')) {
                     entry.target.classList.remove('opacity-0', 'translate-y-10', 'translate-x-10', '-translate-x-10', 'scale-95');
+                    observer.unobserve(entry.target);
                 }
-
-                // Animação do Notebook (Abrir Tampa)
+                
+                // Anima o Notebook
                 if (entry.target.id === 'laptop-lid') {
+                    console.log("Notebook visível! Abrindo..."); // Debug para você ver no console
                     entry.target.classList.add('open');
+                    observer.unobserve(entry.target); // Para de observar depois que abriu
                 }
-
-                observer.unobserve(entry.target);
             }
         });
     }, {
-        threshold: 0.1, // Reduzido para 10% (ajuda no celular a ativar mais rápido)
-        root: observerRoot // O SEGREDO: Avisa o navegador onde olhar a rolagem
+        threshold: 0.1, // Basta 10% do objeto aparecer
+        root: heroContainer // Avisa que a rolagem ocorre DENTRO da capa
     });
 
-    // Observa elementos padrão
-    document.querySelectorAll('.reveal-on-scroll').forEach(el => {
-        observer.observe(el);
-    });
+    // Registra os elementos no observador
+    document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
+    if (laptop) observer.observe(laptop);
 
-    // Observa o notebook
-    const laptop = document.getElementById('laptop-lid');
-    if(laptop) observer.observe(laptop);
+    // 2. O GATILHO DE TOQUE (Método de Backup para Celular)
+    // Se o usuário tocar no notebook (tentando ver), ele abre.
+    if (laptop) {
+        laptop.addEventListener('click', () => {
+            laptop.classList.add('open');
+        });
+        
+        // Se tocar em qualquer lugar da área do notebook
+        const wrapper = document.querySelector('.laptop-wrapper');
+        if(wrapper) {
+            wrapper.addEventListener('touchstart', () => {
+                laptop.classList.add('open');
+            }, {passive: true});
+        }
+    }
 }
 // Rolar para a próxima seção
 window.scrollToNextSection = function() {
