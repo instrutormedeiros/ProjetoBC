@@ -2221,17 +2221,33 @@ window.openManagerPanel = async function() {
         let stats = { total: 0, completed: 0, progress: 0, pending: 0 };
         const totalCourseModules = 52; // Total aproximado de módulos do curso
 
-        snapshot.forEach(doc => {
+snapshot.forEach(doc => {
             const u = doc.data();
             
-            // FILTRO B2B: Aqui você verá todos. Se quiser filtrar só a turma "Coca-Cola", 
-            // você usaria: if (u.company !== 'Coca-Cola') return;
-            
-            // Dados
+            // Dados Básicos
             const phone = u.phone || 'Não informado';
             const company = u.company || 'Particular';
             const modulesDone = u.completedModules ? u.completedModules.length : 0;
             
+            // --- NOVO: STATUS E DATA ---
+            let statusBadge = '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-[10px] rounded-full font-bold uppercase">TRIAL</span>';
+            if (u.status === 'premium') {
+                statusBadge = '<span class="px-2 py-1 bg-green-100 text-green-800 text-[10px] rounded-full font-bold uppercase">PREMIUM</span>';
+            }
+            
+            // Formata a data (DD/MM/AAAA)
+            let validadeStr = '-';
+            if (u.acesso_ate) {
+                const dataValidade = new Date(u.acesso_ate);
+                validadeStr = dataValidade.toLocaleDateString('pt-BR');
+                
+                // Se venceu, marca em vermelho
+                if (new Date() > dataValidade) {
+                    validadeStr = `<span class="text-red-500 font-bold">${validadeStr} (Exp)</span>`;
+                }
+            }
+            // ---------------------------
+
             // Cálculo de Progresso
             const percent = Math.min(100, Math.round((modulesDone / totalCourseModules) * 100));
             
@@ -2241,35 +2257,36 @@ window.openManagerPanel = async function() {
             else if (percent > 0) stats.progress++;
             else stats.pending++;
 
-            // Barra de Progresso Visual
             let progressColor = 'bg-red-500';
             if (percent > 30) progressColor = 'bg-yellow-500';
             if (percent > 80) progressColor = 'bg-green-500';
 
+            // HTML DA LINHA (ATUALIZADO COM NOVAS COLUNAS)
             html += `
-                <tr class="hover:bg-gray-50">
+                <tr class="hover:bg-gray-50 border-b border-gray-100">
                     <td class="px-4 py-3">
                         <div class="font-bold text-gray-800">${u.name}</div>
                         <div class="text-xs text-gray-500">${u.email}</div>
                     </td>
-                    <td class="px-4 py-3 text-gray-600">
+                    <td class="px-4 py-3 text-gray-600 text-xs">
                         <i class="fab fa-whatsapp text-green-500 mr-1"></i> ${phone}
                     </td>
                     <td class="px-4 py-3">
-                        <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-bold">${company}</span>
+                        <span class="px-2 py-1 bg-blue-50 text-blue-700 text-[10px] rounded font-bold border border-blue-100">${company}</span>
                     </td>
                     <td class="px-4 py-3">
                         <div class="flex items-center">
-                            <div class="w-full bg-gray-200 rounded-full h-2.5 mr-2 max-w-[100px]">
-                                <div class="${progressColor} h-2.5 rounded-full" style="width: ${percent}%"></div>
+                            <div class="w-16 bg-gray-200 rounded-full h-1.5 mr-2">
+                                <div class="${progressColor} h-1.5 rounded-full" style="width: ${percent}%"></div>
                             </div>
                             <span class="text-xs font-bold text-gray-600">${percent}%</span>
                         </div>
                     </td>
                     <td class="px-4 py-3">
-                        <span class="text-xs font-bold ${percent === 100 ? 'text-green-600' : 'text-gray-500'}">
-                            ${percent === 100 ? 'CONCLUÍDO' : 'EM CURSO'}
-                        </span>
+                        ${statusBadge}
+                    </td>
+                    <td class="px-4 py-3 text-xs font-mono text-gray-600">
+                        ${validadeStr}
                     </td>
                 </tr>
             `;
