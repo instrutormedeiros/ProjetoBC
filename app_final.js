@@ -260,10 +260,15 @@ function init() {
     }
 
     function onLoginSuccess(user, userData) {
+        // --- NOVO: GARANTE QUE A CAPA SUMA NO REFRESH ---
+        const landing = document.getElementById('landing-hero');
+        if (landing) landing.classList.add('hidden'); // Esconde a capa
+        document.body.classList.remove('landing-active'); // Destrava rolagem
+        // ------------------------------------------------
+
         currentUserData = userData; 
 
         if (document.body.getAttribute('data-app-ready') === 'true') return;
-        document.body.setAttribute('data-app-ready', 'true');
         
         // Fecha modais e overlays para liberar a tela
         document.getElementById('name-prompt-modal')?.classList.remove('show');
