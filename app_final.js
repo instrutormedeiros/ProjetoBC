@@ -496,6 +496,8 @@ function init() {
     function setupAuthEventListeners() {
         const nameField = document.getElementById('name-field-container');
         const cpfField = document.getElementById('cpf-field-container'); 
+        const phoneField = document.getElementById('phone-field-container'); // NOVO
+        const phoneInput = document.getElementById('phone-input'); // NOVO
         const companyField = document.getElementById('company-field-container'); // NOVO
         const companyInput = document.getElementById('company-input'); // NOVO
         const nameInput = document.getElementById('name-input');
@@ -564,6 +566,7 @@ function init() {
             signupGroup.classList.remove('hidden');
             nameField.classList.remove('hidden');
             cpfField.classList.remove('hidden'); 
+            phoneField.classList.remove('hidden'); // MOSTRAR TELEFONE
             companyField.classList.remove('hidden');
             authTitle.textContent = "Criar Nova Conta";
             authMsg.textContent = "Cadastre-se para o Período de Experiência.";
@@ -574,6 +577,7 @@ function init() {
             signupGroup.classList.add('hidden');
             nameField.classList.add('hidden');
             cpfField.classList.add('hidden'); 
+            phoneField.classList.add('hidden'); // ESCONDER TELEFONE
             companyField.classList.add('hidden');
             authTitle.textContent = "Área do Aluno";
             authMsg.textContent = "Acesso Restrito";
@@ -599,12 +603,13 @@ function init() {
             }
         });
         btnSignup?.addEventListener('click', async () => {
+            const phone = phoneInput.value; // NOVO
             const company = companyInput.value; // NOVO
             const name = nameInput.value;
             const email = emailInput.value;
             const password = passwordInput.value;
             const cpf = cpfInput.value;
-            if (!name || !email || !password || !cpf) {
+            if (!name || !email || !password || !cpf || !phone) {
                 feedback.textContent = "Todos os campos são obrigatórios.";
                 feedback.className = "text-center text-sm mt-4 font-semibold text-red-500";
                 return;
@@ -612,7 +617,7 @@ function init() {
             feedback.textContent = "Criando conta...";
             feedback.className = "text-center text-sm mt-4 text-blue-400 font-semibold";
             try {
-                await FirebaseCourse.signUpWithEmail(name, email, password, cpf, company);
+                await FirebaseCourse.signUpWithEmail(name, email, password, cpf, company, phone);
                 feedback.textContent = "Sucesso! Iniciando...";
             } catch (error) {
                 feedback.className = "text-center text-sm mt-4 text-red-400 font-semibold";
