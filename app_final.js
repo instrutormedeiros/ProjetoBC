@@ -396,6 +396,7 @@ function init() {
                             <button onclick="manageUserAccess('${uid}')" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Gerenciar Plano"><i class="fas fa-calendar-alt"></i></button>
                             <button onclick="sendResetEmail('${u.email}')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Resetar Senha"><i class="fas fa-key"></i></button>
                             <button onclick="deleteUser('${uid}', '${u.name}', '${cpf}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Excluir"><i class="fas fa-trash"></i></button>
+                            <button onclick="toggleManagerRole('${uid}', ${u.isManager})" class="${u.isManager ? 'bg-purple-600' : 'bg-gray-400'} hover:bg-purple-500 text-white px-2 py-1.5 rounded text-xs shadow" title="Alternar Gestor"><i class="fas fa-briefcase"></i></button>
                         </td>
                     </tr>
                 `;
@@ -2176,21 +2177,25 @@ window.startManagerLogin = function() {
     // 2. Chama a função que abre o modal de login
     enterSystem();
 };
-    // --- LÓGICA DO PAINEL DO GESTOR (B2B) ---
+   // --- LÓGICA DO PAINEL DO GESTOR (B2B) ---
 window.openManagerPanel = async function() {
-    // VERIFICAÇÃO DE SEGURANÇA B2B
+    
+    // 1. Verifica se está logado
     if (!currentUserData) {
-        alert("Área restrita para Gestores. Por favor, faça login primeiro.");
-        enterSystem(); // Abre o modal de login
+        // Se não estiver logado, manda para a tela de login
+        // (A função startManagerLogin já cuidou de salvar a intenção)
+        enterSystem(); 
         return;
     }
-    
-    // Opcional: Verificar se é admin ou tem flag de empresa
-    // if (!currentUserData.isAdmin && !currentUserData.isManager) {
-    //    alert("Acesso negado. Sua conta não tem perfil de Gestor.");
-    //    return;
-    // }
 
+    // 2. TRAVA DE SEGURANÇA (AQUI ESTÁ O SEGREDO)
+    // Se o usuário NÃO for admin E NÃO tiver a flag 'isManager', bloqueia.
+    if (currentUserData.isAdmin !== true && currentUserData.isManager !== true) {
+        alert("⛔ ACESSO NEGADO\n\nSua conta não possui permissão de Gestor.\nEntre em contato com o suporte para validar seu cadastro corporativo.");
+        return; // PARA TUDO AQUI. Não carrega dados, não abre modal.
+    }
+
+    // 3. Se passou pela trava, abre o painel...
     const modal = document.getElementById('manager-modal');
     const overlay = document.getElementById('admin-modal-overlay'); // Reutilizamos o overlay do admin
     const tbody = document.getElementById('manager-table-body');
@@ -2285,6 +2290,23 @@ window.openManagerPanel = async function() {
     } catch (error) {
         console.error(error);
         tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-red-500">Erro ao carregar dados.</td></tr>';
+    }
+};
+    // Função para dar/tirar poder de Gestor
+window.toggleManagerRole = async function(uid, currentStatus) {
+    const novoStatus = !currentStatus; // Inverte (se era true vira false, e vice-versa)
+    const acao = novoStatus ? "PROMOVER" : "REMOVER";
+    
+    if(confirm(`Deseja ${acao} este usuário como Gestor de Empresa?`)) {
+        try {
+            await window.__fbDB.collection('users').doc(uid).update({ 
+                isManager: novoStatus 
+            });
+            alert(`Sucesso! Permissão de Gestor ${novoStatus ? 'CONCEDIDA' : 'REMOVIDA'}.`);
+            openAdminPanel(); // Atualiza a lista
+        } catch(e) {
+            alert("Erro: " + e.message);
+        }
     }
 };
     init();
