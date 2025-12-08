@@ -2100,27 +2100,29 @@ window.scrollToStory = function() {
     if (section) section.scrollIntoView({ behavior: 'smooth' });
 }
 
-// Entra no sistema e verifica login
+// Entra no sistema e verifica login (VERSÃO OTIMIZADA PARA MOBILE)
 window.enterSystem = function() {
     const landing = document.getElementById('landing-hero');
     
-    // 1. Destrava a rolagem do corpo principal
-    document.body.classList.remove('landing-active');
-
-    // 2. Efeito visual de "subir a cortina"
     if (landing) {
-        landing.style.transform = 'translateY(-100%)';
-        landing.style.opacity = '0';
+        // 1. Prepara a animação (Hardware Acceleration)
+        landing.style.willChange = 'transform, opacity';
+        landing.style.transition = 'transform 0.8s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.8s ease';
+        
+        // 2. Força o navegador a reconhecer o estado atual antes de mudar
+        requestAnimationFrame(() => {
+            // Aplica o movimento
+            landing.style.transform = 'translate3d(0, -100%, 0)'; // translate3d ativa a GPU do celular
+            landing.style.opacity = '0';
+        });
     }
 
-    // 3. Aguarda a animação e ATIVA O SISTEMA
+    // 3. Aguarda a animação terminar para destravar o scroll e remover a capa
     setTimeout(() => {
         if (landing) landing.classList.add('hidden'); // Remove do DOM
+        document.body.classList.remove('landing-active'); // Destrava a rolagem do corpo principal SÓ AGORA
         
-        // === A CORREÇÃO MÁGICA ESTÁ AQUI ===
-        // Se o usuário não estiver logado (currentUserData vazio), 
-        // ativamos o "ouvinte" (checkAuth). 
-        // É isso que vai destravar o "Verificando..." e chamar o onLoginSuccess.
+        // Verifica autenticação
         if (!currentUserData) {
             console.log("Ativando verificação de autenticação...");
             if (typeof FirebaseCourse !== 'undefined') {
@@ -2129,7 +2131,7 @@ window.enterSystem = function() {
                 });
             }
         }
-    }, 800);
+    }, 800); // Tempo sincronizado com a transição (0.8s)
 }
     // --- SISTEMA DE ANIMAÇÃO AO ROLAR (SCROLL REVEAL) ---
 // --- SISTEMA DE ANIMAÇÃO AO ROLAR (SCROLL REVEAL & LAPTOP) ---
