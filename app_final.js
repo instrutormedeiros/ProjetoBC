@@ -2133,29 +2133,61 @@ window.enterSystem = function() {
         }
     }, 800); // Tempo sincronizado com a transição (0.8s)
 }
-// --- SISTEMA DE ANIMAÇÃO E NOTEBOOK (BLINDADO PARA MOBILE) ---
+// --- SISTEMA DE ANIMAÇÃO E NOTEBOOK (COM DICA DE TOQUE) ---
 function initScrollReveal() {
     const laptop = document.getElementById('laptop-lid');
     const heroContainer = document.getElementById('landing-hero');
+    const tapHint = document.getElementById('notebook-tap-hint');
 
-    // 1. O OBSERVADOR DE ROLAGEM (Método Principal)
+    // Função para abrir e esconder a dica
+    const openLaptop = () => {
+        if (laptop && !laptop.classList.contains('open')) {
+            console.log("Abrindo notebook...");
+            laptop.classList.add('open');
+            // Esconde a dica suavemente
+            if (tapHint) {
+                tapHint.style.opacity = '0';
+                setTimeout(() => tapHint.style.display = 'none', 500);
+            }
+        }
+    };
+
+    // 1. O OBSERVADOR DE ROLAGEM
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                // Anima elementos de texto
                 if (entry.target.classList.contains('reveal-on-scroll')) {
                     entry.target.classList.remove('opacity-0', 'translate-y-10', 'translate-x-10', '-translate-x-10', 'scale-95');
                     observer.unobserve(entry.target);
                 }
                 
-                // Anima o Notebook
                 if (entry.target.id === 'laptop-lid') {
-                    console.log("Notebook visível! Abrindo..."); // Debug para você ver no console
-                    entry.target.classList.add('open');
-                    observer.unobserve(entry.target); // Para de observar depois que abriu
+                    openLaptop(); // Chama a função unificada
+                    observer.unobserve(entry.target);
                 }
             }
         });
+    }, {
+        threshold: 0.1,
+        root: heroContainer
+    });
+
+    document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
+    if (laptop) observer.observe(laptop);
+
+    // 2. GATILHOS DE INTERAÇÃO (TOQUE/CLIQUE)
+    if (laptop) {
+        // Se clicar no notebook
+        laptop.addEventListener('click', openLaptop);
+        
+        // Se clicar na área em volta (wrapper)
+        const wrapper = document.querySelector('.laptop-wrapper');
+        if(wrapper) {
+            wrapper.addEventListener('touchstart', openLaptop, {passive: true});
+            wrapper.addEventListener('click', openLaptop); // Garante clique no wrapper também
+        }
+    }
+}
     }, {
         threshold: 0.1, // Basta 10% do objeto aparecer
         root: heroContainer // Avisa que a rolagem ocorre DENTRO da capa
