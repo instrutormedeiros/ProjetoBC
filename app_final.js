@@ -2149,6 +2149,14 @@ window.scrollToNextSection = function() {
     const section = document.getElementById('features-section');
     if(section) section.scrollIntoView({ behavior: 'smooth' });
 }
+    // --- FUNÇÃO PARA INICIAR LOGIN COMO GESTOR ---
+window.startManagerLogin = function() {
+    // 1. Salva na memória que o usuário quer ir para o painel
+    localStorage.setItem('open_manager_after_login', 'true');
+    
+    // 2. Chama a função que abre o modal de login
+    enterSystem();
+};
     // --- LÓGICA DO PAINEL DO GESTOR (B2B) ---
 window.openManagerPanel = async function() {
     // VERIFICAÇÃO DE SEGURANÇA B2B
