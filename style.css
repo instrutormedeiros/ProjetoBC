@@ -902,49 +902,54 @@ body.focus-mode #main-wrapper { padding-bottom: 2rem; }
 
 /* Scrollbar invisível na capa para elegância */
 #landing-hero::-webkit-scrollbar {
-  width: 0px;
-  background: transparent;
+    width: 0px;
+    background: transparent;
 }
-/* CAPA como seção normal, não grudada na tela */
+
+/* CAPA: comportamento em tela cheia, mas controlada por classe no BODY */
 #landing-hero {
-    position: relative;      /* antes era fixed */
-    z-index: 1;              /* antes era 10000 */
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
     background-color: #050a14;
-    min-height: 100vh;
-    overflow-y: auto;
+
+    /* Habilita rolagem suave e elástica apenas na capa */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+
+    /* Altura total correta em celulares */
+    height: 100vh;
+    height: 100dvh; /* Dynamic Viewport Height */
 }
-landing-hero div {
+
+/* Conteúdo interno da capa */
+#landing-hero > div {
     min-height: 100%;
     height: auto !important;
     position: relative;
     padding-bottom: 0 !important;
 }
 
-    /* Habilita rolagem suave e elástica */
-    overflow-y: auto !important; 
-    -webkit-overflow-scrolling: touch; /* Essencial para elasticidade no iPhone */
-    
-    /* Garante altura total correta em celulares */
-    height: 100vh; 
-    height: 100dvh; /* Dynamic Viewport Height (ajusta com a barra do navegador) */
-}
-/* Esconde a barra de rolagem do BODY principal enquanto a landing estiver ativa */
+/* Quando a landing está ativa: o BODY NÃO rola */
 body.landing-active {
-    overflow: hidden;
+    overflow: hidden;          /* o corpo não rola, só a capa */
+    padding-bottom: 0 !important;
 }
-/* Botão com corte diagonal */
+
+/* Botão com corte diagonal (usado na capa) */
 .clip-path-slant {
     clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
     border-radius: 4px;
 }
-/* --- CORREÇÃO DO CORTE DE TEXTO --- */
+
+/* Dá um respiro para a fonte itálica não cortar na capa */
 .fix-text-clip {
-    padding-right: 0.2em; /* Dá um respiro para a fonte itálica não cortar */
+    padding-right: 0.2em;
 }
 
-/* --- EFEITO NOTEBOOK 3D --- */
+/* --- EFEITO NOTEBOOK 3D DA CAPA --- */
 .laptop-wrapper {
-    perspective: 1000px; /* Cria o ambiente 3D */
+    perspective: 1000px;              /* Cria o ambiente 3D */
     perspective-origin: 50% 100%;
 }
 
@@ -952,39 +957,37 @@ body.landing-active {
     transform-origin: bottom;
     transform-style: preserve-3d;
     transition: transform 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
     /* Começa fechado */
     transform: rotateX(-90deg);
+
     /* Força a GPU do celular a renderizar isso */
-    will-change: transform; 
+    will-change: transform;
     -webkit-backface-visibility: hidden; /* Ajuda no Safari/iOS */
 }
 
-/* Classe que abre a tampa */
+/* Classe que abre a tampa do notebook */
 .laptop-lid.open {
-    transform: rotateX(0deg) !important; /* O !important garante que nada sobrescreva */
+    transform: rotateX(0deg) !important; /* garante que nada sobrescreva */
 }
-/* Detalhes do Accordion (FAQ) */
+
+/* Detalhes do Accordion (FAQ) da capa */
 details > summary {
     list-style: none;
 }
+
 details > summary::-webkit-details-marker {
     display: none;
 }
+
 details[open] summary ~ * {
     animation: sweep .5s ease-in-out;
 }
 
 @keyframes sweep {
-    0%    {opacity: 0; transform: translateY(-10px)}
-    100%  {opacity: 1; transform: translateY(0)}
+    0% { opacity: 0; transform: translateY(-10px); }
+    100% { opacity: 1; transform: translateY(0); }
 }
-
-/* Remove espaço extra do corpo quando a capa está ativa */
-body.landing-active {
-    overflow: hidden; /* O corpo não rola, só a capa rola */
-    padding-bottom: 0 !important;
-}
-
 
 
 
