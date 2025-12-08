@@ -920,14 +920,6 @@ body.focus-mode #main-wrapper { padding-bottom: 2rem; }
     height: 100vh; 
     height: 100dvh; /* Dynamic Viewport Height (ajusta com a barra do navegador) */
 }
-
-/* Garante que o conteúdo interno flua corretamente */
-#landing-hero > div {
-    min-height: 100%;
-    height: auto !important;
-    position: relative;
-    padding-bottom: 0 !important;
-}
 /* Esconde a barra de rolagem do BODY principal enquanto a landing estiver ativa */
 body.landing-active {
     overflow: hidden;
@@ -984,6 +976,7 @@ body.landing-active {
     overflow: hidden; /* O corpo não rola, só a capa rola */
     padding-bottom: 0 !important;
 }
+
 
 
 
