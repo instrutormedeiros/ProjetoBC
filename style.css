@@ -35,13 +35,15 @@
     --border-color: #374151;
 }
 
-body { 
-    font-family: 'Lato', sans-serif; 
-    scroll-behavior: smooth; 
-    background-color: var(--light-bg); 
-    color: var(--dark-text); 
-    padding-bottom: 70px; /* Espaço para menu mobile */
-    transition: background-color 0.3s, color 0.3s; 
+body {
+    min-height: 100vh; /* Ocupa no mínimo a tela toda */
+    height: auto;      /* Permite crescer com o conteúdo (FIM DA ROLAGEM INFINITA) */
+    font-family: 'Lato', sans-serif;
+    scroll-behavior: smooth;
+    background-color: var(--light-bg);
+    color: var(--dark-text);
+    padding-bottom: 70px;
+    transition: background-color 0.3s, color 0.3s;
 }
 
 @media (max-width: 1024px) {
@@ -968,4 +970,5 @@ details[open] summary ~ * {
     0%    {opacity: 0; transform: translateY(-10px)}
     100%  {opacity: 1; transform: translateY(0)}
 }
+
 
