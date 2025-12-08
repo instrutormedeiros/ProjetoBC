@@ -2133,69 +2133,30 @@ window.enterSystem = function() {
         }
     }, 800); // Tempo sincronizado com a transição (0.8s)
 }
-// --- SISTEMA DE ANIMAÇÃO E NOTEBOOK (COM DICA MOBILE) ---
+// --- SISTEMA DE ANIMAÇÃO E NOTEBOOK (BLINDADO PARA MOBILE) ---
 function initScrollReveal() {
     const laptop = document.getElementById('laptop-lid');
     const heroContainer = document.getElementById('landing-hero');
-    const tapHint = document.getElementById('notebook-tap-hint');
 
-    // Função Unificada: Abre o notebook e esconde a dica
-    const openLaptop = () => {
-        if (laptop && !laptop.classList.contains('open')) {
-            // 1. Abre a tampa
-            laptop.classList.add('open');
-            
-            // 2. Some com a dica visualmente
-            if (tapHint) {
-                tapHint.style.opacity = '0'; // Fica transparente
-                // Remove do layout após o efeito visual (0.5s)
-                setTimeout(() => {
-                    tapHint.style.display = 'none'; 
-                }, 500);
-            }
-        }
-    };
-
-    // --- A. GATILHO POR ROLAGEM (Desktop/Geral) ---
+    // 1. O OBSERVADOR DE ROLAGEM (Método Principal)
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                // Anima textos
+                // Anima elementos de texto
                 if (entry.target.classList.contains('reveal-on-scroll')) {
                     entry.target.classList.remove('opacity-0', 'translate-y-10', 'translate-x-10', '-translate-x-10', 'scale-95');
                     observer.unobserve(entry.target);
                 }
                 
-                // Anima Notebook (Se o navegador detectar a rolagem)
+                // Anima o Notebook
                 if (entry.target.id === 'laptop-lid') {
-                    openLaptop(); 
-                    observer.unobserve(entry.target);
+                    console.log("Notebook visível! Abrindo..."); // Debug para você ver no console
+                    entry.target.classList.add('open');
+                    observer.unobserve(entry.target); // Para de observar depois que abriu
                 }
             }
         });
     }, {
-        threshold: 0.1, // Sensibilidade alta (10%)
-        root: heroContainer // Importante para detectar dentro da capa
-    });
-
-    // Registra elementos
-    document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
-    if (laptop) observer.observe(laptop);
-
-    // --- B. GATILHO POR TOQUE (Mobile/Interação) ---
-    if (laptop) {
-        // Se clicar no próprio notebook
-        laptop.addEventListener('click', openLaptop);
-        
-        // Se clicar na área envolta (wrapper) - ajuda em telas pequenas
-        const wrapper = document.querySelector('.laptop-wrapper');
-        if(wrapper) {
-            wrapper.addEventListener('click', openLaptop);
-            wrapper.addEventListener('touchstart', openLaptop, {passive: true});
-        }
-    }
-}
-     , {
         threshold: 0.1, // Basta 10% do objeto aparecer
         root: heroContainer // Avisa que a rolagem ocorre DENTRO da capa
     });
