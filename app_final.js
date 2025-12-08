@@ -2151,6 +2151,19 @@ window.scrollToNextSection = function() {
 }
     // --- LÓGICA DO PAINEL DO GESTOR (B2B) ---
 window.openManagerPanel = async function() {
+    // VERIFICAÇÃO DE SEGURANÇA B2B
+    if (!currentUserData) {
+        alert("Área restrita para Gestores. Por favor, faça login primeiro.");
+        enterSystem(); // Abre o modal de login
+        return;
+    }
+    
+    // Opcional: Verificar se é admin ou tem flag de empresa
+    // if (!currentUserData.isAdmin && !currentUserData.isManager) {
+    //    alert("Acesso negado. Sua conta não tem perfil de Gestor.");
+    //    return;
+    // }
+
     const modal = document.getElementById('manager-modal');
     const overlay = document.getElementById('admin-modal-overlay'); // Reutilizamos o overlay do admin
     const tbody = document.getElementById('manager-table-body');
