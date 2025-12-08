@@ -2133,9 +2133,15 @@ window.enterSystem = function() {
         }
     }, 800); // Tempo sincronizado com a transição (0.8s)
 }
-    // --- SISTEMA DE ANIMAÇÃO AO ROLAR (SCROLL REVEAL) ---
-// --- SISTEMA DE ANIMAÇÃO AO ROLAR (SCROLL REVEAL & LAPTOP) ---
+// --- SISTEMA DE ANIMAÇÃO AO ROLAR (CORRIGIDO PARA MOBILE) ---
 function initScrollReveal() {
+    // Detecta se a rolagem acontece dentro do Hero (Capa) ou na Janela
+    const heroContainer = document.getElementById('landing-hero');
+    
+    // Se a capa estiver fixa, ela é quem rola. Se não, é a janela.
+    const isFixed = heroContainer && window.getComputedStyle(heroContainer).position === 'fixed';
+    const observerRoot = isFixed ? heroContainer : null;
+
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -2154,7 +2160,8 @@ function initScrollReveal() {
             }
         });
     }, {
-        threshold: 0.15 // Dispara quando 15% do elemento estiver visível
+        threshold: 0.1, // Reduzido para 10% (ajuda no celular a ativar mais rápido)
+        root: observerRoot // O SEGREDO: Avisa o navegador onde olhar a rolagem
     });
 
     // Observa elementos padrão
@@ -2162,7 +2169,7 @@ function initScrollReveal() {
         observer.observe(el);
     });
 
-    // Observa o notebook especificamente
+    // Observa o notebook
     const laptop = document.getElementById('laptop-lid');
     if(laptop) observer.observe(laptop);
 }
