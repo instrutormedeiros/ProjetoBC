@@ -905,34 +905,27 @@ body.focus-mode #main-wrapper { padding-bottom: 2rem; }
   width: 0px;
   background: transparent;
 }
-/* CORREÇÃO DE ROLAGEM DA LANDING PAGE */
+/* CORREÇÃO DE ROLAGEM DA CAPA (FINAL DEFINITIVO) */
 #landing-hero {
     position: fixed;
     inset: 0;
-    z-index: 10000; /* Garante que fique acima de tudo */
-    overflow-y: auto !important; /* Rolagem vertical */
-    height: 100vh; /* Altura total da tela */
+    z-index: 10000;
+    overflow-y: auto !important; /* Garante a rolagem */
+    height: 100vh;
     background-color: #050a14;
-    -webkit-overflow-scrolling: touch; /* Suavidade no iPhone */
+    -webkit-overflow-scrolling: touch;
     
-    /* O SEGREDO PARA PARAR NO FINAL: */
-    overscroll-behavior-y: none; /* Impede o efeito elástico (bouncing) */
-    scroll-behavior: smooth;
+    /* REMOVIDO: overscroll-behavior-y: none; (Isso devolve a elasticidade) */
 }
 
-/* Garante que o conteúdo pare no lugar certo */
+/* Ajuste do conteúdo interno */
 #landing-hero > div {
-    height: auto !important;
     min-height: 100vh;
-    padding-bottom: 0 !important; /* Remove espaços extras no final */
-}
-
-/* Garante que o conteúdo dentro não trave */
-#landing-hero > div {
     height: auto !important;
-    min-height: 100vh;
+    
+    /* O SEGREDO DO CORTE: Adicionei um padding generoso no final */
+    padding-bottom: 80px !important; 
 }
-
 /* Esconde a barra de rolagem do BODY principal enquanto a landing estiver ativa */
 body.landing-active {
     overflow: hidden;
@@ -989,6 +982,7 @@ body.landing-active {
     overflow: hidden; /* O corpo não rola, só a capa rola */
     padding-bottom: 0 !important;
 }
+
 
 
 
