@@ -603,7 +603,7 @@ function init() {
             cpfField.classList.add('hidden'); 
             phoneField.classList.add('hidden'); // ESCONDER TELEFONE
             companyField.classList.add('hidden');
-            authTitle.textContent = "Área do Aluno";
+            authTitle.textContent = "Acesso ao Sistema";
             authMsg.textContent = "Acesso Restrito";
             feedback.textContent = "";
         });
