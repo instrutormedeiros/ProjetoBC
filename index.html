@@ -35,9 +35,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Lato:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js" defer></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
     <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
 </head>
@@ -322,7 +322,6 @@
                         <button id="admin-panel-btn" class="hidden bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-3 rounded-full shadow-md transition-all" title="Painel Administrativo">
                             <i class="fas fa-crown"></i>
                         </button>
-
                         <button id="install-app-btn" class="hidden bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-full text-sm font-bold shadow-md transition-all flex items-center">
                             <i class="fas fa-download mr-2"></i> Instalar App
                         </button>
@@ -435,7 +434,11 @@
                     <p>© 2013-2025 Curso de Formação Profissional. Todos os direitos reservados.</p>
                    <div class="mt-6 flex flex-wrap justify-center items-center gap-4">
                       
-                        <button id="logout-button" class="text-xs text-yellow-500 hover:text-yellow-400 underline transition flex items-center">
+                       <button id="manual-sync-btn" class="text-xs text-blue-400 hover:text-blue-300 underline transition flex items-center">
+    <i class="fas fa-cloud-upload-alt mr-1"></i> Salvar Progresso
+</button>
+<span class="text-gray-600">|</span> 
+                       <button id="logout-button" class="text-xs text-yellow-500 hover:text-yellow-400 underline transition flex items-center">
                             <i class="fas fa-sign-out-alt mr-1"></i> Sair
                         </button>
                         
@@ -831,6 +834,15 @@
       }
       v.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs"; v.type = "text/javascript"; s.parentNode.insertBefore(v, s);
   })(document, 'script');
-</script>
+    </script>
+               <div id="manager-fab" class="hidden fixed top-24 right-4 z-[9999] group animate-fade-in-up">
+    <button onclick="if((window.__fbDB || window.fbDB) && typeof openManagerPanel === 'function'){ openManagerPanel(); } else { alert('Aguarde o carregamento do sistema...'); }" 
+            class="flex items-center justify-center w-12 h-12 bg-purple-600 text-white rounded-full shadow-lg hover:bg-purple-500 hover:scale-110 transition-all duration-300 border-2 border-white/20">
+        <i class="fas fa-chart-line text-xl"></i>
+    </button>
+    <span class="absolute right-14 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs font-bold px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-white/10 shadow-xl">
+        Painel Gestor
+    </span>
+</div>
 </body>
 </html>
