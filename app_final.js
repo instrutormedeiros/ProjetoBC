@@ -2358,33 +2358,73 @@ window.openManagerPanel = async function() {
     if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> Buscando dados...</td></tr>`;
 
     try {
-        const snapshot = await db.collection("users").get();
-        let users = [];
-        let turmasEncontradas = new Set();
+           // === Inicia listener em tempo real (onSnapshot) para o painel do gestor ===
+    // Se já existir um listener antigo, cancela primeiro
+    if (window.managerUnsubscribe && typeof window.managerUnsubscribe === 'function') {
+        try { window.managerUnsubscribe(); } catch(e){ console.warn("Erro ao remover listener antigo:", e); }
+        window.managerUnsubscribe = null;
+    }
 
-        snapshot.forEach(doc => {
-            const u = doc.data();
-            u.uid = doc.id;
-            // Padroniza o nome da turma para o filtro funcionar (Maiúsculo e sem espaços)
-            u.company = (u.company || "Particular").trim().toUpperCase();
-            if (!u.completedModules) u.completedModules = [];
-            
-            users.push(u);
-            turmasEncontradas.add(u.company);
-        });
+    // Query otimizada: seleciona apenas campos necessários para o painel (reduz custo)
+    // Ajuste o .select(...) conforme os campos que você realmente usa no renderManagerTable
+    const usersQuery = db.collection("users").orderBy('name'); // adicione .where('company','==', 'ALGUMA') se quiser filtrar por turma
 
-        users.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-        window.managerCachedUsers = users;
+    window.managerUnsubscribe = usersQuery.onSnapshot(snapshot => {
+        try {
+            let users = [];
+            let turmasEncontradas = new Set();
 
-        // Preenche o filtro automaticamente com as turmas existentes
-        if (filterSelect) {
-            filterSelect.innerHTML = '<option value="TODOS">Todas as Turmas</option>';
-            Array.from(turmasEncontradas).sort().forEach(turma => {
-                filterSelect.innerHTML += `<option value="${turma}">${turma}</option>`;
+            snapshot.forEach(doc => {
+                const u = doc.data() || {};
+                u.uid = doc.id;
+                u.company = (u.company || "Particular").trim().toUpperCase();
+                if (!u.completedModules) u.completedModules = [];
+                users.push(u);
+                turmasEncontradas.add(u.company);
             });
-        }
 
-        renderManagerTable(users);
+            users.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+            window.managerCachedUsers = users;
+
+            // Atualiza o filtro de turmas (mantendo a seleção atual, se houver)
+            if (filterSelect) {
+                const prevValue = filterSelect.value || 'TODOS';
+                filterSelect.innerHTML = '<option value="TODOS">Todas as Turmas</option>';
+                Array.from(turmasEncontradas).sort().forEach(turma => {
+                    filterSelect.innerHTML += `<option value="${turma}">${turma}</option>`;
+                });
+                if (Array.from(turmasEncontradas).includes(prevValue)) {
+                    filterSelect.value = prevValue;
+                } else {
+                    filterSelect.value = 'TODOS';
+                }
+            }
+
+            renderManagerTable(users);
+        } catch (err) {
+            console.error("Erro no listener do painel do gestor:", err);
+        }
+    }, err => {
+        console.error("Erro ao abrir listener do painel do gestor:", err);
+        if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Erro: ${err.message}</td></tr>`;
+    });
+
+    // Ao fechar o modal, garantir que o listener seja removido:
+    if (closeBtn) {
+        const oldClose = closeBtn.onclick;
+        closeBtn.onclick = () => {
+            modal.classList.remove("show");
+            if (!document.getElementById("admin-modal")?.classList.contains("show")) {
+                overlay.classList.remove("show");
+            }
+            // Remove listener em tempo real quando o gestor fecha o modal
+            if (window.managerUnsubscribe && typeof window.managerUnsubscribe === 'function') {
+                try { window.managerUnsubscribe(); } catch(e) { console.warn("Erro ao remover managerUnsubscribe:", e); }
+                window.managerUnsubscribe = null;
+            }
+            if (typeof oldClose === 'function') oldClose();
+        };
+    }
 
     } catch (err) {
         console.error("Erro:", err);
