@@ -298,7 +298,6 @@ setTimeout(() => {
     } else {
         currentUserData = userData;
     }
-    // --------------------------------------
 
         if (document.body.getAttribute('data-app-ready') === 'true') return;
         
@@ -2641,33 +2640,20 @@ window.saveProgressToCloud = function() {
     });
 }
 
-    // 1. Pega o progresso (Prioridade: Variável Global > LocalStorage)
-    let modulesToSave = completedModules;
-    
-    if (!modulesToSave || modulesToSave.length === 0) {
-        const localData = localStorage.getItem('gateBombeiroCompletedModules_v3');
-        if (localData) {
-            modulesToSave = JSON.parse(localData);
-            completedModules = modulesToSave; // Sincroniza a global
-            console.log("📂 Progresso recuperado do cache local:", modulesToSave.length, "módulos.");
-        }
-    }
-
-    console.log("☁️ Enviando para nuvem para o UID:", currentUserData.uid);
-    console.log("📦 Dados:", modulesToSave);
-
-    // 2. Envio ao Firestore
-    return window.__fbDB.collection('users').doc(currentUserData.uid).update({
+   // ... (início da função saveProgressToCloud acima) ...
+    // 3. Envio ao Firestore (Usando o targetUid garantido)
+    return window.__fbDB.collection('users').doc(targetUid).update({
         completedModules: modulesToSave,
-        last_progress_update: firebase.firestore.FieldValue.serverTimestamp() // Marca d'água de tempo
+        last_progress_update: firebase.firestore.FieldValue.serverTimestamp()
     }).then(() => {
         console.log("✅ SUCESSO: Progresso salvo no banco de dados!");
         // Atualiza o objeto local para o painel ler na hora
         if (currentUserData) currentUserData.completedModules = modulesToSave;
     }).catch(err => {
         console.error("❌ ERRO NO BANCO DE DADOS:", err);
-        alert("Erro ao salvar na nuvem. Verifique sua conexão.");
+        alert("Erro ao salvar: " + err.message);
     });
-}
-    init();
-});
+} // <--- Fecha a função saveProgressToCloud
+
+    init(); // <--- Inicia o app
+}); // <--- Fecha o DOMContentLoaded
