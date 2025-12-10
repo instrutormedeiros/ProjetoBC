@@ -286,13 +286,19 @@ setTimeout(() => {
     }
 
     function onLoginSuccess(user, userData) {
-        // --- NOVO: GARANTE QUE A CAPA SUMA NO REFRESH ---
-        const landing = document.getElementById('landing-hero');
-        if (landing) landing.classList.add('hidden'); // Esconde a capa
-        document.body.classList.remove('landing-active'); // Destrava rolagem
-        // ------------------------------------------------
+    // --- NOVO: GARANTE QUE A CAPA SUMA NO REFRESH ---
+    const landing = document.getElementById('landing-hero');
+    if (landing) landing.classList.add('hidden'); 
+    document.body.classList.remove('landing-active'); 
 
-        currentUserData = userData; 
+    // --- CORREÇÃO DO ERRO DE SALVAMENTO ---
+    // Injeta o UID (que vem da autenticação) dentro dos dados do usuário
+    if (userData && user) {
+        currentUserData = { ...userData, uid: user.uid };
+    } else {
+        currentUserData = userData;
+    }
+    // --------------------------------------
 
         if (document.body.getAttribute('data-app-ready') === 'true') return;
         
@@ -2581,25 +2587,59 @@ window.toggleManagerRole = async function(uid, currentStatus) {
         }
     }
 };
- // Substitua a função window.saveProgressToCloud existente por esta:
 window.saveProgressToCloud = function() {
     console.log("🔥 TENTATIVA DE SALVAMENTO DE PROGRESSO...");
 
-    // DIAGNÓSTICO: Verifica se o usuário existe
-    if (!currentUserData || !currentUserData.uid) {
-        console.warn("⚠️ ALERTA: Usuário não identificado na memória. Tentando recuperar...");
-        
-        // Tenta recuperar da sessão local se a memória RAM falhou
-        const sessionUser = firebase.auth().currentUser;
-        if (sessionUser) {
-            console.log("✅ Usuário recuperado do Auth: ", sessionUser.uid);
-            // Reconstrói o objeto mínimo necessário
-            if (!currentUserData) currentUserData = { uid: sessionUser.uid };
+    // 1. Verificação e Recuperação de Emergência do UID
+    let targetUid = null;
+
+    if (currentUserData && currentUserData.uid) {
+        targetUid = currentUserData.uid;
+    } else {
+        // Se a variável global falhou, tenta pegar direto do sistema de autenticação
+        const authUser = firebase.auth().currentUser;
+        if (authUser) {
+            console.log("🔄 UID recuperado via Auth:", authUser.uid);
+            targetUid = authUser.uid;
+            // Reconstrói a variável global para não dar erro na próxima
+            if (currentUserData) {
+                currentUserData.uid = authUser.uid;
+            } else {
+                currentUserData = { uid: authUser.uid };
+            }
         } else {
-            console.error("❌ ERRO CRÍTICO: Nenhum usuário logado. O salvamento foi abortado.");
+            console.error("❌ ERRO CRÍTICO: Sessão perdida.");
+            alert("Sua sessão expirou. Por favor, recarregue a página e faça login novamente.");
             return Promise.reject("Usuário não logado");
         }
     }
+
+    // 2. Pega o progresso (Prioridade: Variável Global > LocalStorage)
+    let modulesToSave = completedModules;
+    
+    if (!modulesToSave || modulesToSave.length === 0) {
+        const localData = localStorage.getItem('gateBombeiroCompletedModules_v3');
+        if (localData) {
+            modulesToSave = JSON.parse(localData);
+            completedModules = modulesToSave; // Sincroniza a global
+        }
+    }
+
+    console.log("☁️ Enviando para nuvem. UID:", targetUid, "| Módulos:", modulesToSave.length);
+
+    // 3. Envio ao Firestore (Usando o targetUid garantido)
+    return window.__fbDB.collection('users').doc(targetUid).update({
+        completedModules: modulesToSave,
+        last_progress_update: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+        console.log("✅ SUCESSO: Progresso salvo no banco de dados!");
+        // Atualiza o objeto local para o painel ler na hora
+        if (currentUserData) currentUserData.completedModules = modulesToSave;
+    }).catch(err => {
+        console.error("❌ ERRO NO BANCO DE DADOS:", err);
+        alert("Erro ao salvar: " + err.message);
+    });
+}
 
     // 1. Pega o progresso (Prioridade: Variável Global > LocalStorage)
     let modulesToSave = completedModules;
