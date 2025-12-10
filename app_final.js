@@ -2318,20 +2318,15 @@ let managerCachedUsers = [];
 // BLOCO CORRIGIDO: GESTÃO DE EQUIPE, FILTRO E PROGRESSO
 // ============================================================
 
-// Substitua a função window.openManagerPanel existente por esta:
+// --- FUNÇÃO SUBSTITUTA (Copie e cole sobre a antiga window.openManagerPanel) ---
 window.openManagerPanel = function() {
-    console.log("🔓 Abrindo Painel do Gestor (Tempo Real)...");
+    console.log("🔓 Abrindo Painel do Gestor (MODO TEMPO REAL)...");
 
     const db = window.__fbDB || window.fbDB; 
     
-    if (!db) {
-        alert("⏳ Sistema carregando. Tente novamente.");
-        return;
-    }
-    if (!currentUserData) {
-        alert("❌ Erro: Usuário não identificado.");
-        return;
-    }
+    // Verificação de segurança
+    if (!db) { alert("⏳ Sistema carregando. Tente novamente."); return; }
+    if (!currentUserData) { alert("❌ Erro: Usuário não identificado."); return; }
 
     const modal = document.getElementById("manager-modal");
     const overlay = document.getElementById("admin-modal-overlay");
@@ -2341,37 +2336,41 @@ window.openManagerPanel = function() {
 
     if (!modal || !overlay) return;
 
+    // Abre o modal
     modal.classList.add("show");
     overlay.classList.add("show");
 
-    if (titleEl) titleEl.textContent = "Gestão de equipe (Ao Vivo)";
+    if (titleEl) titleEl.textContent = "Gestão de Equipe (Ao Vivo 🔴)";
     
-    // Configura o botão de fechar para encerrar a conexão em tempo real
+    // Configura o botão de fechar para DESLIGAR a conexão (Economia de dados)
     const closeBtn = document.getElementById("close-manager-modal");
     if (closeBtn) {
         closeBtn.onclick = () => {
             modal.classList.remove("show");
-            // Se o listener estiver ativo, desliga ele para economizar recursos
+            
+            // 🔥 AQUI ESTÁ O SEGREDO: Desliga o radar ao fechar a janela
             if (typeof managerUnsubscribe === 'function') {
                 managerUnsubscribe();
                 managerUnsubscribe = null;
                 console.log("🔒 Conexão em tempo real encerrada.");
             }
             
+            // Só fecha o overlay se o painel de admin geral não estiver aberto por baixo
             if (!document.getElementById("admin-modal")?.classList.contains("show")) {
                 overlay.classList.remove("show");
             }
         };
     }
 
-    if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> Conectando ao vivo...</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> Conectando ao satélite...</td></tr>`;
 
-    // --- AQUI COMEÇA A MÁGICA DO TEMPO REAL ---
-    // Se já existir uma conexão aberta, fecha a anterior antes de abrir uma nova
+    // --- CONEXÃO FIREBASE EM TEMPO REAL ---
+    
+    // 1. Se já existir uma conexão aberta, fecha a anterior para não duplicar
     if (managerUnsubscribe) managerUnsubscribe();
 
     try {
-        // .onSnapshot cria o listener contínuo
+        // 2. Cria o Listener (.onSnapshot em vez de .get)
         managerUnsubscribe = db.collection("users").onSnapshot((snapshot) => {
             let users = [];
             let turmasEncontradas = new Set();
@@ -2379,6 +2378,7 @@ window.openManagerPanel = function() {
             snapshot.forEach(doc => {
                 const u = doc.data();
                 u.uid = doc.id;
+                // Tratamento de dados para evitar erro se o campo não existir
                 u.company = (u.company || "Particular").trim().toUpperCase();
                 if (!u.completedModules) u.completedModules = [];
                 
@@ -2386,23 +2386,25 @@ window.openManagerPanel = function() {
                 turmasEncontradas.add(u.company);
             });
 
+            // Ordenação Alfabética
             users.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+            
+            // Salva no cache global para o filtro usar
             window.managerCachedUsers = users;
 
-            // Atualiza o filtro de turmas apenas se for a primeira carga ou se surgirem novas turmas
-            // (Lógica para manter a seleção atual do filtro se já existir)
+            // Preenche o filtro de turmas (apenas se for a primeira carga ou se mudou algo)
             if (filterSelect && filterSelect.options.length <= 1) {
                 const valorAtual = filterSelect.value;
                 filterSelect.innerHTML = '<option value="TODOS">Todas as Turmas</option>';
                 Array.from(turmasEncontradas).sort().forEach(turma => {
                     filterSelect.innerHTML += `<option value="${turma}">${turma}</option>`;
                 });
-                filterSelect.value = valorAtual; // Mantém o que estava selecionado
+                filterSelect.value = valorAtual; 
             }
 
-            // Chama o filtro para renderizar (ele usa os dados cacheados atualizados)
+            // Chama o renderizador da tabela
             window.filterManagerTable();
-            console.log("📡 Dados atualizados em tempo real!");
+            console.log("📡 Dados atualizados em tempo real! (Ping)");
 
         }, (error) => {
             console.error("Erro no listener:", error);
@@ -2579,33 +2581,53 @@ window.toggleManagerRole = async function(uid, currentStatus) {
         }
     }
 };
- // --- FUNÇÃO NOVA: SALVAR PROGRESSO NO FIREBASE (VERSÃO BLINDADA) ---
+ // Substitua a função window.saveProgressToCloud existente por esta:
 window.saveProgressToCloud = function() {
-    console.log("🔥 SALVANDO PROGRESSO - INICIADO");  // ← ADICIONE AQUI
-    if (currentUserData && currentUserData.uid) {
-        // 1. Tenta pegar da variável global
-        let modulesToSave = completedModules;
+    console.log("🔥 TENTATIVA DE SALVAMENTO DE PROGRESSO...");
+
+    // DIAGNÓSTICO: Verifica se o usuário existe
+    if (!currentUserData || !currentUserData.uid) {
+        console.warn("⚠️ ALERTA: Usuário não identificado na memória. Tentando recuperar...");
         
-        // 2. BLINDAGEM: Se estiver vazia, pega direto da memória física do navegador
-        if (!modulesToSave || modulesToSave.length === 0) {
-            const localData = localStorage.getItem('gateBombeiroCompletedModules_v3');
-            if (localData) {
-                modulesToSave = JSON.parse(localData);
-                completedModules = modulesToSave; // Atualiza a global também
-            }
+        // Tenta recuperar da sessão local se a memória RAM falhou
+        const sessionUser = firebase.auth().currentUser;
+        if (sessionUser) {
+            console.log("✅ Usuário recuperado do Auth: ", sessionUser.uid);
+            // Reconstrói o objeto mínimo necessário
+            if (!currentUserData) currentUserData = { uid: sessionUser.uid };
+        } else {
+            console.error("❌ ERRO CRÍTICO: Nenhum usuário logado. O salvamento foi abortado.");
+            return Promise.reject("Usuário não logado");
         }
-
-        console.log("Enviando para nuvem:", modulesToSave); // <--- SE NÃO APARECER ISSO NO CONSOLE, O CÓDIGO TÁ VELHO
-
-        return window.__fbDB.collection('users').doc(currentUserData.uid).update({
-            completedModules: modulesToSave
-        }).then(() => {
-            console.log("Progresso salvo com sucesso!");
-            // Atualiza o objeto local para o painel ler na hora
-            currentUserData.completedModules = modulesToSave;
-        }).catch(err => console.error("Erro ao salvar progresso:", err));
     }
-    return Promise.resolve();
+
+    // 1. Pega o progresso (Prioridade: Variável Global > LocalStorage)
+    let modulesToSave = completedModules;
+    
+    if (!modulesToSave || modulesToSave.length === 0) {
+        const localData = localStorage.getItem('gateBombeiroCompletedModules_v3');
+        if (localData) {
+            modulesToSave = JSON.parse(localData);
+            completedModules = modulesToSave; // Sincroniza a global
+            console.log("📂 Progresso recuperado do cache local:", modulesToSave.length, "módulos.");
+        }
+    }
+
+    console.log("☁️ Enviando para nuvem para o UID:", currentUserData.uid);
+    console.log("📦 Dados:", modulesToSave);
+
+    // 2. Envio ao Firestore
+    return window.__fbDB.collection('users').doc(currentUserData.uid).update({
+        completedModules: modulesToSave,
+        last_progress_update: firebase.firestore.FieldValue.serverTimestamp() // Marca d'água de tempo
+    }).then(() => {
+        console.log("✅ SUCESSO: Progresso salvo no banco de dados!");
+        // Atualiza o objeto local para o painel ler na hora
+        if (currentUserData) currentUserData.completedModules = modulesToSave;
+    }).catch(err => {
+        console.error("❌ ERRO NO BANCO DE DADOS:", err);
+        alert("Erro ao salvar na nuvem. Verifique sua conexão.");
+    });
 }
     init();
 });
