@@ -4,7 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- VARIÁVEIS GLOBAIS DO APP ---
     const contentArea = document.getElementById('content-area');
-    
+   
+    // Adicione isso junto com as variáveis globais no topo do app_final.js
+    let managerUnsubscribe = null; // Variável para guardar o listener do Firestore
     // CORREÇÃO AQUI: Definindo a variável globalmente
     let totalModules = 0; 
     
@@ -2316,9 +2318,9 @@ let managerCachedUsers = [];
 // BLOCO CORRIGIDO: GESTÃO DE EQUIPE, FILTRO E PROGRESSO
 // ============================================================
 
-// 1. Função Principal: Abrir Painel
-window.openManagerPanel = async function() {
-    console.log("🔓 Abrindo Painel do Gestor...");
+// Substitua a função window.openManagerPanel existente por esta:
+window.openManagerPanel = function() {
+    console.log("🔓 Abrindo Painel do Gestor (Tempo Real)...");
 
     const db = window.__fbDB || window.fbDB; 
     
@@ -2342,43 +2344,44 @@ window.openManagerPanel = async function() {
     modal.classList.add("show");
     overlay.classList.add("show");
 
-    // Título atualizado
-    if (titleEl) titleEl.textContent = "Gestão de equipe";
+    if (titleEl) titleEl.textContent = "Gestão de equipe (Ao Vivo)";
     
+    // Configura o botão de fechar para encerrar a conexão em tempo real
     const closeBtn = document.getElementById("close-manager-modal");
     if (closeBtn) {
         closeBtn.onclick = () => {
             modal.classList.remove("show");
+            // Se o listener estiver ativo, desliga ele para economizar recursos
+            if (typeof managerUnsubscribe === 'function') {
+                managerUnsubscribe();
+                managerUnsubscribe = null;
+                console.log("🔒 Conexão em tempo real encerrada.");
+            }
+            
             if (!document.getElementById("admin-modal")?.classList.contains("show")) {
                 overlay.classList.remove("show");
             }
         };
     }
 
-    if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> Buscando dados...</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> Conectando ao vivo...</td></tr>`;
+
+    // --- AQUI COMEÇA A MÁGICA DO TEMPO REAL ---
+    // Se já existir uma conexão aberta, fecha a anterior antes de abrir uma nova
+    if (managerUnsubscribe) managerUnsubscribe();
 
     try {
-           // === Inicia listener em tempo real (onSnapshot) para o painel do gestor ===
-    // Se já existir um listener antigo, cancela primeiro
-    if (window.managerUnsubscribe && typeof window.managerUnsubscribe === 'function') {
-        try { window.managerUnsubscribe(); } catch(e){ console.warn("Erro ao remover listener antigo:", e); }
-        window.managerUnsubscribe = null;
-    }
-
-    // Query otimizada: seleciona apenas campos necessários para o painel (reduz custo)
-    // Ajuste o .select(...) conforme os campos que você realmente usa no renderManagerTable
-    const usersQuery = db.collection("users").orderBy('name'); // adicione .where('company','==', 'ALGUMA') se quiser filtrar por turma
-
-    window.managerUnsubscribe = usersQuery.onSnapshot(snapshot => {
-        try {
+        // .onSnapshot cria o listener contínuo
+        managerUnsubscribe = db.collection("users").onSnapshot((snapshot) => {
             let users = [];
             let turmasEncontradas = new Set();
 
             snapshot.forEach(doc => {
-                const u = doc.data() || {};
+                const u = doc.data();
                 u.uid = doc.id;
                 u.company = (u.company || "Particular").trim().toUpperCase();
                 if (!u.completedModules) u.completedModules = [];
+                
                 users.push(u);
                 turmasEncontradas.add(u.company);
             });
@@ -2386,49 +2389,28 @@ window.openManagerPanel = async function() {
             users.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
             window.managerCachedUsers = users;
 
-            // Atualiza o filtro de turmas (mantendo a seleção atual, se houver)
-            if (filterSelect) {
-                const prevValue = filterSelect.value || 'TODOS';
+            // Atualiza o filtro de turmas apenas se for a primeira carga ou se surgirem novas turmas
+            // (Lógica para manter a seleção atual do filtro se já existir)
+            if (filterSelect && filterSelect.options.length <= 1) {
+                const valorAtual = filterSelect.value;
                 filterSelect.innerHTML = '<option value="TODOS">Todas as Turmas</option>';
                 Array.from(turmasEncontradas).sort().forEach(turma => {
                     filterSelect.innerHTML += `<option value="${turma}">${turma}</option>`;
                 });
-                if (Array.from(turmasEncontradas).includes(prevValue)) {
-                    filterSelect.value = prevValue;
-                } else {
-                    filterSelect.value = 'TODOS';
-                }
+                filterSelect.value = valorAtual; // Mantém o que estava selecionado
             }
 
-            renderManagerTable(users);
-        } catch (err) {
-            console.error("Erro no listener do painel do gestor:", err);
-        }
-    }, err => {
-        console.error("Erro ao abrir listener do painel do gestor:", err);
-        if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Erro: ${err.message}</td></tr>`;
-    });
+            // Chama o filtro para renderizar (ele usa os dados cacheados atualizados)
+            window.filterManagerTable();
+            console.log("📡 Dados atualizados em tempo real!");
 
-    // Ao fechar o modal, garantir que o listener seja removido:
-    if (closeBtn) {
-        const oldClose = closeBtn.onclick;
-        closeBtn.onclick = () => {
-            modal.classList.remove("show");
-            if (!document.getElementById("admin-modal")?.classList.contains("show")) {
-                overlay.classList.remove("show");
-            }
-            // Remove listener em tempo real quando o gestor fecha o modal
-            if (window.managerUnsubscribe && typeof window.managerUnsubscribe === 'function') {
-                try { window.managerUnsubscribe(); } catch(e) { console.warn("Erro ao remover managerUnsubscribe:", e); }
-                window.managerUnsubscribe = null;
-            }
-            if (typeof oldClose === 'function') oldClose();
-        };
-    }
+        }, (error) => {
+            console.error("Erro no listener:", error);
+            if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Erro de conexão: ${error.message}</td></tr>`;
+        });
 
     } catch (err) {
-        console.error("Erro:", err);
-        if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Erro: ${err.message}</td></tr>`;
+        console.error("Erro ao iniciar listener:", err);
     }
 };
 
