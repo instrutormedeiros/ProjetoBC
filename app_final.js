@@ -474,6 +474,16 @@ users.forEach(({ uid, data: u }) => {
 
 // Atualiza contador depois de montar a tabela
 updateAdminStats(stats);
+        
+function updateAdminStats(stats) {
+    const totalEl = document.getElementById('admin-total-users');
+    const premEl  = document.getElementById('admin-total-premium');
+    const trialEl = document.getElementById('admin-total-trial');
+
+    if (totalEl) totalEl.textContent = stats.total || 0;
+    if (premEl)  premEl.textContent  = stats.premium || 0;
+    if (trialEl) trialEl.textContent = stats.trial || 0;
+}
 
     window.manageUserAccess = async function(uid) {
         const op = prompt(
