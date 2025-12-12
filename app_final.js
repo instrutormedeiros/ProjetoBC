@@ -2384,7 +2384,7 @@ window.openManagerPanel = function() {
                 const u = doc.data();
                 u.uid = doc.id;
                 // Tratamento de dados para evitar erro se o campo não existir
-                u.company = (u.company || "Particular").trim().toUpperCase();
+                u.company = (u.company || "Particular").trim()
                 if (!u.completedModules) u.completedModules = [];
                 
                 users.push(u);
