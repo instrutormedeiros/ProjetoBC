@@ -239,7 +239,12 @@ function init() {
         };
         
         if (typeof FirebaseCourse !== 'undefined') {
-            FirebaseCourse.init(firebaseConfig);
+           FirebaseCourse.init(firebaseConfig);
+
+// garante alias global para não dar undefined
+window.fbDB = window.__fbDB || null;
+window.fbAuth = window.__fbAuth || null;
+
             // Aguarda o Firebase estar pronto
 setTimeout(() => {
     if (window.fbDB) {
@@ -2621,12 +2626,19 @@ window.saveProgressToCloud = function() {
 
     console.log("☁️ Enviando para nuvem. UID:", targetUid, "| Módulos:", modulesToSave.length);
 
-    // 3. Envio ao Firestore (Usando o targetUid garantido)
-    return window.__fbDB.collection('users').doc(targetUid).update({
-        completedModules: modulesToSave,
-        last_progress_update: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
-        console.log("✅ SUCESSO: Progresso salvo no banco de dados!");
+   // 3. Envio ao Firestore (Usando o targetUid garantido)
+const db = window.__fbDB || window.fbDB;
+if (!db) {
+    console.error("❌ ERRO: Banco de dados ainda não está pronto em saveProgressToCloud.");
+    alert("Sistema ainda está carregando. Tente novamente em alguns segundos.");
+    return;
+}
+
+return db.collection('users').doc(targetUid).update({
+    completedModules: modulesToSave,
+    last_progress_update: firebase.firestore.FieldValue.serverTimestamp()
+});
+
         // Atualiza o objeto local para o painel ler na hora
         if (currentUserData) currentUserData.completedModules = modulesToSave;
     }).catch(err => {
