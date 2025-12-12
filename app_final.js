@@ -1,4 +1,4 @@
--/* === ARQUIVO app_final.js (VERSÃO FINAL V10.1 - CORREÇÃO TOTAL MODULES) === */
+/* === ARQUIVO app_final.js (VERSÃO FINAL V10.1 - CORREÇÃO TOTAL MODULES) === */
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -375,47 +375,7 @@ setTimeout(() => {
 
        // Inicia Tour Automático (se nunca viu)
         startOnboardingTour(false); 
-        // Configura botão "Continuar Curso" no mini dashboard
-        const dashBtn = document.getElementById('dash-continue-btn');
-        if (dashBtn) {
-            dashBtn.onclick = () => {
-                const allModules = Object.keys(window.moduleContent || {});
-                const firstModule = allModules[0] || null;
 
-                // Se já tem módulo atual, continua nele; se não, vai para o primeiro
-                const targetModule = currentModuleId || firstModule;
-if (targetModule) {
-    if (typeof window.loadModule === 'function') {
-        window.loadModule(targetModule);
-    } else if (typeof window.openModule === 'function') {
-        window.openModule(targetModule);
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-            };
-        }
-
-        // Define texto do próximo módulo recomendado
-        const dashNext = document.getElementById('dash-next-module');
-        if (dashNext) {
-            const allModules = Object.keys(window.moduleContent || {});
-            let nextId = null;
-
-            if (!completedModules || completedModules.length === 0) {
-                nextId = allModules[0] || null;
-            } else {
-                nextId = allModules.find(id => !completedModules.includes(id)) 
-                    || allModules[allModules.length - 1];
-            }
-
-            if (nextId && window.moduleContent[nextId]) {
-                dashNext.textContent = 'Próximo módulo: ' + (window.moduleContent[nextId].title || nextId);
-            } else {
-                dashNext.textContent = 'Você concluiu todos os módulos disponíveis.';
-            }
-        }
-        
        if (localStorage.getItem("open_manager_after_login") === "true") {
     localStorage.removeItem("open_manager_after_login");
     setTimeout(() => {
@@ -1053,27 +1013,17 @@ function updateAdminStats(stats) {
                 setupNotesListener(id);
             }
 
-contentArea.style.opacity = '1';
-contentArea.style.transition = 'opacity 0.3s ease';
-window.scrollTo({ top: 0, behavior: 'smooth' });
-updateActiveModuleInList();
-updateNavigationButtons();
-updateBreadcrumbs(d.title);
-
-// NOVO BLOCO SEGURO
-const moduleNav = document.getElementById('module-nav');
-if (moduleNav) {
-    moduleNav.classList.remove('hidden');
-}
-
-closeSidebar();
-
-const nextBtn = document.getElementById('next-module');
-if (nextBtn) {
-    nextBtn.classList.remove('blinking-button');
-}
-}, 300);
-}
+            contentArea.style.opacity = '1';
+            contentArea.style.transition = 'opacity 0.3s ease';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            updateActiveModuleInList();
+            updateNavigationButtons();
+            updateBreadcrumbs(d.title);
+            document.getElementById('module-nav').classList.remove('hidden');
+            closeSidebar();
+            document.getElementById('next-module')?.classList.remove('blinking-button');
+        }, 300);
+    }
     
     // === LÓGICA: MODO SOBREVIVÊNCIA ===
     async function initSurvivalGame() {
@@ -1792,32 +1742,15 @@ if (nextBtn) {
         checkAchievements();
         // Atualiza contadores do sidebar
         populateModuleLists(); 
-        // --- Mini dashboard do aluno ---
-    const dashProgressText = document.getElementById('dash-progress-text');
-    const dashCompleted = document.getElementById('dash-completed-count');
-    const dashTotal = document.getElementById('dash-total-count');
-    const dashBar = document.getElementById('dash-progress-bar');
-
-    if (dashProgressText) dashProgressText.textContent = `${p.toFixed(0)}%`;
-    if (dashCompleted) dashCompleted.textContent = completedModules.length;
-    if (dashTotal) dashTotal.textContent = totalModules;
-    if (dashBar) dashBar.style.width = `${p}%`;
-
-    if (totalModules > 0 && completedModules.length === totalModules) showCongratulations();
-}
-
-   function showCongratulations() {
-    const congrats = document.getElementById('congratulations-modal');
-    if (congrats) congrats.classList.add('show');
-
-    const overlay = document.getElementById('modal-overlay');
-    if (overlay) overlay.classList.add('show');
-
-    if (typeof confetti === 'function') {
-        confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 }, zIndex: 200 });
+        
+        if (totalModules > 0 && completedModules.length === totalModules) showCongratulations();
     }
-}
 
+    function showCongratulations() {
+        document.getElementById('congratulations-modal')?.classList.add('show');
+        document.getElementById('modal-overlay')?.classList.add('show');
+        if(typeof confetti === 'function') confetti({particleCount:150, spread:90, origin:{y:0.6},zIndex:200});
+    }
     function showAchievementToast(title) {
         const toast = document.createElement('div');
         toast.className = 'toast';
@@ -1925,12 +1858,9 @@ if (nextBtn) {
         prevModule.disabled = (n === 1);
         nextModule.disabled = (n === totalModules); 
     }
-function setupQuizListeners() {
-    const options = document.querySelectorAll('.quiz-option');
-    if (!options || options.length === 0) return;
-    options.forEach(o => o.addEventListener('click', handleQuizOptionClick));
-}
-
+    function setupQuizListeners() {
+        document.querySelectorAll('.quiz-option').forEach(o => o.addEventListener('click', handleQuizOptionClick));
+    }
 
     function triggerSuccessParticles(clickEvent, element) {
         if (typeof confetti === 'function') confetti({ particleCount: 28, spread: 70, origin: { x: clickEvent ? clickEvent.clientX/window.innerWidth : 0.5, y: clickEvent ? clickEvent.clientY/window.innerHeight : 0.5 } });
