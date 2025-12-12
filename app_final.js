@@ -375,7 +375,42 @@ setTimeout(() => {
 
        // Inicia Tour Automático (se nunca viu)
         startOnboardingTour(false); 
+        // Configura botão "Continuar Curso" no mini dashboard
+        const dashBtn = document.getElementById('dash-continue-btn');
+        if (dashBtn) {
+            dashBtn.onclick = () => {
+                const allModules = Object.keys(window.moduleContent || {});
+                const firstModule = allModules[0] || null;
 
+                // Se já tem módulo atual, continua nele; se não, vai para o primeiro
+                const targetModule = currentModuleId || firstModule;
+                if (targetModule) {
+                    loadModule(targetModule);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            };
+        }
+
+        // Define texto do próximo módulo recomendado
+        const dashNext = document.getElementById('dash-next-module');
+        if (dashNext) {
+            const allModules = Object.keys(window.moduleContent || {});
+            let nextId = null;
+
+            if (!completedModules || completedModules.length === 0) {
+                nextId = allModules[0] || null;
+            } else {
+                nextId = allModules.find(id => !completedModules.includes(id)) 
+                    || allModules[allModules.length - 1];
+            }
+
+            if (nextId && window.moduleContent[nextId]) {
+                dashNext.textContent = 'Próximo módulo: ' + (window.moduleContent[nextId].title || nextId);
+            } else {
+                dashNext.textContent = 'Você concluiu todos os módulos disponíveis.';
+            }
+        }
+        
        if (localStorage.getItem("open_manager_after_login") === "true") {
     localStorage.removeItem("open_manager_after_login");
     setTimeout(() => {
@@ -1742,9 +1777,19 @@ function updateAdminStats(stats) {
         checkAchievements();
         // Atualiza contadores do sidebar
         populateModuleLists(); 
-        
-        if (totalModules > 0 && completedModules.length === totalModules) showCongratulations();
-    }
+        // --- Mini dashboard do aluno ---
+    const dashProgressText = document.getElementById('dash-progress-text');
+    const dashCompleted = document.getElementById('dash-completed-count');
+    const dashTotal = document.getElementById('dash-total-count');
+    const dashBar = document.getElementById('dash-progress-bar');
+
+    if (dashProgressText) dashProgressText.textContent = `${p.toFixed(0)}%`;
+    if (dashCompleted) dashCompleted.textContent = completedModules.length;
+    if (dashTotal) dashTotal.textContent = totalModules;
+    if (dashBar) dashBar.style.width = `${p}%`;
+
+    if (totalModules > 0 && completedModules.length === totalModules) showCongratulations();
+}
 
     function showCongratulations() {
         document.getElementById('congratulations-modal')?.classList.add('show');
