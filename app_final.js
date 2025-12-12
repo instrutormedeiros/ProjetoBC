@@ -1059,19 +1059,20 @@ function updateAdminStats(stats) {
             updateActiveModuleInList();
             updateNavigationButtons();
             updateBreadcrumbs(d.title);
-            const moduleNav = document.getElementById('module-nav');
-if (moduleNav) {
-    moduleNav.classList.remove('hidden');
-}
-
-closeSidebar();
-
-const nextBtn = document.getElementById('next-module');
-if (nextBtn) {
-    nextBtn.classList.remove('blinking-button');
-}
-        }, 300);
+                // Ajuste: só mexe em classList se o elemento existir
+    const moduleNav = document.getElementById('module-nav');
+    if (moduleNav) {
+        moduleNav.classList.remove('hidden');
     }
+
+    closeSidebar();
+
+    const nextBtn = document.getElementById('next-module');
+    if (nextBtn) {
+        nextBtn.classList.remove('blinking-button');
+    }
+}, 300);
+}
     
     // === LÓGICA: MODO SOBREVIVÊNCIA ===
     async function initSurvivalGame() {
