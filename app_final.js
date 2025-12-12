@@ -1059,9 +1059,17 @@ function updateAdminStats(stats) {
             updateActiveModuleInList();
             updateNavigationButtons();
             updateBreadcrumbs(d.title);
-            document.getElementById('module-nav').classList.remove('hidden');
-            closeSidebar();
-            document.getElementById('next-module')?.classList.remove('blinking-button');
+            const moduleNav = document.getElementById('module-nav');
+if (moduleNav) {
+    moduleNav.classList.remove('hidden');
+}
+
+closeSidebar();
+
+const nextBtn = document.getElementById('next-module');
+if (nextBtn) {
+    nextBtn.classList.remove('blinking-button');
+}
         }, 300);
     }
     
