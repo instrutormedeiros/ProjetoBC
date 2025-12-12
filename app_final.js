@@ -203,10 +203,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if(installBtnMobile) installBtnMobile.addEventListener('click', triggerInstall);
 
     if (typeof moduleContent === 'undefined' || typeof moduleCategories === 'undefined') {
-        document.getElementById('main-header')?.classList.add('hidden');
-        document.querySelector('footer')?.classList.add('hidden');
-        return; 
-    }
+    console.warn("⚠️ Conteúdo do curso ainda não carregado. Mantendo apenas a capa.");
+    document.getElementById('main-header')?.classList.add('hidden');
+    document.querySelector('footer')?.classList.add('hidden');
+    // NÃO dá return aqui, deixa o restante do init continuar
+}
 
 function init() {
     // ========================================
@@ -370,12 +371,8 @@ setTimeout(() => {
        // Inicia Tour Automático (se nunca viu)
         startOnboardingTour(false); 
 
-        // --- CORREÇÃO BLINDADA B2B ---
-// Verifica se a intenção de abrir o painel existe
-if (localStorage.getItem("openmanagerafterlogin") === "true") {
-    localStorage.removeItem("openmanagerafterlogin");
-    
-    // Aguarda o Firebase estar pronto antes de abrir o painel
+       if (localStorage.getItem("open_manager_after_login") === "true") {
+    localStorage.removeItem("open_manager_after_login");
     setTimeout(() => {
         if (window.fbDB && typeof openManagerPanel === "function") {
             console.log("🔓 Abrindo painel do gestor automaticamente...");
@@ -388,8 +385,9 @@ if (localStorage.getItem("openmanagerafterlogin") === "true") {
                 }
             }, 3000);
         }
-    }, 2000);  // Aumentei de 1500ms para 2000ms
+    }, 2000);
 }
+
 
     // --- TRAVA DE SEGURANÇA (ADICIONE ISTO AQUI) ---
         // Isso impede que os botões sejam duplicados quando o banco atualiza
