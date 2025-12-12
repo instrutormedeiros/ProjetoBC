@@ -2397,15 +2397,17 @@ window.openManagerPanel = function() {
             // Salva no cache global para o filtro usar
             window.managerCachedUsers = users;
 
-            // Preenche o filtro de turmas (apenas se for a primeira carga ou se mudou algo)
-            if (filterSelect && filterSelect.options.length <= 1) {
-                const valorAtual = filterSelect.value;
-                filterSelect.innerHTML = '<option value="TODOS">Todas as Turmas</option>';
-                Array.from(turmasEncontradas).sort().forEach(turma => {
-                    filterSelect.innerHTML += `<option value="${turma}">${turma}</option>`;
-                });
-                filterSelect.value = valorAtual; 
-            }
+           // Preenche SEMPRE o filtro de turmas com o snapshot atual
+if (filterSelect) {
+    const valorAtual = filterSelect.value || 'TODOS';
+    filterSelect.innerHTML = '<option value="TODOS">Todas as Turmas</option>';
+    Array.from(turmasEncontradas).sort().forEach(turma => {
+        filterSelect.innerHTML += `<option value="${turma}">${turma}</option>`;
+    });
+    // Se a turma selecionada ainda existir, mantém; senão volta para TODOS
+    const exists = Array.from(filterSelect.options).some(opt => opt.value === valorAtual);
+    filterSelect.value = exists ? valorAtual : 'TODOS';
+}
 
             // Chama o renderizador da tabela
             window.filterManagerTable();
