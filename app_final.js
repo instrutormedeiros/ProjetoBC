@@ -2586,80 +2586,63 @@ window.toggleManagerRole = async function(uid, currentStatus) {
         }
     }
 };
-window.saveProgressToCloud = function() {
-    console.log("🔥 TENTATIVA DE SALVAMENTO DE PROGRESSO...");
-
-    // 1. Verificação e Recuperação de Emergência do UID
-    let targetUid = null;
-
-    if (currentUserData && currentUserData.uid) {
-        targetUid = currentUserData.uid;
-    } else {
-        // Se a variável global falhou, tenta pegar direto do sistema de autenticação
-        const authUser = firebase.auth().currentUser;
-        if (authUser) {
-            console.log("🔄 UID recuperado via Auth:", authUser.uid);
-            targetUid = authUser.uid;
-            // Reconstrói a variável global para não dar erro na próxima
-            if (currentUserData) {
-                currentUserData.uid = authUser.uid;
-            } else {
-                currentUserData = { uid: authUser.uid };
+window.saveProgressToCloud = function(targetUid = null) {
+    return new Promise((resolve, reject) => {
+        try {
+            if (!currentUserData || !currentUserData.uid) {
+                console.warn("⚠️ Usuário não definido, não há o que salvar.");
+                resolve();
+                return;
             }
-        } else {
-            console.error("❌ ERRO CRÍTICO: Sessão perdida.");
-            alert("Sua sessão expirou. Por favor, recarregue a página e faça login novamente.");
-            return Promise.reject("Usuário não logado");
+
+            // 1. Decide para qual UID salvar
+            let finalTargetUid = targetUid || currentUserData.uid;
+
+            // 2. Pega o progresso
+            let modulesToSave = completedModules || [];
+            if (!modulesToSave || modulesToSave.length === 0) {
+                const localData = localStorage.getItem('gateBombeiroCompletedModules_v3');
+                if (localData) {
+                    modulesToSave = JSON.parse(localData);
+                    completedModules = modulesToSave;
+                }
+            }
+            modulesToSave = Array.from(new Set(modulesToSave));
+
+            console.log("📤 Enviando para nuvem. UID:", finalTargetUid, "| Módulos:", modulesToSave.length);
+
+            // 3. Envio ao Firestore
+            const db = window.__fbDB || window.fbDB;
+            if (!db) {
+                console.error("❌ ERRO: Banco de dados ainda não está pronto em saveProgressToCloud.");
+                alert("Sistema ainda está carregando. Tente novamente em alguns segundos.");
+                resolve();
+                return;
+            }
+
+            db.collection('users').doc(finalTargetUid).update({
+                completedModules: modulesToSave,
+                last_progress_update: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                console.log("✅ SUCESSO: Progresso salvo no banco de dados!");
+
+                if (currentUserData) {
+                    currentUserData.completedModules = modulesToSave;
+                }
+
+                resolve();
+            }).catch(err => {
+                console.error("❌ ERRO NO BANCO DE DADOS:", err);
+                alert("Erro ao salvar: " + err.message);
+                reject(err);
+            });
+
+        } catch (err) {
+            console.error("❌ ERRO GERAL em saveProgressToCloud:", err);
+            reject(err);
         }
-    }
-
-    // 2. Pega o progresso (Prioridade: Variável Global > LocalStorage)
-    let modulesToSave = completedModules;
-    
-    if (!modulesToSave || modulesToSave.length === 0) {
-        const localData = localStorage.getItem('gateBombeiroCompletedModules_v3');
-        if (localData) {
-            modulesToSave = JSON.parse(localData);
-            completedModules = modulesToSave; // Sincroniza a global
-        }
-    }
-
-    console.log("☁️ Enviando para nuvem. UID:", targetUid, "| Módulos:", modulesToSave.length);
-
-   // 3. Envio ao Firestore (Usando o targetUid garantido)
-const db = window.__fbDB || window.fbDB;
-if (!db) {
-    console.error("❌ ERRO: Banco de dados ainda não está pronto em saveProgressToCloud.");
-    alert("Sistema ainda está carregando. Tente novamente em alguns segundos.");
-    return;
-}
-
-return db.collection('users').doc(targetUid).update({
-    completedModules: modulesToSave,
-    last_progress_update: firebase.firestore.FieldValue.serverTimestamp()
-});
-
-        // Atualiza o objeto local para o painel ler na hora
-        if (currentUserData) currentUserData.completedModules = modulesToSave;
-    }).catch(err => {
-        console.error("❌ ERRO NO BANCO DE DADOS:", err);
-        alert("Erro ao salvar: " + err.message);
     });
-}
-
-   // ... (início da função saveProgressToCloud acima) ...
-    // 3. Envio ao Firestore (Usando o targetUid garantido)
-    return window.__fbDB.collection('users').doc(targetUid).update({
-        completedModules: modulesToSave,
-        last_progress_update: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
-        console.log("✅ SUCESSO: Progresso salvo no banco de dados!");
-        // Atualiza o objeto local para o painel ler na hora
-        if (currentUserData) currentUserData.completedModules = modulesToSave;
-    }).catch(err => {
-        console.error("❌ ERRO NO BANCO DE DADOS:", err);
-        alert("Erro ao salvar: " + err.message);
-    });
+};
 
     init(); // <--- Inicia o app
 }); // <--- Fecha o DOMContentLoaded
