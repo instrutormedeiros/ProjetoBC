@@ -384,10 +384,15 @@ setTimeout(() => {
 
                 // Se já tem módulo atual, continua nele; se não, vai para o primeiro
                 const targetModule = currentModuleId || firstModule;
-                if (targetModule) {
-                    loadModule(targetModule);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
+if (targetModule) {
+    if (typeof window.loadModule === 'function') {
+        window.loadModule(targetModule);
+    } else if (typeof window.openModule === 'function') {
+        window.openModule(targetModule);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
             };
         }
 
