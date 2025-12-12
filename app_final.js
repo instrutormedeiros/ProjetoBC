@@ -2308,11 +2308,8 @@ window.scrollToNextSection = function() {
 }
     // --- FUNÇÃO PARA INICIAR LOGIN COMO GESTOR ---
 window.startManagerLogin = function() {
-    // 1. Salva na memória que o usuário quer ir para o painel
-    localStorage.setItem('open_manager_after_login', 'true');
-    
-    // 2. Chama a função que abre o modal de login
-    enterSystem();
+       localStorage.setItem('open_manager_after_login', 'true');
+       enterSystem();
 };
   // VARIÁVEL GLOBAL PARA ARMAZENAR DADOS DO GESTOR TEMPORARIAMENTE
 let managerCachedUsers = [];
