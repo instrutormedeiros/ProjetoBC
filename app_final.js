@@ -2648,7 +2648,6 @@ window.saveProgressToCloud = function() {
         console.error("❌ ERRO NO BANCO DE DADOS:", err);
         alert("Erro ao salvar: " + err.message);
     });
-} // <--- Fecha a função saveProgressToCloud
 
     init(); // <--- Inicia o app
 }); // <--- Fecha o DOMContentLoaded
