@@ -2455,13 +2455,24 @@ window.renderManagerTable = function(usersList) {
         return;
     }
 
-    usersList.forEach(u => {
-        const completedArr = (Array.isArray(u.completedModules)) ? u.completedModules : [];
+        usersList.forEach(u => {
+        // Garante que completedModules venha sempre como array
+        const completedArr = Array.isArray(u.completedModules)
+            ? u.completedModules
+            : (u.completedModules && typeof u.completedModules === 'object'
+                ? Object.keys(u.completedModules)   // caso salvo como objeto {id:true}
+                : []);
+
         const modulesDone = completedArr.length;
-        
+
+        // Garante total de módulos consistente
+        const total = (window.moduleContent && Object.keys(window.moduleContent).length > 0)
+            ? Object.keys(window.moduleContent).length
+            : totalCourseModules;
+
         let percent = 0;
-        if (totalCourseModules > 0) {
-            percent = Math.round((modulesDone / totalCourseModules) * 100);
+        if (total > 0) {
+            percent = Math.round((modulesDone / total) * 100);
         }
         if (percent > 100) percent = 100;
 
