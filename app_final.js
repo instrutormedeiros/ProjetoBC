@@ -1053,7 +1053,7 @@ function updateAdminStats(stats) {
                 setupNotesListener(id);
             }
 
-            contentArea.style.opacity = '1';
+contentArea.style.opacity = '1';
 contentArea.style.transition = 'opacity 0.3s ease';
 window.scrollTo({ top: 0, behavior: 'smooth' });
 updateActiveModuleInList();
@@ -1925,12 +1925,12 @@ if (nextBtn) {
         prevModule.disabled = (n === 1);
         nextModule.disabled = (n === totalModules); 
     }
-    function setupQuizListeners() {
+function setupQuizListeners() {
     const options = document.querySelectorAll('.quiz-option');
-    if (!options || options.length === 0) return;   // <-- ADICIONE ESTA LINHA
-
+    if (!options || options.length === 0) return;
     options.forEach(o => o.addEventListener('click', handleQuizOptionClick));
 }
+
 
     function triggerSuccessParticles(clickEvent, element) {
         if (typeof confetti === 'function') confetti({ particleCount: 28, spread: 70, origin: { x: clickEvent ? clickEvent.clientX/window.innerWidth : 0.5, y: clickEvent ? clickEvent.clientY/window.innerHeight : 0.5 } });
