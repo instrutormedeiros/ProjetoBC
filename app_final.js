@@ -1,4 +1,4 @@
-/* === ARQUIVO app_final.js (VERSÃO FINAL V10.1 - CORREÇÃO TOTAL MODULES) === */
+-/* === ARQUIVO app_final.js (VERSÃO FINAL V10.1 - CORREÇÃO TOTAL MODULES) === */
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -1054,23 +1054,24 @@ function updateAdminStats(stats) {
             }
 
             contentArea.style.opacity = '1';
-            contentArea.style.transition = 'opacity 0.3s ease';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            updateActiveModuleInList();
-            updateNavigationButtons();
-            updateBreadcrumbs(d.title);
-                // Ajuste: só mexe em classList se o elemento existir
-    const moduleNav = document.getElementById('module-nav');
-    if (moduleNav) {
-        moduleNav.classList.remove('hidden');
-    }
+contentArea.style.transition = 'opacity 0.3s ease';
+window.scrollTo({ top: 0, behavior: 'smooth' });
+updateActiveModuleInList();
+updateNavigationButtons();
+updateBreadcrumbs(d.title);
 
-    closeSidebar();
+// NOVO BLOCO SEGURO
+const moduleNav = document.getElementById('module-nav');
+if (moduleNav) {
+    moduleNav.classList.remove('hidden');
+}
 
-    const nextBtn = document.getElementById('next-module');
-    if (nextBtn) {
-        nextBtn.classList.remove('blinking-button');
-    }
+closeSidebar();
+
+const nextBtn = document.getElementById('next-module');
+if (nextBtn) {
+    nextBtn.classList.remove('blinking-button');
+}
 }, 300);
 }
     
@@ -1805,11 +1806,18 @@ function updateAdminStats(stats) {
     if (totalModules > 0 && completedModules.length === totalModules) showCongratulations();
 }
 
-    function showCongratulations() {
-        document.getElementById('congratulations-modal')?.classList.add('show');
-        document.getElementById('modal-overlay')?.classList.add('show');
-        if(typeof confetti === 'function') confetti({particleCount:150, spread:90, origin:{y:0.6},zIndex:200});
+   function showCongratulations() {
+    const congrats = document.getElementById('congratulations-modal');
+    if (congrats) congrats.classList.add('show');
+
+    const overlay = document.getElementById('modal-overlay');
+    if (overlay) overlay.classList.add('show');
+
+    if (typeof confetti === 'function') {
+        confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 }, zIndex: 200 });
     }
+}
+
     function showAchievementToast(title) {
         const toast = document.createElement('div');
         toast.className = 'toast';
@@ -1918,8 +1926,11 @@ function updateAdminStats(stats) {
         nextModule.disabled = (n === totalModules); 
     }
     function setupQuizListeners() {
-        document.querySelectorAll('.quiz-option').forEach(o => o.addEventListener('click', handleQuizOptionClick));
-    }
+    const options = document.querySelectorAll('.quiz-option');
+    if (!options || options.length === 0) return;   // <-- ADICIONE ESTA LINHA
+
+    options.forEach(o => o.addEventListener('click', handleQuizOptionClick));
+}
 
     function triggerSuccessParticles(clickEvent, element) {
         if (typeof confetti === 'function') confetti({ particleCount: 28, spread: 70, origin: { x: clickEvent ? clickEvent.clientX/window.innerWidth : 0.5, y: clickEvent ? clickEvent.clientY/window.innerHeight : 0.5 } });
