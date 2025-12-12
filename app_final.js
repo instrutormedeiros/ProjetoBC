@@ -401,73 +401,83 @@ setTimeout(() => {
     }
     
     // --- FUNÇÕES ADMIN (ATUALIZADAS E LEGÍVEIS) ---
-    window.openAdminPanel = async function() {
-        if (!currentUserData || !currentUserData.isAdmin) return;
-        adminModal.classList.add('show');
-        adminOverlay.classList.add('show');
-        const tbody = document.getElementById('admin-table-body');
-        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center">Carregando usuários...</td></tr>';
+window.openAdminPanel = async function() {
+    if (!currentUserData || !currentUserData.isAdmin) return;
+
+    adminModal.classList.add('show');
+    adminOverlay.classList.add('show');
+
+    const tbody = document.getElementById('admin-table-body');
+    tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center">Carregando usuários...</td></tr>';
+
+    // Usa o mesmo alias de banco que o painel do gestor
+    const db = window.__fbDB || window.fbDB;
+    if (!db) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-red-500">Banco de dados não carregado.</td></tr>';
+        return;
+    }
+
+    try {
+        const snapshot = await db.collection('users').orderBy('name').get();
+        tbody.innerHTML = '';
         
-        try {
-            const snapshot = await window.__fbDB.collection('users').orderBy('name').get();
-            tbody.innerHTML = '';
+        snapshot.forEach(doc => {
+            const u = doc.data();
+            const uid = doc.id;
             
-            snapshot.forEach(doc => {
-                const u = doc.data();
-                const uid = doc.id;
-                
-                // Verifica status e expiração
-                let statusDisplay = u.status || 'trial';
-                let statusColor = 'bg-gray-100 text-gray-800';
-                
-                const validade = u.acesso_ate ? new Date(u.acesso_ate) : null;
-                const isExpired = validade && new Date() > validade;
-                const validadeStr = validade ? validade.toLocaleDateString('pt-BR') : '-';
+            // Verifica status e expiração
+            let statusDisplay = u.status || 'trial';
+            let statusColor = 'bg-gray-100 text-gray-800';
+            
+            const validade = u.acesso_ate ? new Date(u.acesso_ate) : null;
+            const isExpired = validade && new Date() > validade;
+            const validadeStr = validade ? validade.toLocaleDateString('pt-BR') : '-';
 
-                if (u.status === 'premium') {
-                    if (isExpired) {
-                        statusDisplay = 'EXPIRADO';
-                        statusColor = 'bg-red-100 text-red-800';
-                    } else {
-                        statusColor = 'bg-green-100 text-green-800';
-                    }
+            if (u.status === 'premium') {
+                if (isExpired) {
+                    statusDisplay = 'EXPIRADO';
+                    statusColor = 'bg-red-100 text-red-800';
                 } else {
-                    statusColor = 'bg-yellow-100 text-yellow-800';
+                    statusColor = 'bg-green-100 text-green-800';
                 }
+            } else {
+                statusColor = 'bg-yellow-100 text-yellow-800';
+            }
 
-                const cpf = u.cpf || 'Sem CPF';
-                const planoTipo = u.planType || (u.status === 'premium' ? 'Indefinido' : 'Trial');
-                const deviceInfo = u.last_device || 'Desconhecido';
-                const noteIconColor = u.adminNote ? 'text-yellow-500' : 'text-gray-400';
+            const cpf = u.cpf || 'Sem CPF';
+            const planoTipo = u.planType || (u.status === 'premium' ? 'Indefinido' : 'Trial');
+            const deviceInfo = u.last_device || 'Desconhecido';
+            const noteIconColor = u.adminNote ? 'text-yellow-500' : 'text-gray-400';
 
-                const row = `
-                    <tr class="border-b hover:bg-gray-50 transition-colors">
-                        <td class="p-3 font-bold text-gray-800">${u.name}</td>
-                        <td class="p-3 text-gray-600 text-sm">${u.email}<br><span class="text-xs text-gray-500">CPF: ${cpf}</span></td>
-                        <td class="p-3 text-xs text-gray-500 max-w-[150px] truncate" title="${deviceInfo}">${deviceInfo}</td>
-                        <td class="p-3">
-                            <div class="flex flex-col items-start">
-                                <span class="px-2 py-1 rounded text-xs font-bold uppercase ${statusColor}">${statusDisplay}</span>
-                                <span class="text-xs text-gray-500 mt-1">${planoTipo}</span>
-                            </div>
-                        </td>
-                        <td class="p-3 text-sm font-medium">${validadeStr}</td>
-                        <td class="p-3 flex flex-wrap gap-2">
-                            <button onclick="editUserData('${uid}', '${u.name}', '${cpf}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Editar Dados"><i class="fas fa-pen"></i></button>
-                            <button onclick="editUserNote('${uid}', '${(u.adminNote || '').replace(/'/g, "\\'")}')" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 px-2 py-1.5 rounded text-xs shadow" title="Nota Admin"><i class="fas fa-sticky-note ${noteIconColor}"></i></button>
-                            <button onclick="manageUserAccess('${uid}')" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Gerenciar Plano"><i class="fas fa-calendar-alt"></i></button>
-                            <button onclick="sendResetEmail('${u.email}')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Resetar Senha"><i class="fas fa-key"></i></button>
-                            <button onclick="deleteUser('${uid}', '${u.name}', '${cpf}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Excluir"><i class="fas fa-trash"></i></button>
-                            <button onclick="toggleManagerRole('${uid}', ${u.isManager})" class="${u.isManager ? 'bg-purple-600' : 'bg-gray-400'} hover:bg-purple-500 text-white px-2 py-1.5 rounded text-xs shadow" title="Alternar Gestor"><i class="fas fa-briefcase"></i></button>
-                        </td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
-            });
-        } catch (err) {
-            tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Erro ao carregar: ${err.message}</td></tr>`;
-        }
-    };
+            const row = `
+                <tr class="border-b hover:bg-gray-50 transition-colors">
+                    <td class="p-3 font-bold text-gray-800">${u.name}</td>
+                    <td class="p-3 text-gray-600 text-sm">${u.email}<br><span class="text-xs text-gray-500">CPF: ${cpf}</span></td>
+                    <td class="p-3 text-xs text-gray-500 max-w-[150px] truncate" title="${deviceInfo}">${deviceInfo}</td>
+                    <td class="p-3">
+                        <div class="flex flex-col items-start">
+                            <span class="px-2 py-1 rounded text-xs font-bold uppercase ${statusColor}">${statusDisplay}</span>
+                            <span class="text-xs text-gray-500 mt-1">${planoTipo}</span>
+                        </div>
+                    </td>
+                    <td class="p-3 text-sm font-medium">${validadeStr}</td>
+                    <td class="p-3 flex flex-wrap gap-2">
+                        <button onclick="editUserData('${uid}', '${u.name}', '${cpf}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Editar Dados"><i class="fas fa-pen"></i></button>
+                        <button onclick="editUserNote('${uid}', '${(u.adminNote || '').replace(/'/g, "\\'")}')" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 px-2 py-1.5 rounded text-xs shadow" title="Nota Admin"><i class="fas fa-sticky-note ${noteIconColor}"></i></button>
+                        <button onclick="manageUserAccess('${uid}')" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Gerenciar Plano"><i class="fas fa-calendar-alt"></i></button>
+                        <button onclick="sendResetEmail('${u.email}')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Resetar Senha"><i class="fas fa-key"></i></button>
+                        <button onclick="deleteUser('${uid}', '${u.name}', '${cpf}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Excluir"><i class="fas fa-trash"></i></button>
+                        <button onclick="toggleManagerRole('${uid}', ${u.isManager})" class="${u.isManager ? 'bg-purple-600' : 'bg-gray-400'} hover:bg-purple-500 text-white px-2 py-1.5 rounded text-xs shadow" title="Alternar Gestor"><i class="fas fa-briefcase"></i></button>
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Erro ao carregar: ${err.message}</td></tr>`;
+    }
+};
+
 
     window.manageUserAccess = async function(uid) {
         const op = prompt(
