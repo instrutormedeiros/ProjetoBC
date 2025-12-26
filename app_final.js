@@ -404,13 +404,15 @@ setTimeout(() => {
 window.openAdminPanel = async function() {
     if (!currentUserData || !currentUserData.isAdmin) return;
 
+    const adminModal = document.getElementById('admin-modal');
+    const adminOverlay = document.getElementById('admin-modal-overlay');
+    
     adminModal.classList.add('show');
     adminOverlay.classList.add('show');
 
     const tbody = document.getElementById('admin-table-body');
     tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center">Carregando usuários...</td></tr>';
 
-    // Usa o mesmo alias de banco que o painel do gestor
     const db = window.__fbDB || window.fbDB;
     if (!db) {
         tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-red-500">Banco de dados não carregado.</td></tr>';
@@ -428,7 +430,7 @@ window.openAdminPanel = async function() {
             users.push({ uid, data: u });
         });
 
-        // Ordena alfabeticamente ignorando maiúsculas/minúsculas/acentos
+        // Ordena alfabeticamente
         users.sort((a, b) => {
             const na = (a.data.name || '').toLocaleLowerCase('pt-BR');
             const nb = (b.data.name || '').toLocaleLowerCase('pt-BR');
@@ -442,10 +444,9 @@ window.openAdminPanel = async function() {
             if (u.status === 'premium') stats.premium++;
             else stats.trial++;
 
-            // Verifica status e expiração
+            // --- LÓGICA DE STATUS ---
             let statusDisplay = u.status || 'trial';
             let statusColor = 'bg-gray-100 text-gray-800';
-
             const validade = u.acesso_ate ? new Date(u.acesso_ate) : null;
             const isExpired = validade && new Date() > validade;
             const validadeStr = validade ? validade.toLocaleDateString('pt-BR') : '-';
@@ -466,9 +467,21 @@ window.openAdminPanel = async function() {
             const deviceInfo = u.last_device || 'Desconhecido';
             const noteIconColor = u.adminNote ? 'text-yellow-500' : 'text-gray-400';
 
+            // --- NOVO: LÓGICA DO CURSO (BC vs SP) ---
+            const cursoCodigo = u.courseType || 'BC'; // Padrão BC se não existir
+            const cursoLabel = cursoCodigo === 'SP' ? 'SEG. PATRIMONIAL' : 'BOMBEIRO CIVIL';
+            const cursoBadgeColor = cursoCodigo === 'SP' 
+                ? 'bg-blue-100 text-blue-800 border-blue-200' 
+                : 'bg-red-100 text-red-800 border-red-200';
+
             const row = `
                 <tr class="border-b hover:bg-gray-50 transition-colors">
-                    <td class="p-3 font-bold text-gray-800">${u.name}</td>
+                    <td class="p-3 font-bold text-gray-800">
+                        ${u.name}
+                        <div class="mt-1">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${cursoBadgeColor}">${cursoLabel}</span>
+                        </div>
+                    </td>
                     <td class="p-3 text-gray-600 text-sm">${u.email}<br><span class="text-xs text-gray-500">CPF: ${cpf}</span></td>
                     <td class="p-3 text-xs text-gray-500 max-w-[150px] truncate" title="${deviceInfo}">${deviceInfo}</td>
                     <td class="p-3">
@@ -480,6 +493,10 @@ window.openAdminPanel = async function() {
                     <td class="p-3 text-sm font-medium">${validadeStr}</td>
                     <td class="p-3 flex flex-wrap gap-2">
                         <button onclick="editUserData('${uid}', '${u.name}', '${cpf}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Editar Dados"><i class="fas fa-pen"></i></button>
+                        
+                        <!-- BOTÃO NOVO: ALTERAR CURSO -->
+                        <button onclick="changeUserCourse('${uid}', '${cursoCodigo}')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-1.5 rounded text-xs shadow" title="Alterar Curso (BC/SP)"><i class="fas fa-graduation-cap"></i></button>
+                        
                         <button onclick="editUserNote('${uid}', '${(u.adminNote || '').replace(/'/g, "\\'")}')" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 px-2 py-1.5 rounded text-xs shadow" title="Nota Admin"><i class="fas fa-sticky-note ${noteIconColor}"></i></button>
                         <button onclick="manageUserAccess('${uid}')" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Gerenciar Plano"><i class="fas fa-calendar-alt"></i></button>
                         <button onclick="sendResetEmail('${u.email}')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Resetar Senha"><i class="fas fa-key"></i></button>
@@ -729,21 +746,28 @@ function updateAdminStats(stats) {
             }
         });
         btnSignup?.addEventListener('click', async () => {
-            const phone = phoneInput.value; // NOVO
-            const company = companyInput.value; // NOVO
+            const phone = document.getElementById('phone-input').value; 
+            const company = document.getElementById('company-input').value; 
+            // --- NOVO: Captura o curso escolhido ---
+            const courseSelect = document.getElementById('course-input');
+            const courseType = courseSelect ? courseSelect.value : 'BC'; 
+            // ---------------------------------------
+            
             const name = nameInput.value;
             const email = emailInput.value;
             const password = passwordInput.value;
             const cpf = cpfInput.value;
+
             if (!name || !email || !password || !cpf || !phone) {
-                feedback.textContent = "Todos os campos são obrigatórios.";
+                feedback.textContent = "Todos os campos obrigatórios devem ser preenchidos.";
                 feedback.className = "text-center text-sm mt-4 font-semibold text-red-500";
                 return;
             }
             feedback.textContent = "Criando conta...";
             feedback.className = "text-center text-sm mt-4 text-blue-400 font-semibold";
             try {
-                await FirebaseCourse.signUpWithEmail(name, email, password, cpf, company, phone);
+                // Passamos o courseType como último argumento
+                await FirebaseCourse.signUpWithEmail(name, email, password, cpf, company, phone, courseType);
                 feedback.textContent = "Sucesso! Iniciando...";
             } catch (error) {
                 feedback.className = "text-center text-sm mt-4 text-red-400 font-semibold";
@@ -2744,6 +2768,42 @@ window.saveProgressToCloud = function(targetUid = null) {
         }
     });
 };
+    
+// --- FUNÇÃO PARA ALTERAR CURSO (ADMIN) ---
+window.changeUserCourse = async function(uid, currentType) {
+    const promptText = "Digite o código do curso para este aluno:\n\nBC = Bombeiro Civil\nSP = Segurança Patrimonial";
+    let newType = prompt(promptText, currentType);
+    
+    if (newType === null) return; // Cancelou
+    
+    newType = newType.toUpperCase().trim();
+    
+    // Validação simples
+    if (newType !== 'BC' && newType !== 'SP') {
+        alert("❌ Código inválido! Use apenas 'BC' ou 'SP'.");
+        return;
+    }
 
+    if (newType === currentType) {
+        alert("O aluno já está neste curso.");
+        return;
+    }
+
+    try {
+        const db = window.__fbDB || window.fbDB;
+        await db.collection('users').doc(uid).update({
+            courseType: newType
+        });
+        
+        alert(`✅ Sucesso!\nCurso alterado para: ${newType === 'SP' ? 'Segurança Patrimonial' : 'Bombeiro Civil'}.`);
+        
+        // Recarrega a tabela para mostrar a mudança
+        openAdminPanel(); 
+    } catch (e) {
+        alert("Erro ao alterar curso: " + e.message);
+        console.error(e);
+    }
+};
+    
     init(); // <--- Inicia o app
 }); // <--- Fecha o DOMContentLoaded
