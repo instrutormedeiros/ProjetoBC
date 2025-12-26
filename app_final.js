@@ -292,106 +292,97 @@ setTimeout(() => {
     }
 
     function onLoginSuccess(user, userData) {
-    // --- NOVO: GARANTE QUE A CAPA SUMA NO REFRESH ---
-    const landing = document.getElementById('landing-hero');
-    if (landing) landing.classList.add('hidden'); 
-    document.body.classList.remove('landing-active'); 
+        // Remove capa e libera scroll
+        const landing = document.getElementById('landing-hero');
+        if (landing) landing.classList.add('hidden'); 
+        document.body.classList.remove('landing-active'); 
 
-    // --- CORREÇÃO DO ERRO DE SALVAMENTO ---
-    // Injeta o UID (que vem da autenticação) dentro dos dados do usuário
-    if (userData && user) {
-        currentUserData = { ...userData, uid: user.uid };
-    } else {
-        currentUserData = userData;
-    }
+        if (userData && user) {
+            currentUserData = { ...userData, uid: user.uid };
+        } else {
+            currentUserData = userData;
+        }
 
         if (document.body.getAttribute('data-app-ready') === 'true') return;
         
-        // Fecha modais e overlays para liberar a tela
         document.getElementById('name-prompt-modal')?.classList.remove('show');
         document.getElementById('name-modal-overlay')?.classList.remove('show');
         document.getElementById('expired-modal')?.classList.remove('show');
         
-        // Saudação personalizada
         const greetingEl = document.getElementById('welcome-greeting');
         if(greetingEl) greetingEl.textContent = `Olá, ${userData.name.split(' ')[0]}!`;
         
-        // Marca d'água de segurança
         const printWatermark = document.getElementById('print-watermark');
         if (printWatermark) {
             printWatermark.textContent = `Licenciado para ${userData.name} (CPF: ${userData.cpf || '...'}) - Proibida a Cópia`;
         }
 
-        // Libera Botões Admin (se for admin)
+        // Admin e Gestor Buttons
         const adminBtn = document.getElementById('admin-panel-btn');
         const mobileAdminBtn = document.getElementById('mobile-admin-btn');
+        const managerFab = document.getElementById("manager-fab");
+
         if (userData.isAdmin === true) {
             if(adminBtn) adminBtn.classList.remove('hidden');
             if(mobileAdminBtn) mobileAdminBtn.classList.remove('hidden');
         }
-        // ========================================
-// ========================================
-        // LÓGICA DO BOTÃO GESTOR (CORRIGIDO)
-        // ========================================
-        const painelBtn = document.getElementById("open-manager-panel-btn");
-        
-        // ========================================
-        // LÓGICA DO BOTÃO FLUTUANTE DE GESTOR
-        // ========================================
-        const managerFab = document.getElementById("manager-fab");
-        
-        // Se for gestor OU admin, mostra o botão flutuante
         if (userData.isManager === true || userData.isAdmin === true) {
-            if (managerFab) {
-                managerFab.classList.remove("hidden"); // Remove a classe que esconde
-                console.log("✅ Botão Flutuante de Gestor ATIVADO para:", userData.name);
-            }
+            if (managerFab) managerFab.classList.remove("hidden");
         }
 
         checkTrialStatus(userData.acesso_ate);
 
-        // --- PROGRESSO SINCRONIZADO (BIDIRECIONAL) ---
+        // Progresso
         if (userData.completedModules && Array.isArray(userData.completedModules) && userData.completedModules.length > 0) {
-            // Se o banco tem dados, usa o banco (prioridade nuvem)
             completedModules = userData.completedModules;
             localStorage.setItem('gateBombeiroCompletedModules_v3', JSON.stringify(completedModules));
-            console.log("Progresso recuperado da nuvem.");
         } else if (completedModules.length > 0) {
-            // Se o banco está vazio, mas o aluno tem progresso local, ENVIA para o banco
-            console.log("Sincronizando progresso local para a nuvem...");
             saveProgressToCloud();
         }
 
-        // Inicializa contadores
-        totalModules = Object.keys(window.moduleContent || {}).length;
-        document.getElementById('total-modules').textContent = totalModules;
-        document.getElementById('course-modules-count').textContent = totalModules;
+        // --- CORREÇÃO DA CONTAGEM DE MÓDULOS (62 vs 4) ---
+        // Aqui recalculamos o totalModules baseado APENAS no que o aluno pode ver
+        let count = 0;
+        const userCourse = userData.courseType || 'BC';
+        const isAdm = userData.isAdmin || userData.courseType === 'GESTOR';
+
+        Object.keys(window.moduleContent || {}).forEach(modId => {
+            const isSp = modId.startsWith('sp_');
+            
+            if (isAdm) {
+                count++; // Admin vê tudo (66)
+            } else {
+                // Aluno BC: conta se NÃO for SP
+                if (userCourse === 'BC' && !isSp) count++;
+                // Aluno SP: conta se FOR SP
+                else if (userCourse === 'SP' && isSp) count++;
+            }
+        });
         
-        // Carrega listas e eventos
+        totalModules = count; // Atualiza a variável global
+        // --------------------------------------------------
+
+        // Atualiza a interface com o número correto
+        const totalEl = document.getElementById('total-modules');
+        const courseCountEl = document.getElementById('course-modules-count');
+        if(totalEl) totalEl.textContent = totalModules;
+        if(courseCountEl) courseCountEl.textContent = totalModules;
+        
         populateModuleLists();
         updateProgress();
         addEventListeners(); 
         handleInitialLoad();
-
-       // Inicia Tour Automático (se nunca viu)
         startOnboardingTour(false); 
 
-       if (localStorage.getItem("open_manager_after_login") === "true") {
-    localStorage.removeItem("open_manager_after_login");
-    setTimeout(() => {
-        if (window.fbDB && typeof openManagerPanel === "function") {
-            console.log("🔓 Abrindo painel do gestor automaticamente...");
-            openManagerPanel();
-        } else {
-            console.warn("⚠️ Firebase ainda não está pronto. Tentando novamente em 3 segundos...");
+        if (localStorage.getItem("open_manager_after_login") === "true") {
+            localStorage.removeItem("open_manager_after_login");
             setTimeout(() => {
-                if (window.fbDB && typeof openManagerPanel === "function") {
-                    openManagerPanel();
-                }
-            }, 3000);
+                if (window.fbDB && typeof openManagerPanel === "function") openManagerPanel();
+            }, 2000);
         }
-    }, 2000);
-}
+
+        document.body.setAttribute('data-app-ready', 'true');
+    }
 
 
     // --- TRAVA DE SEGURANÇA (ADICIONE ISTO AQUI) ---
@@ -636,13 +627,22 @@ function updateAdminStats(stats) {
         }
     }
 
+// --- 1. ATUALIZAÇÃO DA FUNÇÃO DE EVENTOS DE AUTENTICAÇÃO ---
+    // Substitua a função setupAuthEventListeners inteira por esta:
+    
     function setupAuthEventListeners() {
         const nameField = document.getElementById('name-field-container');
         const cpfField = document.getElementById('cpf-field-container'); 
-        const phoneField = document.getElementById('phone-field-container'); // NOVO
-        const phoneInput = document.getElementById('phone-input'); // NOVO
-        const companyField = document.getElementById('company-field-container'); // NOVO
-        const companyInput = document.getElementById('company-input'); // NOVO
+        const phoneField = document.getElementById('phone-field-container'); 
+        const phoneInput = document.getElementById('phone-input'); 
+        const companyField = document.getElementById('company-field-container'); 
+        const companyInput = document.getElementById('company-input'); 
+        
+        // --- NOVO: Referência ao campo de curso ---
+        const courseField = document.getElementById('course-field-container'); 
+        const courseSelect = document.getElementById('course-input');
+        // ------------------------------------------
+
         const nameInput = document.getElementById('name-input');
         const cpfInput = document.getElementById('cpf-input'); 
         const emailInput = document.getElementById('email-input');
@@ -663,23 +663,16 @@ function updateAdminStats(stats) {
         const closePayModal = document.getElementById('close-payment-modal-btn');
         const loginModalOverlay = document.getElementById('name-modal-overlay');
         const loginModal = document.getElementById('name-prompt-modal');
-        // ... (Logo após as definições das variáveis dentro de setupAuthEventListeners)
 
-        // --- LÓGICA DO ENTER PARA LOGIN ---
-        // Se apertar Enter no campo de senha, clica no botão de entrar
+        // ... (Lógica do Enter mantida) ...
         passwordInput.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
-                btnLogin.click();
+                if (!loginGroup.classList.contains('hidden')) btnLogin.click();
+                else btnSignup.click();
             }
         });
 
-        // (Opcional) Se apertar Enter no email, pula para a senha
-        emailInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                passwordInput.focus();
-            }
-        });
-
+        // ... (Lógica do Modal de Pagamento mantida) ...
         function openPaymentModal() {
             expiredModal.classList.add('show');
             if (loginModalOverlay) loginModalOverlay.classList.add('show');
@@ -704,28 +697,41 @@ function updateAdminStats(stats) {
                 }
             }
         });
+
+        // --- ALTERAÇÃO AQUI: Lógica de Alternar Login/Cadastro ---
         btnShowSignup?.addEventListener('click', () => {
             loginGroup.classList.add('hidden');
             signupGroup.classList.remove('hidden');
+            
+            // Mostra campos extras
             nameField.classList.remove('hidden');
             cpfField.classList.remove('hidden'); 
-            phoneField.classList.remove('hidden'); // MOSTRAR TELEFONE
+            phoneField.classList.remove('hidden'); 
             companyField.classList.remove('hidden');
+            if(courseField) courseField.classList.remove('hidden'); // MOSTRA o curso
+            
             authTitle.textContent = "Criar Nova Conta";
             authMsg.textContent = "Cadastre-se para o Período de Experiência.";
             feedback.textContent = "";
         });
+
         btnShowLogin?.addEventListener('click', () => {
             loginGroup.classList.remove('hidden');
             signupGroup.classList.add('hidden');
+            
+            // Esconde campos extras
             nameField.classList.add('hidden');
             cpfField.classList.add('hidden'); 
-            phoneField.classList.add('hidden'); // ESCONDER TELEFONE
+            phoneField.classList.add('hidden'); 
             companyField.classList.add('hidden');
+            if(courseField) courseField.classList.add('hidden'); // ESCONDE o curso
+            
             authTitle.textContent = "Acesso ao Sistema";
             authMsg.textContent = "Acesso Restrito";
             feedback.textContent = "";
         });
+
+        // Login Action
         btnLogin?.addEventListener('click', async () => {
             const email = emailInput.value;
             const password = passwordInput.value;
@@ -745,14 +751,12 @@ function updateAdminStats(stats) {
                 feedback.textContent = "Erro ao entrar. Verifique seus dados.";
             }
         });
+
+        // Signup Action (Com captura do curso)
         btnSignup?.addEventListener('click', async () => {
-            const phone = document.getElementById('phone-input').value; 
-            const company = document.getElementById('company-input').value; 
-            // --- NOVO: Captura o curso escolhido ---
-            const courseSelect = document.getElementById('course-input');
-            const courseType = courseSelect ? courseSelect.value : 'BC'; 
-            // ---------------------------------------
-            
+            const phone = phoneInput.value; 
+            const company = companyInput.value; 
+            const courseType = courseSelect ? courseSelect.value : 'BC'; // Captura
             const name = nameInput.value;
             const email = emailInput.value;
             const password = passwordInput.value;
@@ -766,7 +770,6 @@ function updateAdminStats(stats) {
             feedback.textContent = "Criando conta...";
             feedback.className = "text-center text-sm mt-4 text-blue-400 font-semibold";
             try {
-                // Passamos o courseType como último argumento
                 await FirebaseCourse.signUpWithEmail(name, email, password, cpf, company, phone, courseType);
                 feedback.textContent = "Sucesso! Iniciando...";
             } catch (error) {
