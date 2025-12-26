@@ -380,11 +380,6 @@ setTimeout(() => {
                 if (window.fbDB && typeof openManagerPanel === "function") openManagerPanel();
             }, 2000);
         }
-
-        document.body.setAttribute('data-app-ready', 'true');
-    }
-
-
     // --- TRAVA DE SEGURANÇA (ADICIONE ISTO AQUI) ---
         // Isso impede que os botões sejam duplicados quando o banco atualiza
         document.body.setAttribute('data-app-ready', 'true');
