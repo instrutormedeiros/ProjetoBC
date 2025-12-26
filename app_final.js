@@ -2845,6 +2845,145 @@ window.changeUserCourse = async function(uid, currentType) {
         console.error(e);
     }
 };
+    // --- NOVA FUNÇÃO: LIMPEZA TOTAL DE DADOS (LOGOUT/RESET) ---
+window.clearLocalUserData = function() {
+    // 1. Limpa variáveis globais da memória RAM
+    completedModules = [];
+    notifiedAchievements = [];
+    currentUserData = null;
+    totalModules = 0;
+
+    // 2. Limpa o LocalStorage (Disco)
+    localStorage.removeItem('gateBombeiroCompletedModules_v3');
+    localStorage.removeItem('gateBombeiroNotifiedAchievements_v3');
+    localStorage.removeItem('gateBombeiroLastModule');
+    localStorage.removeItem('my_session_id');
+    localStorage.removeItem('user_profile_pic');
+    
+    // Limpa notas salvas
+    Object.keys(localStorage).forEach(key => { 
+        if (key.startsWith('note-')) localStorage.removeItem(key); 
+    });
+
+    // 3. Atualiza a interface visualmente para "Zero"
+    const totalEl = document.getElementById('total-modules');
+    const completedEl = document.getElementById('completed-modules-count');
+    const progressText = document.getElementById('progress-text');
+    const progressBar = document.getElementById('progress-bar-minimal');
+    const welcome = document.getElementById('welcome-greeting');
+
+    if (totalEl) totalEl.textContent = '0';
+    if (completedEl) completedEl.textContent = '0';
+    if (progressText) progressText.textContent = '0%';
+    if (progressBar) progressBar.style.width = '0%';
+    if (welcome) welcome.textContent = 'Bem-vindo,';
+
+    // 4. Reseta checkbox visual da lista
+    document.querySelectorAll('.module-list-item').forEach(item => {
+        item.classList.remove('completed', 'active');
+        const icon = item.querySelector('.completion-icon');
+        if(icon) icon.remove();
+    });
+
+    console.log("🧹 Dados locais limpos com sucesso.");
+};
+```
+
+### 2. Atualizar o Botão de Logout (Dentro de `init`)
+
+No seu arquivo `app_final.js`, dentro da função `init()`, você tem os *event listeners* do logout. Precisamos mudar para que eles chamem nossa nova função de limpeza **antes** de sair do Firebase.
+
+**Substitua** as linhas do `logout-button` dentro de `init()` por estas:
+
+```javascript
+            // ... dentro de init() ...
+
+            // LÓGICA DE LOGOUT BLINDADA
+            const handleLogout = async () => {
+                window.clearLocalUserData(); // <--- A MÁGICA ACONTECE AQUI
+                await FirebaseCourse.signOutUser();
+                window.location.reload(); // Recarrega a página para garantir estado zero
+            };
+
+            document.getElementById('logout-button')?.addEventListener('click', handleLogout);
+            document.getElementById('logout-expired-button')?.addEventListener('click', handleLogout);
+            document.getElementById('logout-button-header')?.addEventListener('click', handleLogout);
+
+            // ... restante do init ...
+```
+
+### 3. Corrigir o Botão de Reset (Resetar Progresso)
+
+Procure onde o botão `confirm-reset-button` é configurado (geralmente dentro de `addEventListeners`) e substitua pelo código abaixo, que agora usa a função de limpeza correta e também **zera no banco de dados**.
+
+```javascript
+        // ... dentro de addEventListeners ...
+
+        // 4. Reset com Limpeza de Nuvem
+        document.getElementById('reset-progress')?.addEventListener('click', () => { 
+            document.getElementById('reset-modal')?.classList.add('show'); 
+            document.getElementById('reset-modal-overlay')?.classList.add('show'); 
+        });
+        
+        document.getElementById('cancel-reset-button')?.addEventListener('click', () => { 
+            document.getElementById('reset-modal')?.classList.remove('show'); 
+            document.getElementById('reset-modal-overlay')?.classList.remove('show'); 
+        });
+        
+        document.getElementById('confirm-reset-button')?.addEventListener('click', async () => {
+            const btn = document.getElementById('confirm-reset-button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Resetando...';
+            btn.disabled = true;
+
+            try {
+                // 1. Limpa no Banco de Dados (Firestore) se estiver logado
+                if (currentUserData && currentUserData.uid) {
+                    const db = window.__fbDB || window.fbDB;
+                    await db.collection('users').doc(currentUserData.uid).update({
+                        completedModules: [] // Zera no banco
+                    });
+                }
+
+                // 2. Limpa Local
+                window.clearLocalUserData();
+
+                alert('Progresso resetado com sucesso!');
+                window.location.reload();
+            } catch (error) {
+                console.error(error);
+                alert("Erro ao resetar na nuvem, mas o local foi limpo.");
+                window.location.reload();
+            }
+        });
+```
+
+### 4. Correção Final no `onLoginSuccess` (Evitar Herança de Dados)
+
+Por fim, uma pequena trava de segurança na função `onLoginSuccess`. Encontre o trecho onde ele carrega o progresso e **substitua** por este:
+
+```javascript
+        // ... dentro de onLoginSuccess ...
+
+        // --- PROGRESSO SINCRONIZADO (CORRIGIDO) ---
+        // Se o usuário tem dados na nuvem, usa a nuvem (Prioridade Máxima)
+        if (userData.completedModules && Array.isArray(userData.completedModules)) {
+            completedModules = userData.completedModules;
+            // Atualiza o localStorage para ficar igual à nuvem
+            localStorage.setItem('gateBombeiroCompletedModules_v3', JSON.stringify(completedModules));
+            console.log("Progresso sincronizado da nuvem:", completedModules.length);
+        } 
+        // Se a nuvem está vazia, mas temos dados locais E parece ser o mesmo usuário (sessão), envia.
+        // Se for um login fresco sem sessão anterior, ignoramos o local para evitar contaminação.
+        else if (completedModules.length > 0 && localStorage.getItem('my_session_id') === userData.current_session_id) {
+            console.log("Sincronizando progresso local para a nuvem...");
+            saveProgressToCloud();
+        } 
+        else {
+            // Se não tem na nuvem e não é sessão contínua, assume zero.
+            completedModules = [];
+            localStorage.removeItem('gateBombeiroCompletedModules_v3');
+        }
     
     init(); // <--- Inicia o app
 }); // <--- Fecha o DOMContentLoaded
