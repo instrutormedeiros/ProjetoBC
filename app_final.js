@@ -1686,7 +1686,8 @@ function updateAdminStats(stats) {
         document.getElementById('mobile-module-container').innerHTML = getModuleListHTML();
     }
 
-    // --- FUNÇÃO ATUALIZADA: LISTA DE MÓDULOS COM CONTADORES ---
+    // --- FUNÇÃO ATUALIZADA: LISTA DE MÓDULOS COM CONTADORES E SEGURANÇA ACL ---
+    // --- FUNÇÃO ATUALIZADA: LISTA DE MÓDULOS COM SUPORTE A CATEGORIAS SP ---
     function getModuleListHTML() {
         let html = `<h2 class="text-2xl font-semibold mb-5 flex items-center text-blue-900 dark:text-white"><i class="fas fa-list-ul mr-3 text-orange-500"></i> Conteúdo do Curso</h2><div class="mb-4 relative"><input type="text" class="module-search w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700" placeholder="Buscar módulo..."><i class="fas fa-search absolute right-3 top-3.5 text-gray-400"></i></div><div class="module-accordion-container space-y-2">`;
         
@@ -1695,22 +1696,56 @@ function updateAdminStats(stats) {
             const isLocked = cat.isPremium && (!currentUserData || currentUserData.status !== 'premium');
             const lockIcon = isLocked ? '<i class="fas fa-lock text-xs ml-2 text-yellow-500"></i>' : '';
             
-            // CÁLCULO DE CONTADORES
+            // --- CÁLCULO DE CONTADORES ---
             let catTotal = 0;
             let catCompleted = 0;
+            
+            // Define quem é o usuário
+            const userType = currentUserData ? (currentUserData.courseType || 'BC') : 'BC';
+            const isManager = currentUserData ? (currentUserData.isAdmin || currentUserData.courseType === 'GESTOR') : false;
+
+            // Determina o prefixo baseado na categoria (SEGREDO AQUI)
+            // Se a categoria tem isSP: true, buscamos sp_moduleX. Senão, moduleX.
+            const prefix = cat.isSP ? 'sp_module' : 'module';
+
             for(let i = cat.range[0]; i <= cat.range[1]; i++) {
-                const mid = `module${i}`;
+                const mid = `${prefix}${i}`; // Monta o ID correto (ex: sp_module1 ou module1)
+
                 if(moduleContent[mid]) {
-                    catTotal++;
-                    if(completedModules.includes(mid)) catCompleted++;
+                    // ACL: Verifica se deve contar este módulo
+                    const isSpContent = mid.startsWith('sp_');
+                    let showIt = true;
+
+                    if (!isManager) {
+                        if (userType === 'BC' && isSpContent) showIt = false; 
+                        if (userType === 'SP' && !isSpContent) showIt = false; 
+                    }
+
+                    if (showIt) {
+                        catTotal++;
+                        if(completedModules.includes(mid)) catCompleted++;
+                    }
                 }
             }
 
+            // Se a categoria estiver vazia para este aluno, não desenha o botão dela
+            if (catTotal === 0 && !isManager) continue; 
+
             html += `<div><button class="accordion-button"><span><i class="${cat.icon} w-6 mr-2 text-gray-500"></i>${cat.title} ${lockIcon}</span> <span class="module-count">${catCompleted}/${catTotal}</span> <i class="fas fa-chevron-down"></i></button><div class="accordion-panel">`;
             
+            // --- GERAÇÃO DA LISTA DE MÓDULOS ---
             for (let i = cat.range[0]; i <= cat.range[1]; i++) {
-                const m = moduleContent[`module${i}`];
+                const mid = `${prefix}${i}`; // ID Correto
+                const m = moduleContent[mid];
+
                 if (m) {
+                    // ACL: Verifica se deve exibir (Mesma lógica de cima)
+                    const isSpContent = m.id.startsWith('sp_');
+                    if (!isManager) {
+                        if (userType === 'BC' && isSpContent) continue;
+                        if (userType === 'SP' && !isSpContent) continue;
+                    }
+
                     const isDone = Array.isArray(completedModules) && completedModules.includes(m.id);
                     const itemLock = isLocked ? '<i class="fas fa-lock text-xs text-gray-400 ml-2"></i>' : '';
                     html += `<div class="module-list-item${isDone ? ' completed' : ''}" data-module="${m.id}"><i class="${m.iconClass} module-icon"></i><span style="flex:1">${m.title} ${itemLock}</span>${isDone ? '<i class="fas fa-check-circle completion-icon" aria-hidden="true"></i>' : ''}</div>`;
@@ -1718,11 +1753,25 @@ function updateAdminStats(stats) {
             }
             html += `</div></div>`;
         }
+        
+        // Finaliza o HTML
         html += `</div>`;
         html += `<div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700"><h3 class="text-xl font-semibold mb-6 text-gray-800 dark:text-white flex items-center"><i class="fas fa-medal mr-2 text-yellow-500"></i> Conquistas por Área</h3><div id="achievements-grid" class="grid grid-cols-2 gap-4">`;
+        
         for (const key in moduleCategories) {
             const cat = moduleCategories[key];
-            html += `<div id="ach-cat-${key}" class="achievement-card" title="Conclua a área para ganhar: ${cat.achievementTitle}"><div class="achievement-icon"><i class="${cat.icon}"></i></div><p class="achievement-title">${cat.achievementTitle}</p></div>`;
+            let showAchievement = true;
+            
+            // Esconde conquista da área errada
+            if (currentUserData && !currentUserData.isAdmin && currentUserData.courseType !== 'GESTOR') {
+                const type = currentUserData.courseType || 'BC';
+                if (type === 'BC' && cat.isSP) showAchievement = false;
+                if (type === 'SP' && !cat.isSP) showAchievement = false;
+            }
+
+            if (showAchievement) {
+                html += `<div id="ach-cat-${key}" class="achievement-card" title="Conclua a área para ganhar: ${cat.achievementTitle}"><div class="achievement-icon"><i class="${cat.icon}"></i></div><p class="achievement-title">${cat.achievementTitle}</p></div>`;
+            }
         }
         html += `</div></div>`;
         return html;
