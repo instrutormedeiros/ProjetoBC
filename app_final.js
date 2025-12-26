@@ -1978,18 +1978,30 @@ function updateAdminStats(stats) {
     function updateActiveModuleInList() {
         document.querySelectorAll('.module-list-item').forEach(i => i.classList.toggle('active', i.dataset.module === currentModuleId));
     }
+    // --- FUNÇÃO CORRIGIDA: ATUALIZAR ESTADO DOS BOTÕES (Navegação) ---
     function updateNavigationButtons() {
         const prevModule = document.getElementById('prev-module');
         const nextModule = document.getElementById('next-module');
+        
         if (!prevModule || !nextModule) return;
+        
         if (!currentModuleId) {
              prevModule.disabled = true;
              nextModule.disabled = true;
              return;
         }
-        const n = parseInt(currentModuleId.replace('module',''));
-        prevModule.disabled = (n === 1);
-        nextModule.disabled = (n === totalModules); 
+        
+        // Lógica Híbrida: Detecta se é SP ou BC para extrair o número corretamente
+        let n = 0;
+        if (currentModuleId.startsWith('sp_module')) {
+            n = parseInt(currentModuleId.replace('sp_module', ''));
+        } else {
+            n = parseInt(currentModuleId.replace('module', ''));
+        }
+
+        // Bloqueia se for o primeiro (1) ou o último (totalModules)
+        prevModule.disabled = (n <= 1);
+        nextModule.disabled = (n >= totalModules); 
     }
     function setupQuizListeners() {
         document.querySelectorAll('.quiz-option').forEach(o => o.addEventListener('click', handleQuizOptionClick));
@@ -2029,23 +2041,50 @@ function updateAdminStats(stats) {
     }
 
     function addEventListeners() {
-        // 1. Botões de Navegação
+        // 1. Botões de Navegação (CORRIGIDO PARA SUPORTAR SP E BC)
         const nextButton = document.getElementById('next-module');
         const prevButton = document.getElementById('prev-module');
 
         prevButton?.addEventListener('click', () => {
             if (!currentModuleId) return;
-            const n = parseInt(currentModuleId.replace('module',''));
-            if(n > 1) loadModuleContent(`module${n-1}`);
+            
+            // Detecta prefixo correto (module ou sp_module)
+            let prefix = 'module';
+            let n = 0;
+
+            if (currentModuleId.startsWith('sp_module')) {
+                prefix = 'sp_module';
+                n = parseInt(currentModuleId.replace('sp_module', ''));
+            } else {
+                n = parseInt(currentModuleId.replace('module', ''));
+            }
+
+            if(n > 1) {
+                loadModuleContent(`${prefix}${n-1}`);
+            }
             nextButton?.classList.remove('blinking-button');
         });
+
         nextButton?.addEventListener('click', () => {
             if (!currentModuleId) return;
-            const n = parseInt(currentModuleId.replace('module',''));
-            if(n < totalModules) loadModuleContent(`module${n+1}`);
+            
+            // Detecta prefixo correto
+            let prefix = 'module';
+            let n = 0;
+
+            if (currentModuleId.startsWith('sp_module')) {
+                prefix = 'sp_module';
+                n = parseInt(currentModuleId.replace('sp_module', ''));
+            } else {
+                n = parseInt(currentModuleId.replace('module', ''));
+            }
+
+            // Usa totalModules (que já é filtrado por curso no login)
+            if(n < totalModules) {
+                loadModuleContent(`${prefix}${n+1}`);
+            }
             nextButton?.classList.remove('blinking-button');
-            });
-        // Listener do botão do painel de gestor
+        });
 const managerPanelBtn = document.getElementById("manager-panel-btn");
 if (managerPanelBtn) {
     managerPanelBtn.addEventListener("click", () => {
