@@ -625,6 +625,9 @@ function updateAdminStats(stats) {
 // --- 1. ATUALIZAÇÃO DA FUNÇÃO DE EVENTOS DE AUTENTICAÇÃO ---
     // Substitua a função setupAuthEventListeners inteira por esta:
     
+    // --- 1. ATUALIZAÇÃO DA FUNÇÃO DE EVENTOS DE AUTENTICAÇÃO ---
+    // Substitua a função setupAuthEventListeners inteira por esta:
+    
     function setupAuthEventListeners() {
         const nameField = document.getElementById('name-field-container');
         const cpfField = document.getElementById('cpf-field-container'); 
@@ -658,6 +661,17 @@ function updateAdminStats(stats) {
         const closePayModal = document.getElementById('close-payment-modal-btn');
         const loginModalOverlay = document.getElementById('name-modal-overlay');
         const loginModal = document.getElementById('name-prompt-modal');
+
+        // === CORREÇÃO DE SEGURANÇA VISUAL (INICIALIZAÇÃO) ===
+        // Garante que o campo de curso (e outros de cadastro) comecem OCULTOS se o login estiver visível
+        if (loginGroup && !loginGroup.classList.contains('hidden')) {
+            if (courseField) courseField.classList.add('hidden');
+            if (nameField) nameField.classList.add('hidden');
+            if (cpfField) cpfField.classList.add('hidden');
+            if (phoneField) phoneField.classList.add('hidden');
+            if (companyField) companyField.classList.add('hidden');
+        }
+        // =====================================================
 
         // ... (Lógica do Enter mantida) ...
         passwordInput.addEventListener('keypress', function (e) {
@@ -703,7 +717,7 @@ function updateAdminStats(stats) {
             cpfField.classList.remove('hidden'); 
             phoneField.classList.remove('hidden'); 
             companyField.classList.remove('hidden');
-            if(courseField) courseField.classList.remove('hidden'); // MOSTRA o curso
+            if(courseField) courseField.classList.remove('hidden'); // MOSTRA o curso apenas aqui
             
             authTitle.textContent = "Criar Nova Conta";
             authMsg.textContent = "Cadastre-se para o Período de Experiência.";
