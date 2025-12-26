@@ -1846,23 +1846,52 @@ function updateAdminStats(stats) {
     function updateModuleListStyles() {
         document.querySelectorAll('.module-list-item').forEach(i => i.classList.toggle('completed', completedModules.includes(i.dataset.module)));
     }
+    // --- FUNÇÃO CORRIGIDA: VERIFICAÇÃO DE CONQUISTAS (COM ACL) ---
     function checkAchievements() {
         let newNotification = false;
+        
+        // 1. Identifica quem é o aluno
+        const userType = currentUserData ? (currentUserData.courseType || 'BC') : 'BC';
+        const isManager = currentUserData ? (currentUserData.isAdmin || currentUserData.courseType === 'GESTOR') : false;
+
         for(const key in moduleCategories) {
             const cat = moduleCategories[key];
+            
+            // 2. ACL: Se a conquista não é do curso do aluno, PULA IMEDIATAMENTE
+            // Isso impede que Bombeiro ganhe medalha de SP e vice-versa
+            if (!isManager) {
+                if (userType === 'BC' && cat.isSP) continue; 
+                if (userType === 'SP' && !cat.isSP) continue;
+            }
+
             let allComplete = true;
+            
+            // 3. Define o prefixo correto do ID (module ou sp_module)
+            const prefix = cat.isSP ? 'sp_module' : 'module';
+
+            // 4. Verifica módulo por módulo
             for(let i = cat.range[0]; i <= cat.range[1]; i++) {
-                if (!moduleContent[`module${i}`] || !completedModules.includes(`module${i}`)) {
-                    allComplete = false; break;
+                const mid = `${prefix}${i}`;
+                
+                // Se o módulo não existe no banco OU o aluno não fez -> Incompleto
+                if (!moduleContent[mid] || !completedModules.includes(mid)) {
+                    allComplete = false; 
+                    break;
                 }
             }
+
+            // 5. Se completou tudo e ainda não foi notificado -> Solta os confetes
             if (allComplete && !notifiedAchievements.includes(key)) {
                 showAchievementModal(cat.achievementTitle, cat.icon);
                 notifiedAchievements.push(key);
                 newNotification = true;
             }
+            
+            // 6. Atualiza o visual (cadeado/cor) no painel de módulos
             document.querySelectorAll(`#ach-cat-${key}`).forEach(el => el.classList.toggle('unlocked', allComplete));
         }
+        
+        // Salva estado das notificações para não repetir
         if (newNotification) localStorage.setItem('gateBombeiroNotifiedAchievements_v3', JSON.stringify(notifiedAchievements));
     }
     function showAchievementModal(title, iconClass) {
