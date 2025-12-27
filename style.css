@@ -911,40 +911,33 @@ body.focus-mode #main-wrapper { padding-bottom: 2rem; }
     background: transparent;
 }
 
-/* CONTAINER DO SITE ANTIGO */
-#site-legacy-container {
-    position: relative;
-    width: 100%;
-    /* O SEGREDO: Isso corta qualquer coisa que tente passar da altura definida */
-    overflow: hidden; 
-    background-color: #050a14;
-    z-index: 10;
-}
-/* CAPA ANTIGA (Notebook) */
+/* CAPA: comportamento em tela cheia, mas controlada por classe no BODY */
 #landing-hero {
-    position: relative; /* Mantém relative para fluir abaixo do carrossel */
-    width: 100%;
-    min-height: 100vh;
-    height: auto !important;
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
     background-color: #050a14;
-    
-    /* Garante que não haja scroll INTERNO, apenas o da página */
-    overflow: visible !important; 
-    padding-bottom: 0 !important;
+
+    /* Habilita rolagem suave e elástica apenas na capa */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+
+    /* Altura total correta em celulares */
+    height: 100vh;
+    height: 100dvh; /* Dynamic Viewport Height */
 }
 
 /* Conteúdo interno da capa */
 #landing-hero > div {
-    min-height: 100vh; /* Garante altura total */
+    min-height: 100%;
     height: auto !important;
     position: relative;
-    padding-bottom: 50px !important;
+    padding-bottom: 0 !important;
 }
 
-/* Garante que o corpo role, mas sem margens extras */
+/* Quando a landing está ativa: o BODY NÃO rola */
 body.landing-active {
-    overflow-x: hidden;
-    overflow-y: auto !important;
+    overflow: hidden;          /* o corpo não rola, só a capa */
     padding-bottom: 0 !important;
 }
 
@@ -1001,69 +994,3 @@ details[open] summary ~ * {
     100% { opacity: 1; transform: translateY(0); }
 }
 
-/* =========================================
-   NOVO CARROSSEL HERO (INTRODUÇÃO)
-   ========================================= */
-/* Garante que o carrossel ocupe a tela toda e permita rolagem */
-#intro-carousel-section {
-    position: relative;
-    width: 100%;
-    height: 100vh;
-    overflow: hidden;
-    background-color: #000;
-    z-index: 99999; /* Fica acima de tudo inicialmente */
-    display: block;
-}
-
-/* Efeitos Visuais */
-.intro-vignette {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.9) 100%);
-    pointer-events: none;
-    z-index: 20;
-}
-
-.intro-panel {
-    position: relative;
-    height: 100%;
-    flex-shrink: 0;
-    border-right: 1px solid rgba(255,255,255,0.05);
-    overflow: hidden;
-    cursor: pointer;
-}
-
-.intro-bg-zoom {
-    transition: transform 1.5s cubic-bezier(0.19, 1, 0.22, 1);
-    will-change: transform;
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center;
-    filter: saturate(0.9) contrast(1.1);
-}
-.intro-panel:hover .intro-bg-zoom { transform: scale(1.08); filter: saturate(1.1) contrast(1.1); }
-
-.intro-content { transform: translateY(20px); opacity: 0.8; transition: all 0.5s ease; }
-.intro-panel:hover .intro-content { transform: translateY(0); opacity: 1; }
-
-/* Botões de Navegação (Prefixados com intro-) */
-.intro-nav-arrow {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    cursor: pointer;
-    z-index: 50;
-    transition: all 0.3s ease;
-}
-.intro-nav-arrow:hover { background: rgba(234, 88, 12, 0.9); border-color: #ea580c; transform: translateY(-50%) scale(1.1); }
