@@ -911,20 +911,26 @@ body.focus-mode #main-wrapper { padding-bottom: 2rem; }
     background: transparent;
 }
 
-/* CAPA ANTIGA (Notebook): Ajustada para fluir com o scroll */
-#landing-hero {
-    /* MUDANÇA CRÍTICA: De 'fixed' para 'relative' */
-    position: relative; 
-    inset: 0;
-    z-index: 10; /* Baixamos o z-index para ficar abaixo do carrossel se necessário */
+/* CONTAINER DO SITE ANTIGO */
+#site-legacy-container {
+    position: relative;
+    width: 100%;
+    /* O SEGREDO: Isso corta qualquer coisa que tente passar da altura definida */
+    overflow: hidden; 
     background-color: #050a14;
-
-    /* REMOVER a rolagem interna, pois agora quem rola é o corpo do site */
-    overflow: hidden !important; 
-    
-    /* Altura mínima para garantir que o notebook caiba */
+    z-index: 10;
+}
+/* CAPA ANTIGA (Notebook) */
+#landing-hero {
+    position: relative; /* Mantém relative para fluir abaixo do carrossel */
+    width: 100%;
     min-height: 100vh;
     height: auto !important;
+    background-color: #050a14;
+    
+    /* Garante que não haja scroll INTERNO, apenas o da página */
+    overflow: visible !important; 
+    padding-bottom: 0 !important;
 }
 
 /* Conteúdo interno da capa */
@@ -935,10 +941,10 @@ body.focus-mode #main-wrapper { padding-bottom: 2rem; }
     padding-bottom: 50px !important;
 }
 
-/* Quando a landing está ativa: PERMITIR SCROLL AGORA */
+/* Garante que o corpo role, mas sem margens extras */
 body.landing-active {
     overflow-x: hidden;
-    overflow-y: auto !important; /* Importante: Permite rolar a página */
+    overflow-y: auto !important;
     padding-bottom: 0 !important;
 }
 
@@ -1061,3 +1067,13 @@ details[open] summary ~ * {
     transition: all 0.3s ease;
 }
 .intro-nav-arrow:hover { background: rgba(234, 88, 12, 0.9); border-color: #ea580c; transform: translateY(-50%) scale(1.1); }
+
+/* Força os modais a não ocuparem espaço de rolagem quando fechados */
+.modal, .modal-overlay {
+    display: none; /* Por padrão, não existem no layout */
+}
+
+/* Só aparecem quando tiverem a classe .show (que seu JS adiciona) */
+.modal.show, .modal-overlay.show {
+    display: flex !important; /* Ou block, dependendo do seu layout original */
+}
