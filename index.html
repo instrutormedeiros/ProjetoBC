@@ -1422,136 +1422,215 @@
     </script>
     
     <script>
-        // Função para rolar até o site antigo (scroll suave)
-        window.scrollToSite = function() {
-            const legacyContainer = document.getElementById('site-legacy-container');
-            if(legacyContainer) {
-                legacyContainer.scrollIntoView({ behavior: 'smooth' });
-            }
+        // --- VARIÁVEIS DE CONTROLE DE FLUXO ---
+        window.authIntent = 'STUDENT'; // Pode ser 'STUDENT' ou 'MANAGER'
+
+        // --- 1. Lógica do Botão "Sou Gestor" (Corrigida) ---
+        window.forceManagerOpen = function() {
+            // Define que o usuário quer ir para o painel de gestor
+            window.authIntent = 'MANAGER';
+            
+            // Muda o título visualmente para dar feedback
+            const title = document.getElementById('auth-title');
+            if(title) title.innerHTML = '<i class="fas fa-user-tie text-orange-500 mr-2"></i> Acesso Gestor';
+            
+            // Abre a tela de login (NÃO o painel direto)
+            window.forceStudentOpen();
         };
 
-        // --- LÓGICA DE LOGIN MANUAL (BYPASS) ---
-        // Garante que o modal abra mesmo se o app_final.js falhar no carregamento inicial
+        // --- 2. Lógica do Botão "Área do Aluno" ---
         window.forceStudentOpen = function() {
-            // 1. Remove Carrossel e Capa antiga
+            // Se não clicou em Gestor antes, garante que é fluxo de aluno
+            if (window.authIntent !== 'MANAGER') {
+                window.authIntent = 'STUDENT';
+                const title = document.getElementById('auth-title');
+                if(title) title.innerText = "Acesso ao Sistema";
+            }
+
+            // Remove Carrossel e Capa antiga para focar no login
             const intro = document.getElementById('intro-carousel-wrapper');
             if(intro) intro.style.display = 'none';
             
-            // 2. Garante que os modais estejam visíveis
+            // Força a exibição do Modal de Login
             const loginModal = document.getElementById('name-prompt-modal');
             const overlay = document.getElementById('name-modal-overlay');
             
             if(loginModal && overlay) {
                 loginModal.classList.add('show');
                 overlay.classList.add('show');
-                loginModal.style.display = 'flex'; // Força display flex
-                overlay.style.display = 'block';   // Força display block
+                loginModal.style.display = 'flex';
+                overlay.style.display = 'block';
             } else {
-                alert('Erro ao carregar modal de login. Tente recarregar a página.');
+                console.error('Modal de login não encontrado no DOM');
             }
         };
 
-        window.forceManagerOpen = function() {
-            const intro = document.getElementById('intro-carousel-wrapper');
-            if(intro) intro.style.display = 'none';
-            
-            const managerModal = document.getElementById('manager-modal');
-            const overlay = document.getElementById('admin-modal-overlay'); // Reusando overlay ou criando um se necessário
-            
-            if(managerModal) {
-                managerModal.classList.add('show');
-                managerModal.style.display = 'flex';
-                // Verifica se existe overlay específico para gestor, senão usa o padrão
-                if(overlay) {
-                    overlay.classList.add('show');
-                    overlay.style.display = 'block';
-                }
-            } else {
-                // Tenta chamar a função do app se existir
-                if(typeof openManagerPanel === 'function') openManagerPanel();
-                else alert('Módulo de gestão carregando...');
-            }
-        };
-
+        // --- 3. O "CÉREBRO" QUE CORRIGE O LOOP "VERIFICANDO" ---
         document.addEventListener('DOMContentLoaded', () => {
+            
+            // LISTENER DE OURO: Assim que o Firebase logar, este código roda.
+            // Isso resolve o problema do app_final.js parar no "Verificando..."
+            if(typeof firebase !== 'undefined' && firebase.auth) {
+                firebase.auth().onAuthStateChanged((user) => {
+                    if (user) {
+                        console.log("✅ Usuário autenticado detectado pelo Script Supervisor");
+                        
+                        // Fecha modal de login
+                        const loginModal = document.getElementById('name-prompt-modal');
+                        const overlay = document.getElementById('name-modal-overlay');
+                        if(loginModal) loginModal.classList.remove('show');
+                        if(overlay) overlay.classList.remove('show');
+
+                        // DECISÃO DE ROTA:
+                        if (window.authIntent === 'MANAGER') {
+                            // Se era gestor, abre o painel
+                            openManagerPanelSafe();
+                        } else {
+                            // Se era aluno, chama a função de sucesso do app principal
+                            // (Caso ela não tenha rodado sozinha)
+                            if (typeof onLoginSuccess === 'function' && window.currentUserData) {
+                                onLoginSuccess(user, window.currentUserData);
+                            } else {
+                                // Se o app_final ainda não carregou os dados, recarrega para garantir
+                                const landing = document.getElementById('landing-hero');
+                                if(landing) landing.classList.add('hidden');
+                                document.body.classList.remove('landing-active');
+                            }
+                        }
+                    }
+                });
+            }
+
+            // --- Lógica do Carrossel (Mantida Original) ---
             const track = document.getElementById('carousel-track');
             const prevBtn = document.getElementById('btn-prev');
             const nextBtn = document.getElementById('btn-next');
             
-            if (!track) return; 
+            if (track) {
+                const originalItems = Array.from(track.children);
+                if(originalItems.length > 0) {
+                    [...originalItems, ...originalItems].forEach(item => {
+                        const clone = item.cloneNode(true);
+                        clone.removeAttribute('id');
+                        track.appendChild(clone);
+                    });
 
-            // Clonagem para Loop Infinito
-            const originalItems = Array.from(track.children);
-            [...originalItems, ...originalItems].forEach(item => {
-                const clone = item.cloneNode(true);
-                clone.removeAttribute('id');
-                track.appendChild(clone);
-            });
+                    let currentX = 0;
+                    let speed = 0.3;
+                    let isAnimating = true; 
+                    let itemWidth = 0;
+                    let totalOriginalWidth = 0;
 
-            // Configuração
-            let currentX = 0;
-            let speed = 0.3; // Velocidade lenta e premium
-            let isAnimating = true; 
-            let itemWidth = 0;
-            let totalOriginalWidth = 0;
-
-            function calculateDimensions() {
-                const firstItem = track.children[0];
-                if(firstItem) {
-                    itemWidth = firstItem.offsetWidth;
-                    totalOriginalWidth = itemWidth * originalItems.length;
-                }
-            }
-            
-            window.addEventListener('resize', calculateDimensions);
-            setTimeout(calculateDimensions, 100);
-
-            // Loop de Animação
-            function animate() {
-                if (isAnimating) {
-                    currentX -= speed;
-                    if (Math.abs(currentX) >= totalOriginalWidth) {
-                        currentX = 0;
+                    function calculateDimensions() {
+                        const firstItem = track.children[0];
+                        if(firstItem) {
+                            itemWidth = firstItem.offsetWidth;
+                            totalOriginalWidth = itemWidth * originalItems.length;
+                        }
                     }
-                    track.style.transform = `translate3d(${currentX}px, 0, 0)`;
-                }
-                requestAnimationFrame(animate);
-            }
-            requestAnimationFrame(animate);
-
-            // Controle Manual
-            function moveCarousel(direction) {
-                isAnimating = false;
-                const targetMove = direction === 'next' ? -itemWidth : itemWidth;
-                const startX = currentX;
-                const duration = 800;
-                const startTime = performance.now();
-
-                function step(currentTime) {
-                    const elapsed = currentTime - startTime;
-                    const progress = Math.min(elapsed / duration, 1);
-                    const ease = 1 - Math.pow(1 - progress, 4);
                     
-                    currentX = startX + (targetMove * ease);
-                    
-                    if (Math.abs(currentX) >= totalOriginalWidth) {
-                        if (direction === 'next') currentX += totalOriginalWidth;
-                        else currentX -= totalOriginalWidth;
-                    } else if (currentX > 0) {
-                        currentX -= totalOriginalWidth;
+                    window.addEventListener('resize', calculateDimensions);
+                    setTimeout(calculateDimensions, 100);
+
+                    function animate() {
+                        if (isAnimating && totalOriginalWidth > 0) {
+                            currentX -= speed;
+                            if (Math.abs(currentX) >= totalOriginalWidth) {
+                                currentX = 0;
+                            }
+                            track.style.transform = `translate3d(${currentX}px, 0, 0)`;
+                        }
+                        requestAnimationFrame(animate);
+                    }
+                    requestAnimationFrame(animate);
+
+                    function moveCarousel(direction) {
+                        isAnimating = false;
+                        const targetMove = direction === 'next' ? -itemWidth : itemWidth;
+                        const startX = currentX;
+                        const duration = 800;
+                        const startTime = performance.now();
+
+                        function step(currentTime) {
+                            const elapsed = currentTime - startTime;
+                            const progress = Math.min(elapsed / duration, 1);
+                            const ease = 1 - Math.pow(1 - progress, 4);
+                            
+                            currentX = startX + (targetMove * ease);
+                            
+                            if (Math.abs(currentX) >= totalOriginalWidth) {
+                                if (direction === 'next') currentX += totalOriginalWidth;
+                                else currentX -= totalOriginalWidth;
+                            } else if (currentX > 0) {
+                                currentX -= totalOriginalWidth;
+                            }
+
+                            track.style.transform = `translate3d(${currentX}px, 0, 0)`;
+
+                            if (progress < 1) requestAnimationFrame(step);
+                            else isAnimating = true;
+                        }
+                        requestAnimationFrame(step);
                     }
 
-                    track.style.transform = `translate3d(${currentX}px, 0, 0)`;
-
-                    if (progress < 1) requestAnimationFrame(step);
-                    else isAnimating = true;
+                    if(nextBtn) nextBtn.addEventListener('click', () => moveCarousel('next'));
+                    if(prevBtn) prevBtn.addEventListener('click', () => moveCarousel('prev'));
                 }
-                requestAnimationFrame(step);
             }
-
-            if(nextBtn) nextBtn.addEventListener('click', () => moveCarousel('next'));
-            if(prevBtn) prevBtn.addEventListener('click', () => moveCarousel('prev'));
         });
+
+        // Função auxiliar segura para abrir painel gestor
+        function openManagerPanelSafe() {
+            const managerModal = document.getElementById('manager-modal');
+            const adminOverlay = document.getElementById('admin-modal-overlay'); 
+            
+            if(managerModal) {
+                // Tenta usar a função oficial do app_final.js
+                if (typeof openManagerPanel === 'function') {
+                    openManagerPanel();
+                } else {
+                    // Fallback visual se o JS principal falhar
+                    managerModal.classList.add('show');
+                    managerModal.style.display = 'flex';
+                    if(adminOverlay) {
+                        adminOverlay.classList.add('show');
+                        adminOverlay.style.display = 'block';
+                    }
+                }
+            }
+        }
+
+        // --- TRAVA DE SEGURANÇA (WATCHDOG) ---
+        // Se o botão ficar travado em "Verificando..." por mais de 8s, ele reseta
+        document.addEventListener('click', function(e) {
+            if(e.target && e.target.id === 'login-button') {
+                const btn = e.target;
+                const originalText = "ACESSAR PLATAFORMA"; // Texto original fixo
+                
+                setTimeout(() => {
+                    if(btn.innerText.includes('Verificando') || btn.disabled) {
+                        btn.disabled = false;
+                        btn.innerHTML = originalText + ' <i class="fas fa-arrow-right ml-2"></i>';
+                        const feedback = document.getElementById('auth-feedback');
+                        
+                        // Se o usuário realmente logou mas a tela não mudou, forçamos o refresh
+                        if(firebase.auth().currentUser) {
+                             window.location.reload();
+                        } else {
+                            if(feedback) feedback.innerText = "Login demorou. Tente novamente.";
+                        }
+                    }
+                }, 8000); 
+            }
+        });
+        
+        // Função de scroll para o site legado
+        window.scrollToSite = function() {
+            const legacyContainer = document.getElementById('site-legacy-container');
+            if(legacyContainer) {
+                legacyContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+        };
     </script>
 </body>
 </html>
