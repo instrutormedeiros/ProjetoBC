@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Curso de Formação | Bombeiro Civil e Brigadista</title>
     
-    <!-- PWA e Meta Tags Originais -->
+    <!-- PWA e Meta Tags -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#0b1220">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -46,20 +46,26 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
     <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
 
-    <!-- Estilos Específicos do Carrossel (Isolados) -->
+    <!-- ESTILOS ESPECÍFICOS DO CARROSSEL -->
     <style>
-        /* Container que segura o carrossel no topo */
+        /* Container Geral para garantir a rolagem */
+        html, body {
+            overflow-x: hidden; /* Evita rolagem lateral */
+            scroll-behavior: smooth; /* Garante a suavidade ao descer */
+        }
+
+        /* Container do Carrossel */
         #intro-carousel-wrapper {
             position: relative;
             width: 100%;
-            height: 100vh; /* Ocupa a tela inteira */
-            overflow: hidden; /* Mantém a lógica do carrossel */
+            height: 100vh; 
+            overflow: hidden; 
             background-color: #050505;
-            cursor: pointer; /* Indica clique */
+            cursor: pointer;
             z-index: 50;
         }
 
-        /* --- INÍCIO CSS DO CARROSSEL --- */
+        /* --- CSS DO CARROSSEL (COPIADO DO SEU ARQUIVO) --- */
         #intro-carousel-wrapper .vignette {
             position: absolute;
             inset: 0;
@@ -74,6 +80,7 @@
             flex-shrink: 0;
             border-right: 1px solid rgba(255,255,255,0.05);
             overflow: hidden;
+            /* cursor: pointer; Já está no pai */
         }
         
         #intro-carousel-wrapper .bg-image-zoom {
@@ -143,15 +150,15 @@
             width: max-content;
             will-change: transform;
         }
-        /* --- FIM CSS DO CARROSSEL --- */
     </style>
 </head>
 
-<body class="antialiased overflow-x-hidden">
+<body class="antialiased overflow-x-hidden bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
 
     <!-- 
     ================================================================
     PARTE 1: O CARROSSEL (INTRODUÇÃO)
+    O usuário deve clicar aqui para descer para o site.
     ================================================================ 
     -->
     <div id="intro-carousel-wrapper" title="Clique em qualquer lugar para entrar no site">
@@ -159,6 +166,7 @@
         
             <div class="vignette"></div>
     
+            <!-- Botões com stopPropagation para não acionar a descida ao clicar neles -->
             <button id="btn-prev" class="nav-arrow left-6 md:left-10 arrow-left-anim" onclick="event.stopPropagation()">
                 <i class="fas fa-chevron-left text-xl"></i>
             </button>
@@ -170,7 +178,7 @@
                 <div id="carousel-track">
                     
                     <!-- Slide 1: BC -->
-                    <div class="epic-panel w-[100vw] md:w-[33.333vw] group">
+                    <div class="epic-panel w-[100vw] md:w-[33.333vw] group" onclick="selectCourse('BC')">
                         <div class="bg-image-zoom" style="background-image: url('https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/BC.jpg');"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-500"></div>
                         
@@ -190,7 +198,7 @@
                     </div>
     
                     <!-- Slide 2: SP -->
-                    <div class="epic-panel w-[100vw] md:w-[33.333vw] group">
+                    <div class="epic-panel w-[100vw] md:w-[33.333vw] group" onclick="selectCourse('SP')">
                         <div class="bg-image-zoom" style="background-image: url('https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/SP.jpg');"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-500"></div>
                         
@@ -210,7 +218,7 @@
                     </div>
     
                     <!-- Slide 3: GE -->
-                    <div class="epic-panel w-[100vw] md:w-[33.333vw] group">
+                    <div class="epic-panel w-[100vw] md:w-[33.333vw] group" onclick="selectCourse('GE')">
                         <div class="bg-image-zoom" style="background-image: url('https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/GE.jpg');"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-500"></div>
                         
@@ -230,7 +238,7 @@
                     </div>
     
                     <!-- Slide 4: INS -->
-                    <div class="epic-panel w-[100vw] md:w-[33.333vw] group">
+                    <div class="epic-panel w-[100vw] md:w-[33.333vw] group" onclick="selectCourse('INS')">
                         <div class="bg-image-zoom" style="background-image: url('https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/INS8.png');"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-500"></div>
                         
@@ -260,12 +268,12 @@
 
     <!-- 
     ================================================================
-    PARTE 2: SITE ATUAL (CONTEÚDO PRINCIPAL)
-    Alteração feita: Removido 'fixed inset-0' e alterado para 'relative w-full min-h-screen'
-    para permitir que o site fique abaixo do carrossel.
+    PARTE 2: O SITE ATUAL
+    Modificação IMPORTANTE: 'fixed inset-0' removido e trocado por 
+    'relative min-h-screen' para ficar ABAIXO do carrossel e permitir rolagem.
     ================================================================ 
     -->
-    <div id="landing-hero" class="relative w-full min-h-screen bg-[#050a14] overflow-visible custom-scrollbar transition-all duration-1000 ease-in-out font-sans z-40">
+    <div id="landing-hero" class="relative min-h-screen w-full bg-[#050a14] overflow-visible custom-scrollbar transition-all duration-1000 ease-in-out font-sans z-40">
         
         <nav class="fixed top-0 left-0 w-full z-50 py-3 px-4 md:py-4 md:px-12 flex justify-between items-center bg-gradient-to-b from-black/90 to-transparent backdrop-blur-sm">
             <div class="flex items-center gap-3 md:gap-4">
@@ -1108,6 +1116,7 @@
 
             // --- LÓGICA DO CARROSSEL (PRESERVADA) ---
             window.selectCourse = function(type) {
+                // Redirecionamento visual (mantido console.log original)
                 console.log(`Curso selecionado: ${type}`);
             };
 
