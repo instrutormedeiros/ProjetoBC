@@ -152,6 +152,7 @@
             position: relative;
             z-index: 40;
             background-color: var(--light-bg); /* Garante fundo correto */
+            min-height: 100vh;
         }
     </style>
 </head>
@@ -275,10 +276,9 @@
     ================================================================ 
     -->
     <div id="main-site-wrapper">
-        <!-- 
-            AQUI COMEÇA EXATAMENTE O CONTEÚDO DO BODY DO SITE ANTIGO 
-            Mantendo IDs, Classes e Estrutura Intactos para os Scripts funcionarem
-        -->
+        
+        <!-- AQUI COMEÇA O CORPO DO SITE ANTIGO -->
+        <!-- Se você tiver um HTML específico da CAPA ANTIGA (ex: laptop-wrapper), certifique-se de que ele esteja aqui -->
 
         <!-- NOTIFICAÇÕES (Toast) -->
         <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
@@ -448,7 +448,6 @@
             <!-- ÁREA DE CONTEÚDO DINÂMICO -->
             <main id="content-area" class="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full">
                 <!-- O CONTEÚDO SERÁ INJETADO AQUI PELO JAVASCRIPT (app_final.js) -->
-                <!-- Este elemento precisa existir vazio para que o app_final.js funcione -->
             </main>
 
         </div>
