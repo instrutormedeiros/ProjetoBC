@@ -298,70 +298,85 @@ setTimeout(() => {
         setupRippleEffects();
     }
 
-    // === SUBSTITUA A FUNÇÃO onLoginSuccess INTEIRA POR ESTA ===
+    // === FUNÇÃO onLoginSuccess (VERSÃO FINAL V11 - CORREÇÃO TELA PRETA) ===
     function onLoginSuccess(user, userData) {
-        console.log("🚀 LOGIN CONFIRMADO: Iniciando desbloqueio da tela...");
+        console.log("🚀 LOGIN CONFIRMADO: Revelando o sistema...");
 
-        // 1. FORÇA BRUTA: Destruir visualmente os modais de login
+        // 1. ESCONDER MODAIS (Força Bruta)
         const loginModal = document.getElementById('name-prompt-modal');
         const loginOverlay = document.getElementById('name-modal-overlay');
         const expiredModal = document.getElementById('expired-modal');
 
-        // Remove classes E força o display none (sobreescreve o index.html)
         if (loginModal) {
             loginModal.classList.remove('show');
             loginModal.classList.add('hidden');
-            loginModal.style.display = 'none'; // <--- O SEGREDO ESTÁ AQUI
+            loginModal.style.display = 'none'; 
         }
         if (loginOverlay) {
             loginOverlay.classList.remove('show');
             loginOverlay.classList.add('hidden');
-            loginOverlay.style.display = 'none'; // <--- E AQUI
+            loginOverlay.style.display = 'none';
         }
         if (expiredModal) {
             expiredModal.classList.remove('show');
             expiredModal.style.display = 'none';
         }
 
-        // 2. FORÇA BRUTA: Sumir com a Capa e o Carrossel
+        // 2. ESCONDER CAPA E CARROSSEL
         const landing = document.getElementById('landing-hero');
         const carousel = document.getElementById('intro-carousel-wrapper');
 
         if (landing) {
             landing.classList.add('hidden');
-            landing.style.display = 'none'; // Garante que suma
+            landing.style.display = 'none';
         }
-        
         if (carousel) {
-            carousel.classList.add('hidden'); // Adiciona classe auxiliar se tiver
-            carousel.style.display = 'none';  // Força o desaparecimento
+            carousel.classList.add('hidden');
+            carousel.style.display = 'none';
         }
 
-        // 3. Destravar o Scroll do Corpo do Site
+        // 3. REVELAR O SITE (A PEÇA QUE FALTAVA!)
+        const mainWrapper = document.getElementById('main-wrapper');
+        const contentArea = document.getElementById('content-area');
+        
+        if (mainWrapper) {
+            mainWrapper.classList.remove('hidden'); // <--- A MÁGICA ACONTECE AQUI
+            mainWrapper.style.display = 'block';    // Garante que apareça
+            
+            // Pequena animação de entrada (opcional, mas fica bonito)
+            mainWrapper.style.opacity = '0';
+            setTimeout(() => {
+                mainWrapper.style.transition = 'opacity 0.5s ease';
+                mainWrapper.style.opacity = '1';
+            }, 50);
+        }
+
+        // 4. AJUSTES FINAIS DE TELA
         document.body.classList.remove('landing-active');
         document.body.style.overflow = 'auto'; 
         document.body.style.overflowX = 'hidden';
 
-        // 4. Carregar dados do usuário
+        // 5. LÓGICA DE DADOS DO USUÁRIO (MANTIDA IGUAL)
         if (userData && user) {
             currentUserData = { ...userData, uid: user.uid };
         } else {
             currentUserData = userData;
         }
 
-        // Evita re-executar lógica se já estiver pronto
+        // Evita loop se já carregou
         if (document.body.getAttribute('data-app-ready') === 'true') return;
 
-        // Atualiza saudação e marca d'água
+        // Atualiza saudação
         const greetingEl = document.getElementById('welcome-greeting');
         if(greetingEl && userData.name) greetingEl.textContent = `Olá, ${userData.name.split(' ')[0]}!`;
         
+        // Marca d'água
         const printWatermark = document.getElementById('print-watermark');
         if (printWatermark) {
             printWatermark.textContent = `Licenciado para ${userData.name} (CPF: ${userData.cpf || '...'}) - Proibida a Cópia`;
         }
 
-        // Libera botões de Admin/Gestor
+        // Libera botões de Admin
         const adminBtn = document.getElementById('admin-panel-btn');
         const mobileAdminBtn = document.getElementById('mobile-admin-btn');
         const managerFab = document.getElementById("manager-fab");
@@ -374,10 +389,9 @@ setTimeout(() => {
             if (managerFab) managerFab.classList.remove("hidden");
         }
 
-        // Verifica validade do plano
         checkTrialStatus(userData.acesso_ate);
 
-        // 5. Sincronia de Progresso (Nuvem vs Local)
+        // Sincronia de Progresso
         if (userData.completedModules && Array.isArray(userData.completedModules)) {
             completedModules = userData.completedModules;
             localStorage.setItem('gateBombeiroCompletedModules_v3', JSON.stringify(completedModules));
@@ -387,7 +401,7 @@ setTimeout(() => {
             completedModules = [];
         }
 
-        // 6. Recalcula Módulos Visíveis (BC vs SP)
+        // Contagem de Módulos
         let count = 0;
         const userCourse = userData.courseType || 'BC';
         const isAdm = userData.isAdmin || userData.courseType === 'GESTOR';
@@ -404,7 +418,6 @@ setTimeout(() => {
         
         totalModules = count;
 
-        // Atualiza Interface
         const totalEl = document.getElementById('total-modules');
         const courseCountEl = document.getElementById('course-modules-count');
         if(totalEl) totalEl.textContent = totalModules;
@@ -416,7 +429,6 @@ setTimeout(() => {
         handleInitialLoad();
         startOnboardingTour(false); 
 
-        // Redirecionamento automático para gestor (se aplicável)
         if (localStorage.getItem("open_manager_after_login") === "true") {
             localStorage.removeItem("open_manager_after_login");
             setTimeout(() => {
