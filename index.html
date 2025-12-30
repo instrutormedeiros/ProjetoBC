@@ -183,21 +183,22 @@
         window.openLocalLogin = function(isManager = false) {
             console.log("🚀 AÇÃO DE LOGIN INICIADA | Modo Gestor:", isManager);
             
+            // Tenta capturar os elementos
             const modal = document.getElementById('name-prompt-modal');
             const overlay = document.getElementById('name-modal-overlay');
             const title = document.getElementById('auth-title');
             
+            // Verificação de Segurança
             if (modal && overlay) {
-                // 1. Remove classe hidden
+                // 1. Garante que estão visíveis removendo 'hidden'
                 modal.classList.remove('hidden');
                 overlay.classList.remove('hidden');
                 
-                // 2. Força display flex via classe e style direto
-                modal.classList.add('force-flex');
+                // 2. Força display via Style direto (sobrepõe qualquer classe CSS)
                 modal.style.display = 'flex';
                 overlay.style.display = 'block';
                 
-                // 3. Força Z-Index Supremo
+                // 3. Z-Index Supremo (Garante que fique na frente de tudo)
                 modal.style.zIndex = "9999999";
                 overlay.style.zIndex = "9999998";
                 
@@ -206,20 +207,21 @@
                     title.innerText = isManager ? "Acesso Administrativo" : "Acesso ao Sistema";
                 }
                 
-                console.log("✅ Modal de login deve estar visível agora.");
+                console.log("✅ Sucesso: Modal de login ativado.");
             } else {
-                alert("Erro Crítico: Elementos do modal de login não encontrados no DOM.");
-                console.error("❌ Modal não encontrado. Verifique os IDs 'name-prompt-modal' e 'name-modal-overlay'.");
+                // Feedback visual para você saber se o elemento sumiu
+                alert("Erro Crítico: O modal de login não foi encontrado no código HTML. Verifique se o ID 'name-prompt-modal' existe lá embaixo.");
+                console.error("❌ ERRO: Modal ou Overlay não encontrados pelo ID.");
             }
         };
 
-        // Função para fechar o modal ao clicar no overlay
+        // Função para fechar o modal
         window.closeLocalLogin = function() {
              const modal = document.getElementById('name-prompt-modal');
              const overlay = document.getElementById('name-modal-overlay');
+             
              if(modal) {
                  modal.classList.add('hidden');
-                 modal.classList.remove('force-flex');
                  modal.style.display = 'none';
              }
              if(overlay) {
@@ -331,8 +333,7 @@
     -->
     <div id="landing-hero" style="position: relative !important; z-index: 40 !important;" class="w-full min-h-screen bg-[#050a14] overflow-visible custom-scrollbar transition-all duration-1000 ease-in-out font-sans">
         
-        <!-- NAV CORRIGIDO: Adicionado type="button" e chamada para window.openLocalLogin -->
-        <nav class="absolute top-0 left-0 w-full z-50 py-3 px-4 md:py-4 md:px-12 flex justify-between items-center bg-gradient-to-b from-black/90 to-transparent backdrop-blur-sm">
+        <nav style="z-index: 999 !important; pointer-events: auto;" class="absolute top-0 left-0 w-full py-3 px-4 md:py-4 md:px-12 flex justify-between items-center bg-gradient-to-b from-black/90 to-transparent backdrop-blur-sm">
             <div class="flex items-center gap-3 md:gap-4">
                 <div class="leading-none">
                     <span class="block font-serif font-black italic text-xl md:text-2xl tracking-tight">
@@ -344,14 +345,12 @@
                 </div>
             </div>
             
-            <div class="flex items-center gap-3">
-                <!-- Botão GESTOR -->
-                <button type="button" onclick="event.stopPropagation(); window.openLocalLogin(true);" class="hidden md:flex items-center gap-2 text-gray-300 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors mr-2 cursor-pointer z-50">
+            <div class="flex items-center gap-3 pointer-events-auto">
+                <button type="button" onclick="console.log('Botão Gestor Clicado'); event.stopPropagation(); window.openLocalLogin(true);" class="hidden md:flex items-center gap-2 text-gray-300 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors mr-2 cursor-pointer relative z-50">
                     <i class="fas fa-building text-orange-500"></i> Sou Gestor
                 </button>
 
-                <!-- Botão ALUNO -->
-                <button type="button" onclick="event.stopPropagation(); window.openLocalLogin(false);" class="group flex items-center gap-2 bg-white/5 hover:bg-orange-600 text-white px-4 py-2 md:px-6 md:py-2 rounded border border-white/10 hover:border-orange-500 transition-all duration-300 backdrop-blur-md cursor-pointer z-50">
+                <button type="button" onclick="console.log('Botão Aluno Clicado'); event.stopPropagation(); window.openLocalLogin(false);" class="group flex items-center gap-2 bg-white/5 hover:bg-orange-600 text-white px-4 py-2 md:px-6 md:py-2 rounded border border-white/10 hover:border-orange-500 transition-all duration-300 backdrop-blur-md cursor-pointer relative z-50">
                     <span class="text-[10px] md:text-xs font-bold uppercase tracking-widest">Área do Aluno</span>
                     <i class="fas fa-lock text-[10px] md:text-xs text-orange-500 group-hover:text-white transition-colors"></i>
                 </button>
