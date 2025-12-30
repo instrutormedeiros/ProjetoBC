@@ -1,53 +1,49 @@
-/* === ARQUIVO app_final.js (VERSÃO CORRIGIDA - VISUAL RESTAURADO) === */
+/* === ARQUIVO app_final.js (VERSÃO RESTAURADA - CORREÇÃO FUNCIONAL APENAS) === */
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- VARIÁVEIS GLOBAIS DO APP ---
+    // --- VARIÁVEIS GLOBAIS ---
     const contentArea = document.getElementById('content-area');
-    
-    // Variáveis de controle
     let managerUnsubscribe = null; 
     let totalModules = 0; 
-     
     let completedModules = JSON.parse(localStorage.getItem('gateBombeiroCompletedModules_v3')) || [];
     let notifiedAchievements = JSON.parse(localStorage.getItem('gateBombeiroNotifiedAchievements_v3')) || [];
     let currentModuleId = null;
     let cachedQuestionBanks = {}; 
     let currentUserData = null; 
 
-    // --- VARIÁVEIS PARA O SIMULADO ---
+    // --- VARIÁVEIS SIMULADO E JOGOS ---
     let simuladoTimerInterval = null;
     let simuladoTimeLeft = 0;
     let activeSimuladoQuestions = [];
     let userAnswers = {};
     let currentSimuladoQuestionIndex = 0; 
-
-    // --- VARIÁVEIS PARA MODO SOBREVIVÊNCIA ---
     let survivalLives = 3;
     let survivalScore = 0;
     let survivalQuestions = [];
     let currentSurvivalIndex = 0;
 
-    // --- SELETORES GERAIS ---
+    // --- SELETORES ---
     const toastContainer = document.getElementById('toast-container');
     const sidebar = document.getElementById('off-canvas-sidebar');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
+    const achievementModal = document.getElementById('achievement-modal');
+    const achievementOverlay = document.getElementById('achievement-modal-overlay');
+    const closeAchButton = document.getElementById('close-ach-modal');
+    const breadcrumbContainer = document.getElementById('breadcrumb-container');
     const loadingSpinner = document.getElementById('loading-spinner');
     
-    // Botões Admin/Gestor (Referências iniciais)
-    const adminBtn = document.getElementById('admin-panel-btn');
-    const mobileAdminBtn = document.getElementById('mobile-admin-btn');
+    // Referências Admin
     const adminModal = document.getElementById('admin-modal');
     const adminOverlay = document.getElementById('admin-modal-overlay');
     const closeAdminBtn = document.getElementById('close-admin-modal');
 
-    // --- ACESSIBILIDADE (Mantido igual) ---
+    // --- ACESSIBILIDADE ---
     const fab = document.getElementById('accessibility-fab');
     const menu = document.getElementById('accessibility-menu');
     let fontSizeScale = 1;
 
     fab?.addEventListener('click', () => menu.classList.toggle('show'));
-     
     document.getElementById('acc-font-plus')?.addEventListener('click', () => {
         fontSizeScale += 0.1;
         document.documentElement.style.fontSize = (16 * fontSizeScale) + 'px';
@@ -63,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.toggle('high-spacing');
     });
 
-    // --- AUDIOBOOK (Função padrão) ---
+    // --- AUDIOBOOK ---
     window.speakContent = function() {
         if (!currentModuleId || !moduleContent[currentModuleId]) return;
         
@@ -80,14 +76,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if(btnText) btnText.textContent = 'Continuar';
             return;
         }
-
         if (synth.paused) {
             synth.resume();
             if(btnIcon) btnIcon.className = 'fas fa-pause'; 
             if(btnText) btnText.textContent = 'Pausar';
             return;
         }
-
         if(synth.speaking) synth.cancel(); 
 
         const div = document.createElement('div');
@@ -132,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
         synth.speak(utterance);
     };
 
-    // --- INSTALL PWA (Mantido) ---
+    // --- INSTALL PWA ---
     let deferredPrompt;
     const installBtn = document.getElementById('install-app-btn');
     const installBtnMobile = document.getElementById('install-app-btn-mobile');
@@ -163,7 +157,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (iosModal && iosOverlay) {
                 iosModal.classList.add('show');
                 iosOverlay.classList.add('show');
-                
                 document.getElementById('close-ios-modal')?.addEventListener('click', () => {
                     iosModal.classList.remove('show');
                     iosOverlay.classList.remove('show');
@@ -173,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     iosOverlay.classList.remove('show');
                 });
             } else {
-                alert("Para instalar no iPhone:\nToque em Compartilhar (quadrado com seta).\nToque em 'Adicionar à Tela de Início'.");
+                alert("Para instalar no iPhone:\nToque em Compartilhar.\nToque em 'Adicionar à Tela de Início'.");
             }
         } else if (deferredPrompt) {
             deferredPrompt.prompt();
@@ -184,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             deferredPrompt = null;
         } else {
-            alert("Para instalar:\nProcure o ícone de instalação na barra de endereço ou menu.");
+            alert("Para instalar:\nProcure o ícone de instalação na barra de endereço.");
         }
     }
 
@@ -193,24 +186,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (typeof moduleContent === 'undefined' || typeof moduleCategories === 'undefined') {
         console.warn("⚠️ Conteúdo do curso ainda não carregado.");
-        // Não escondo o header aqui para evitar quebras visuais
+        document.getElementById('main-header')?.classList.add('hidden');
+        document.querySelector('footer')?.classList.add('hidden');
     }
 
-    // --- FUNÇÃO DE INICIALIZAÇÃO (RESTAURADA PARA O PADRÃO) ---
+    // --- FUNÇÃO INIT ORIGINAL ---
     function init() {
         if (typeof firebase === 'undefined') {
-            console.warn("⚠️ Firebase não carregado ainda. Aguardando...");
-            setTimeout(init, 500); 
+            console.warn("⚠️ Firebase não carregado. Aguardando...");
+            setTimeout(init, 500);
             return;
         }
         
-        console.log("✅ Firebase carregado! Iniciando sistema...");
+        console.log("✅ Iniciando sistema...");
         
-        // Garante que a capa esteja visível no início
+        // ESTA CLASSE É FUNDAMENTAL PARA A CAPA APARECER
         document.body.classList.add('landing-active');
         
-        // Inicia animações originais
-        if(typeof initScrollReveal === 'function') initScrollReveal();
+        // Inicia ScrollReveal (Notebook e Animações)
+        if(typeof initScrollReveal === 'function') setTimeout(initScrollReveal, 100);
         
         setupProtection();
         setupTheme();
@@ -230,13 +224,10 @@ document.addEventListener('DOMContentLoaded', () => {
             window.fbDB = window.__fbDB || null;
             window.fbAuth = window.__fbAuth || null;
 
-            setTimeout(() => {
-                if (window.fbDB) console.log("✅ Firebase (DB) pronto.");
-            }, 2000);
+            setTimeout(() => { if (window.fbDB) console.log("✅ Firebase pronto."); }, 2000);
 
             setupAuthEventListeners(); 
             
-            // Logout
             const handleLogout = async () => {
                 window.clearLocalUserData(); 
                 await FirebaseCourse.signOutUser();
@@ -247,9 +238,15 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('logout-expired-button')?.addEventListener('click', handleLogout);
             document.getElementById('logout-button-header')?.addEventListener('click', handleLogout);
 
-            // Verificação de sessão (Silenciosa para não quebrar a capa)
+            // NÃO ESCONDER NADA AQUI MANUALMENTE. DEIXAR O CSS AGIR.
+            const loginModal = document.getElementById('name-prompt-modal');
+            const loginOverlay = document.getElementById('name-modal-overlay');
+            if(loginModal) loginModal.classList.remove('show');
+            if(loginOverlay) loginOverlay.classList.remove('show');
+
             const isLogged = localStorage.getItem('my_session_id');
             if (isLogged) {
+                // Se já estiver logado, aí sim chama o sucesso
                 FirebaseCourse.checkAuth((user, userData) => {
                     onLoginSuccess(user, userData);
                 });
@@ -260,25 +257,22 @@ document.addEventListener('DOMContentLoaded', () => {
         setupRippleEffects();
     }
 
-    // === FUNÇÃO onLoginSuccess (CORRIGIDA: FIX BOTÕES ADMIN/GESTOR SEM QUEBRAR CAPA) ===
+    // === FUNÇÃO onLoginSuccess (CORREÇÃO DE BOTÕES APENAS) ===
     function onLoginSuccess(user, userData) {
         console.log("🚀 LOGIN CONFIRMADO.");
 
-        // 1. Remove Capa e Login
-        const elementsToHide = [
-            'name-prompt-modal', 'name-modal-overlay', 'expired-modal',
-            'landing-hero', 'intro-carousel-wrapper'
-        ];
+        // Esconde a capa e carrossel
+        const elementsToHide = ['name-prompt-modal', 'name-modal-overlay', 'expired-modal', 'landing-hero', 'intro-carousel-wrapper'];
         elementsToHide.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 el.classList.remove('show');
                 el.classList.add('hidden');
-                el.style.display = 'none'; 
+                el.style.display = 'none'; // Força bruta para garantir que some
             }
         });
 
-        // 2. Mostra Painel Principal
+        // Revela o site
         const mainWrapper = document.getElementById('main-wrapper');
         if (mainWrapper) {
             mainWrapper.classList.remove('hidden');
@@ -288,26 +282,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.body.classList.remove('landing-active');
         document.body.style.overflow = 'auto';
+        document.body.style.overflowX = 'hidden';
 
-        // 3. Salva Dados
-        if (userData && user) {
-            currentUserData = { ...userData, uid: user.uid };
-        } else {
-            currentUserData = userData;
-        }
+        if (userData && user) currentUserData = { ...userData, uid: user.uid };
+        else currentUserData = userData;
 
-        // Atualiza UI Básica
         const greetingEl = document.getElementById('welcome-greeting');
         if(greetingEl && userData.name) greetingEl.textContent = `Olá, ${userData.name.split(' ')[0]}!`;
         
         const printWatermark = document.getElementById('print-watermark');
         if (printWatermark) printWatermark.textContent = `Licenciado para ${userData.name} (CPF: ${userData.cpf || '...'}) - Proibida a Cópia`;
 
-        // === CORREÇÃO 1: LIGAÇÃO DOS BOTÕES (CLONE + LISTENER LIMPO) ===
+        // ===============================================================
+        // CORREÇÃO DOS BOTÕES ADMIN/GESTOR (FIX 1)
+        // ===============================================================
         
-        // A) Botão GESTOR
+        // A) Botão ASSINAR
+        const openPay = () => {
+            const m = document.getElementById('expired-modal');
+            const o = document.getElementById('name-modal-overlay');
+            if(m) { m.classList.remove('hidden'); m.classList.add('show'); m.style.display = 'flex'; }
+            if(o) { o.classList.remove('hidden'); o.classList.add('show'); o.style.display = 'block'; o.style.zIndex = '20000'; }
+        };
+        document.querySelectorAll('#header-subscribe-btn, #mobile-subscribe-btn').forEach(btn => {
+            btn.onclick = openPay;
+            btn.style.pointerEvents = 'auto';
+        });
+
+        // B) Botão GESTOR (Reconstrução do Listener)
         const mgrFab = document.getElementById('manager-fab');
-        // Aceita boolean ou string
         if (userData.isManager === true || userData.isManager === "true" || userData.isAdmin === true) {
             if (mgrFab) {
                 mgrFab.classList.remove("hidden");
@@ -316,25 +319,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const fabBtn = mgrFab.querySelector('button');
                 if(fabBtn) {
-                    // Clone para limpar listeners antigos
-                    const newFab = fabBtn.cloneNode(true);
+                    const newFab = fabBtn.cloneNode(true); // Remove listeners antigos
                     fabBtn.parentNode.replaceChild(newFab, fabBtn);
                     
                     newFab.addEventListener('click', function(e) {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log("🔘 Botão Gestor Clicado!");
-                        if(typeof window.openManagerPanel === 'function') {
-                            window.openManagerPanel();
-                        } else {
-                            alert("Painel carregando... Aguarde.");
-                        }
+                        console.log("🔘 Abrindo Gestor...");
+                        if(typeof window.openManagerPanel === 'function') window.openManagerPanel();
+                        else alert("Painel carregando...");
                     });
                 }
             }
         }
 
-        // B) Botão ADMIN
+        // C) Botão ADMIN (Reconstrução do Listener)
         if (userData.isAdmin === true) {
             const adminBtn = document.getElementById('admin-panel-btn');
             const mobileAdminBtn = document.getElementById('mobile-admin-btn');
@@ -342,27 +341,34 @@ document.addEventListener('DOMContentLoaded', () => {
             const attachAdminEvent = (btn) => {
                 if(!btn) return;
                 btn.classList.remove('hidden');
-                // Clone para limpar listeners
                 const newBtn = btn.cloneNode(true);
                 btn.parentNode.replaceChild(newBtn, btn);
 
                 newBtn.addEventListener('click', (e) => { 
                     e.preventDefault(); 
                     e.stopPropagation();
-                    console.log("🛡️ Botão Admin Clicado!");
+                    console.log("🛡️ Abrindo Admin...");
                     if(typeof window.openAdminPanel === 'function') window.openAdminPanel(); 
                 });
             };
-
             attachAdminEvent(adminBtn);
             attachAdminEvent(mobileAdminBtn);
         }
 
-        // ===============================================================
+        // D) Botão RESETAR
+        const resetBtn = document.getElementById('reset-progress');
+        if (resetBtn) {
+            resetBtn.onclick = function(e) {
+                e.preventDefault();
+                const m = document.getElementById('reset-modal');
+                const o = document.getElementById('reset-modal-overlay');
+                if(m) { m.classList.remove('hidden'); m.classList.add('show'); m.style.display = 'block'; m.style.zIndex = '30000'; }
+                if(o) { o.classList.remove('hidden'); o.classList.add('show'); o.style.display = 'block'; o.style.zIndex = '29999'; }
+            };
+        }
 
         checkTrialStatus(userData.acesso_ate);
 
-        // Progresso
         if (userData.completedModules && Array.isArray(userData.completedModules)) {
             completedModules = userData.completedModules;
             localStorage.setItem('gateBombeiroCompletedModules_v3', JSON.stringify(completedModules));
@@ -372,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
             completedModules = [];
         }
 
-        // Contagem (Filtragem BC/SP)
+        // CONTAGEM DE MÓDULOS (FILTRO SP/BC)
         let count = 0;
         const userCourse = userData.courseType || 'BC';
         const isAdm = userData.isAdmin || userData.courseType === 'GESTOR';
@@ -400,7 +406,6 @@ document.addEventListener('DOMContentLoaded', () => {
         handleInitialLoad();
         startOnboardingTour(false);
 
-        // Redirecionamento automático Gestor
         if (localStorage.getItem("open_manager_after_login") === "true") {
             localStorage.removeItem("open_manager_after_login");
             setTimeout(() => {
@@ -613,7 +618,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- SETUP DE AUTHENTICATION ---
     function setupAuthEventListeners() {
-        // Elementos do Form
         const nameField = document.getElementById('name-field-container');
         const cpfField = document.getElementById('cpf-field-container'); 
         const phoneField = document.getElementById('phone-field-container'); 
@@ -640,7 +644,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const loginModalOverlay = document.getElementById('name-modal-overlay');
         const loginModal = document.getElementById('name-prompt-modal');
 
-        // Inicializa estado dos campos
         if (loginGroup && !loginGroup.classList.contains('hidden')) {
             if (courseField) courseField.classList.add('hidden');
             if (nameField) nameField.classList.add('hidden');
@@ -656,17 +659,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Alternar Login/Cadastro
         btnShowSignup?.addEventListener('click', () => {
             loginGroup.classList.add('hidden');
             signupGroup.classList.remove('hidden');
-            
             nameField.classList.remove('hidden');
             cpfField.classList.remove('hidden'); 
             phoneField.classList.remove('hidden'); 
             companyField.classList.remove('hidden');
-            if(courseField) courseField.classList.remove('hidden'); // MOSTRA CURSO
-            
+            if(courseField) courseField.classList.remove('hidden');
             authTitle.textContent = "Criar Nova Conta";
             authMsg.textContent = "Cadastre-se para o Período de Experiência.";
             feedback.textContent = "";
@@ -675,19 +675,16 @@ document.addEventListener('DOMContentLoaded', () => {
         btnShowLogin?.addEventListener('click', () => {
             loginGroup.classList.remove('hidden');
             signupGroup.classList.add('hidden');
-            
             nameField.classList.add('hidden');
             cpfField.classList.add('hidden'); 
             phoneField.classList.add('hidden'); 
             companyField.classList.add('hidden');
-            if(courseField) courseField.classList.add('hidden'); // ESCONDE CURSO
-            
+            if(courseField) courseField.classList.add('hidden');
             authTitle.textContent = "Acesso ao Sistema";
             authMsg.textContent = "Acesso Restrito";
             feedback.textContent = "";
         });
 
-        // Login Action
         btnLogin?.addEventListener('click', async () => {
             const email = emailInput.value;
             const password = passwordInput.value;
@@ -711,7 +708,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Signup Action
         btnSignup?.addEventListener('click', async () => {
             const phone = phoneInput.value; 
             const company = companyInput.value; 
@@ -790,12 +786,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return shuffleArray(finalExamQuestions);
     }
       
-    // === CARREGAMENTO DE MÓDULOS (CORRIGIDO PARA SP/BC) ===
+    // === FIX 2: CARREGAMENTO DE MÓDULOS COM SUPORTE A PREFIXO "SP_" ===
     async function loadModuleContent(id) {
         if (!id || !moduleContent[id]) return;
         const d = moduleContent[id];
         
-        // CORREÇÃO CRÍTICA DO BUG #2: Detecta Prefixo (module vs sp_module)
+        // CORREÇÃO CRÍTICA DO BUG #2
         const isSpModule = id.startsWith('sp_module');
         let num = 0;
         
@@ -809,7 +805,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const key in moduleCategories) {
             const cat = moduleCategories[key];
             const catIsSp = cat.isSP === true; 
-            // Só entra se o tipo bater (SP com SP, BC com BC) e o número estiver no range
+            // Verifica se o tipo bate (SP com SP, BC com BC) e o número está no range
             if (catIsSp === isSpModule && num >= cat.range[0] && num <= cat.range[1]) { 
                 moduleCategory = cat; 
                 break; 
@@ -835,7 +831,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadingSpinner.classList.add('hidden');
             contentArea.classList.remove('hidden'); 
 
-            // RENDERIZAÇÃO DO CONTEÚDO (MANTIDA IGUAL, SÓ CORRIGIU A LÓGICA DE ABERTURA ACIMA)
+            // RENDERIZAÇÃO
             if (d.isSimulado) {
                 contentArea.innerHTML = `
                     <h3 class="text-3xl mb-4 pb-4 border-b text-orange-600 dark:text-orange-500 flex items-center"><i class="${d.iconClass} mr-3"></i> ${d.title}</h3>
@@ -922,7 +918,8 @@ document.addEventListener('DOMContentLoaded', () => {
             closeSidebar();
             document.getElementById('next-module')?.classList.remove('blinking-button');
         }, 300);
-    }// === LÓGICA: MODO SOBREVIVÊNCIA ===
+    }
+// === LÓGICA: MODO SOBREVIVÊNCIA ===
     async function initSurvivalGame() {
         survivalLives = 3;
         survivalScore = 0;
@@ -1331,19 +1328,17 @@ function setupConcludeButtonListener() {
             showAchievementToast(moduleContent[id].title);
             if(typeof confetti === 'function') confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 }, zIndex: 2000 });
             
-            // --- CORREÇÃO DO SCROLL E PISCA-PISCA ---
+            // --- FIX SCROLL SUAVE E REINÍCIO DA ANIMAÇÃO ---
             setTimeout(() => {
                 const navContainer = document.getElementById('module-nav');
                 const nextButton = document.getElementById('next-module');
                 
                 if (navContainer) {
-                    // Scroll suave para a barra de navegação (block: 'center' evita pulos bruscos)
                     navContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     
                     if (nextButton && !nextButton.disabled) {
-                        // Reinicia a animação removendo e readicionando a classe
                         nextButton.classList.remove('blinking-button');
-                        void nextButton.offsetWidth; // Força o navegador a recalcular (Reflow)
+                        void nextButton.offsetWidth; // Força Reflow (reinicia animação)
                         nextButton.classList.add('blinking-button');
                     }
                 }
@@ -1458,13 +1453,17 @@ function setupConcludeButtonListener() {
                 const m = moduleContent[mid];
                 if (m) {
                     const isSpContent = m.id.startsWith('sp_');
+                    let showIt = true;
                     if (!isManager) {
-                        if (userType === 'BC' && isSpContent) continue;
-                        if (userType === 'SP' && !isSpContent) continue;
+                        if (userType === 'BC' && isSpContent) showIt = false;
+                        if (userType === 'SP' && !isSpContent) showIt = false;
                     }
-                    const isDone = Array.isArray(completedModules) && completedModules.includes(m.id);
-                    const itemLock = isLocked ? '<i class="fas fa-lock text-xs text-gray-400 ml-2"></i>' : '';
-                    html += `<div class="module-list-item${isDone ? ' completed' : ''}" data-module="${m.id}"><i class="${m.iconClass} module-icon"></i><span style="flex:1">${m.title} ${itemLock}</span>${isDone ? '<i class="fas fa-check-circle completion-icon" aria-hidden="true"></i>' : ''}</div>`;
+                    
+                    if (showIt) {
+                        const isDone = Array.isArray(completedModules) && completedModules.includes(m.id);
+                        const itemLock = isLocked ? '<i class="fas fa-lock text-xs text-gray-400 ml-2"></i>' : '';
+                        html += `<div class="module-list-item${isDone ? ' completed' : ''}" data-module="${m.id}"><i class="${m.iconClass} module-icon"></i><span style="flex:1">${m.title} ${itemLock}</span>${isDone ? '<i class="fas fa-check-circle completion-icon" aria-hidden="true"></i>' : ''}</div>`;
+                    }
                 }
             }
             html += `</div></div>`;
@@ -1646,16 +1645,18 @@ function setupConcludeButtonListener() {
             }
         });
 
+        const adminBtn = document.getElementById('admin-panel-btn');
+        const mobileAdminBtn = document.getElementById('mobile-admin-btn');
         adminBtn?.addEventListener('click', window.openAdminPanel);
         mobileAdminBtn?.addEventListener('click', window.openAdminPanel);
 
-        closeAdminBtn?.addEventListener('click', () => {
-            adminModal.classList.remove('show');
-            adminOverlay.classList.remove('show');
+        document.getElementById('close-admin-modal')?.addEventListener('click', () => {
+            document.getElementById('admin-modal').classList.remove('show');
+            document.getElementById('admin-modal-overlay').classList.remove('show');
         });
-        adminOverlay?.addEventListener('click', () => {
-            adminModal.classList.remove('show');
-            adminOverlay.classList.remove('show');
+        document.getElementById('admin-modal-overlay')?.addEventListener('click', () => {
+            document.getElementById('admin-modal').classList.remove('show');
+            document.getElementById('admin-modal-overlay').classList.remove('show');
         });
 
         document.getElementById('reset-progress')?.addEventListener('click', () => { 
@@ -1720,7 +1721,7 @@ function setupConcludeButtonListener() {
 
         document.getElementById('mobile-menu-button')?.addEventListener('click', openSidebar);
         document.getElementById('close-sidebar-button')?.addEventListener('click', closeSidebar);
-        sidebarOverlay?.addEventListener('click', closeSidebar);
+        document.getElementById('sidebar-overlay')?.addEventListener('click', closeSidebar);
         document.getElementById('home-button-desktop')?.addEventListener('click', goToHomePage);
         document.getElementById('bottom-nav-home')?.addEventListener('click', goToHomePage);
         document.getElementById('bottom-nav-modules')?.addEventListener('click', openSidebar);
@@ -1733,8 +1734,8 @@ function setupConcludeButtonListener() {
         document.getElementById('focus-nav-modules')?.addEventListener('click', openSidebar);
         document.getElementById('focus-nav-exit')?.addEventListener('click', toggleFocusMode);
         document.getElementById('close-congrats')?.addEventListener('click', () => { document.getElementById('congratulations-modal').classList.remove('show'); document.getElementById('modal-overlay').classList.remove('show'); });
-        closeAchButton?.addEventListener('click', hideAchievementModal);
-        achievementOverlay?.addEventListener('click', hideAchievementModal);
+        document.getElementById('close-ach-modal')?.addEventListener('click', hideAchievementModal);
+        document.getElementById('achievement-modal-overlay')?.addEventListener('click', hideAchievementModal);
     }
 
     // --- CORREÇÃO BUG #1: PAINEL DO GESTOR IMPLEMENTADO ---
@@ -1976,5 +1977,6 @@ function setupConcludeButtonListener() {
         document.querySelectorAll('.module-list-item').forEach(item => { item.classList.remove('completed', 'active'); const icon = item.querySelector('.completion-icon'); if(icon) icon.remove(); });
     };
     
+    // Inicia o app (agora seguro, sem quebrar capa)
     init(); 
 });
