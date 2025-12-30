@@ -998,30 +998,76 @@ details[open] summary ~ * {
    10. INTEGRAÇÃO CAPA CARROSSEL (INTRO OVERLAY)
    ========================================================================== */
 
-/* Container Principal que cobre tudo */
+/* ==========================================================================
+   10. INTEGRAÇÃO CAPA CARROSSEL (INTRO OVERLAY) - V2 (Ajustes Visuais)
+   ========================================================================== */
+
+/* Container Principal */
 #intro-carousel-wrapper {
     position: fixed;
     inset: 0;
-    z-index: 99999; /* ACIMA DE TUDO (O site original é 10000) */
+    z-index: 99999;
     background-color: #050505;
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    transition: transform 0.8s cubic-bezier(0.77, 0, 0.175, 1); /* Efeito de subida suave */
+    /* Força a fonte do site na capa e garante peso */
+    font-family: 'Montserrat', sans-serif; 
+    transition: transform 0.8s cubic-bezier(0.77, 0, 0.175, 1);
 }
 
-/* Classe para esconder a capa deslizando para cima */
 #intro-carousel-wrapper.slide-out {
     transform: translateY(-100%);
 }
 
-/* --- Estilos do Carrossel (Copiados e Isolados) --- */
+/* --- Estilos do Carrossel --- */
+
+/* Ajuste de Fontes mais "cheinhas" (Bold/Black) */
+#intro-carousel-wrapper h2 {
+    font-weight: 900 !important; /* Força negrito extra */
+    letter-spacing: -0.05em !important;
+}
+
+.intro-panel-content span.font-mono {
+    font-weight: 700 !important; /* Subtítulo mais grosso */
+    letter-spacing: 0.1em !important;
+}
+
+/* Indicador de Rolagem (Novo) */
+.intro-scroll-indicator {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    animation: introBounce 2s infinite;
+    pointer-events: none; /* Não atrapalha o clique */
+}
+
+.intro-scroll-indicator i {
+    margin-top: 8px;
+    font-size: 1.2rem;
+}
+
+@keyframes introBounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+    40% { transform: translateX(-50%) translateY(-10px); }
+    60% { transform: translateX(-50%) translateY(-5px); }
+}
 
 /* Vinheta */
 .intro-vignette {
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.8) 100%);
+    background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.9) 100%);
     pointer-events: none;
     z-index: 20;
 }
@@ -1033,7 +1079,7 @@ details[open] summary ~ * {
     flex-shrink: 0;
     border-right: 1px solid rgba(255,255,255,0.05);
     overflow: hidden;
-    cursor: pointer;
+    cursor: pointer; /* Mantém cursor de clique como opção */
 }
 
 .intro-bg-image-zoom {
@@ -1106,4 +1152,8 @@ details[open] summary ~ * {
     height: 100%;
     width: max-content;
     will-change: transform;
+}
+/* Esconde a barra laranja antiga que ficava embaixo */
+#intro-carousel-wrapper .absolute.bottom-0.h-1 {
+    display: none;
 }
