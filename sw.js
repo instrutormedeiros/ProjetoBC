@@ -1,8 +1,8 @@
-/* sw.js — Service Worker V9 (Atualização Forçada para Carrossel)
-   - Cache-then-network strategy
-   - Força a limpeza de caches antigos imediatamente
-*/
-const CACHE_NAME = 'pbc-static-v9'; // <--- ALTERADO PARA V9 PARA FORÇAR ATUALIZAÇÃO
+/* sw.js — Service Worker V11 (ATUALIZAÇÃO OBRIGATÓRIA) */
+
+// MUDE DE 'pbc-static-v9' PARA 'pbc-static-v11'
+const CACHE_NAME = 'pbc-static-v11'; 
+
 const PRECACHE_URLS = [
   '/', 
   '/index.html',
@@ -11,29 +11,30 @@ const PRECACHE_URLS = [
   '/data.js',
   '/quizzes.js',
   '/course.js',
-  '/firebase-init.js'
+  '/firebase-init.js',
+  '/manifest.json' 
+  // Se tiver imagens no carrossel, adicione aqui, ex: '/assets/img/slide1.jpg'
 ];
 
 self.addEventListener('install', event => {
-  self.skipWaiting(); // Força o novo SW a assumir imediatamente, ignorando o antigo
+  self.skipWaiting(); // Força a instalação imediata
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      // Tenta buscar os arquivos novos. Se falhar algum, não trava a instalação.
-      return cache.addAll(PRECACHE_URLS.map(u => new Request(u, {cache: 'reload'}))).catch(err => {
-          console.warn('Falha ao cachear alguns arquivos:', err);
-      });
+      return cache.addAll(PRECACHE_URLS.map(u => new Request(u, {cache: 'reload'})))
+        .catch(err => console.warn('Aviso de cache:', err));
     })
   );
 });
 
 self.addEventListener('activate', event => {
-  clients.claim(); // Assume o controle de todas as abas abertas imediatamente
+  clients.claim(); 
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
       keys.map(k => {
+        // Limpa qualquer cache que não seja o V11
         if (k !== CACHE_NAME) {
             console.log('Limpando cache antigo:', k);
-            return caches.delete(k); // Apaga caches antigos (v8, v7...)
+            return caches.delete(k); 
         }
       })
     ))
@@ -42,9 +43,6 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
-  
-  // Estratégia: Network First (Tenta pegar do servidor; se falhar, pega do cache)
-  // Isso garante que você veja as alterações mais rápido durante o desenvolvimento
   event.respondWith(
     fetch(event.request)
       .then(networkResponse => {
@@ -53,6 +51,6 @@ self.addEventListener('fetch', event => {
           return networkResponse;
         });
       })
-      .catch(() => caches.match(event.request)) // Se estiver offline, usa o cache
+      .catch(() => caches.match(event.request))
   );
 });
