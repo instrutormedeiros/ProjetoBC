@@ -1,4 +1,4 @@
-/* === ARQUIVO app_final.js (VERSÃO FINAL V10.2 - CORREÇÃO LOGIN E CARROSSEL) === */
+/* === ARQUIVO app_final.js (VERSÃO FINAL V10.1 - CORREÇÃO TOTAL MODULES) === */
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -298,184 +298,111 @@ setTimeout(() => {
         setupRippleEffects();
     }
 
-    // === FUNÇÃO onLoginSuccess (VERSÃO FINAL V13 - LIGAÇÃO TOTAL) ===
     function onLoginSuccess(user, userData) {
-        console.log("🚀 LOGIN CONFIRMADO: Ativando TODOS os controles...");
+        // Remove capa e libera scroll
+        const landing = document.getElementById('landing-hero');
+        if (landing) landing.classList.add('hidden'); 
+        document.body.classList.remove('landing-active'); 
 
-        // 1. LIMPEZA VISUAL (Esconde Login/Capa/Carrossel)
-        const elementsToHide = [
-            'name-prompt-modal', 'name-modal-overlay', 'expired-modal',
-            'landing-hero', 'intro-carousel-wrapper'
-        ];
-        
-        elementsToHide.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.classList.remove('show');
-                el.classList.add('hidden');
-                el.style.display = 'none'; // Força bruta para sumir
-            }
-        });
-
-        // 2. REVELAR O SITE (Painel Principal)
-        const mainWrapper = document.getElementById('main-wrapper');
-        if (mainWrapper) {
-            mainWrapper.classList.remove('hidden');
-            mainWrapper.style.display = 'block'; 
-            setTimeout(() => mainWrapper.style.opacity = '1', 50);
-        }
-
-        // 3. DESTRAVAR SCROLL
-        document.body.classList.remove('landing-active');
-        document.body.style.overflow = 'auto';
-        document.body.style.overflowX = 'hidden';
-
-        // 4. CARREGAR DADOS DO USUÁRIO
         if (userData && user) {
             currentUserData = { ...userData, uid: user.uid };
         } else {
             currentUserData = userData;
         }
 
-        // Atualiza Saudação e Marca D'água
+        if (document.body.getAttribute('data-app-ready') === 'true') return;
+        
+        document.getElementById('name-prompt-modal')?.classList.remove('show');
+        document.getElementById('name-modal-overlay')?.classList.remove('show');
+        document.getElementById('expired-modal')?.classList.remove('show');
+        
         const greetingEl = document.getElementById('welcome-greeting');
-        if(greetingEl && userData.name) greetingEl.textContent = `Olá, ${userData.name.split(' ')[0]}!`;
+        if(greetingEl) greetingEl.textContent = `Olá, ${userData.name.split(' ')[0]}!`;
         
         const printWatermark = document.getElementById('print-watermark');
-        if (printWatermark) printWatermark.textContent = `Licenciado para ${userData.name} (CPF: ${userData.cpf || '...'}) - Proibida a Cópia`;
-
-        // ===============================================================
-        // 5. LIGAÇÃO DIRETA DOS BOTÕES (CORREÇÃO DE GESTOR, ADMIN E RESET)
-        // ===============================================================
-        
-        // A) Botão ASSINAR (Já funcionava, mantido)
-        const openPay = () => {
-            const m = document.getElementById('expired-modal');
-            const o = document.getElementById('name-modal-overlay');
-            if(m) { m.classList.remove('hidden'); m.classList.add('show'); m.style.display = 'flex'; }
-            if(o) { o.classList.remove('hidden'); o.classList.add('show'); o.style.display = 'block'; o.style.zIndex = '20000'; }
-        };
-        document.querySelectorAll('#header-subscribe-btn, #mobile-subscribe-btn').forEach(btn => {
-            btn.onclick = openPay;
-            btn.style.pointerEvents = 'auto';
-        });
-
-        // --- COPIE E COLE ISTO DENTRO DE onLoginSuccess (SUBSTITUINDO OS ITENS B e C) ---
-
-        // B) Botão GESTOR (FAB Flutuante) - CORREÇÃO DE FORÇA
-        const mgrFab = document.getElementById('manager-fab');
-        // Verificação flexível (aceita true, "true" ou 1)
-        if (userData.isManager || userData.isAdmin) {
-            if (mgrFab) {
-                mgrFab.classList.remove("hidden");
-                mgrFab.style.display = 'flex'; 
-                mgrFab.style.zIndex = '999999';
-                
-                const fabBtn = mgrFab.querySelector('button');
-                if(fabBtn) {
-                    // Remove qualquer clone anterior para garantir limpeza
-                    const newFab = fabBtn.cloneNode(true);
-                    fabBtn.parentNode.replaceChild(newFab, fabBtn);
-                    
-                    newFab.onclick = function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log("🔘 Botão Gestor Clicado!");
-                        if(typeof window.openManagerPanel === 'function') {
-                            window.openManagerPanel();
-                        } else {
-                            alert("Painel carregando... Tente novamente em alguns segundos.");
-                        }
-                    };
-                }
-            }
+        if (printWatermark) {
+            printWatermark.textContent = `Licenciado para ${userData.name} (CPF: ${userData.cpf || '...'}) - Proibida a Cópia`;
         }
 
-        // C) Botão ADMIN (Cabeçalho e Mobile) - CORREÇÃO DE FORÇA
-        if (userData.isAdmin) {
-            const adminBtn = document.getElementById('admin-panel-btn');
-            const mobileAdminBtn = document.getElementById('mobile-admin-btn');
-            
-            // Função única para abrir
-            const forceOpenAdmin = (e) => { 
-                e.preventDefault(); 
-                e.stopPropagation();
-                if(typeof window.openAdminPanel === 'function') window.openAdminPanel(); 
-            };
+        // Admin e Gestor Buttons
+        const adminBtn = document.getElementById('admin-panel-btn');
+        const mobileAdminBtn = document.getElementById('mobile-admin-btn');
+        const managerFab = document.getElementById("manager-fab");
 
-            if (adminBtn) {
-                adminBtn.classList.remove('hidden');
-                adminBtn.onclick = forceOpenAdmin;
-            }
-            if (mobileAdminBtn) {
-                mobileAdminBtn.classList.remove('hidden');
-                mobileAdminBtn.onclick = forceOpenAdmin;
-            }
+        if (userData.isAdmin === true) {
+            if(adminBtn) adminBtn.classList.remove('hidden');
+            if(mobileAdminBtn) mobileAdminBtn.classList.remove('hidden');
         }
-
-        // D) Botão RESETAR (Rodapé) - CORRIGIDO
-        const resetBtn = document.getElementById('reset-progress');
-        if (resetBtn) {
-            resetBtn.onclick = function(e) {
-                e.preventDefault();
-                const m = document.getElementById('reset-modal');
-                const o = document.getElementById('reset-modal-overlay');
-                if(m) { m.classList.remove('hidden'); m.classList.add('show'); m.style.display = 'block'; m.style.zIndex = '30000'; }
-                if(o) { o.classList.remove('hidden'); o.classList.add('show'); o.style.display = 'block'; o.style.zIndex = '29999'; }
-            };
+        if (userData.isManager === true || userData.isAdmin === true) {
+            if (managerFab) managerFab.classList.remove("hidden");
         }
-
-        // ===============================================================
 
         checkTrialStatus(userData.acesso_ate);
 
-        // Sincronia de Progresso
+        // --- PROGRESSO SINCRONIZADO (CORRIGIDO) ---
+        // Se o usuário tem dados na nuvem, usa a nuvem (Prioridade Máxima)
         if (userData.completedModules && Array.isArray(userData.completedModules)) {
             completedModules = userData.completedModules;
+            // Atualiza o localStorage para ficar igual à nuvem
             localStorage.setItem('gateBombeiroCompletedModules_v3', JSON.stringify(completedModules));
-        } else if (completedModules.length > 0 && localStorage.getItem('my_session_id') === userData.current_session_id) {
+            console.log("Progresso sincronizado da nuvem:", completedModules.length);
+        } 
+        // Se a nuvem está vazia, mas temos dados locais E parece ser o mesmo usuário (sessão), envia.
+        // Se for um login fresco sem sessão anterior, ignoramos o local para evitar contaminação.
+        else if (completedModules.length > 0 && localStorage.getItem('my_session_id') === userData.current_session_id) {
+            console.log("Sincronizando progresso local para a nuvem...");
             saveProgressToCloud();
-        } else {
+        } 
+        else {
+            // Se não tem na nuvem e não é sessão contínua, assume zero.
             completedModules = [];
+            localStorage.removeItem('gateBombeiroCompletedModules_v3');
         }
 
-        // Contagem de Módulos (Filtragem BC/SP)
+        // --- CORREÇÃO DA CONTAGEM DE MÓDULOS (62 vs 4) ---
+        // Aqui recalculamos o totalModules baseado APENAS no que o aluno pode ver
         let count = 0;
         const userCourse = userData.courseType || 'BC';
         const isAdm = userData.isAdmin || userData.courseType === 'GESTOR';
 
         Object.keys(window.moduleContent || {}).forEach(modId => {
             const isSp = modId.startsWith('sp_');
-            if (isAdm) count++;
-            else {
+            
+            if (isAdm) {
+                count++; // Admin vê tudo (66)
+            } else {
+                // Aluno BC: conta se NÃO for SP
                 if (userCourse === 'BC' && !isSp) count++;
+                // Aluno SP: conta se FOR SP
                 else if (userCourse === 'SP' && isSp) count++;
             }
         });
         
-        totalModules = count;
+        totalModules = count; // Atualiza a variável global
+        // --------------------------------------------------
 
+        // Atualiza a interface com o número correto
         const totalEl = document.getElementById('total-modules');
         const courseCountEl = document.getElementById('course-modules-count');
         if(totalEl) totalEl.textContent = totalModules;
         if(courseCountEl) courseCountEl.textContent = totalModules;
         
-        // RECARREGA OS EVENTOS GERAIS (Para garantir que todo o resto funcione)
         populateModuleLists();
         updateProgress();
         addEventListeners(); 
         handleInitialLoad();
-        startOnboardingTour(false);
+        startOnboardingTour(false); 
 
-        // Redirecionamento automático pós-login (Gestor)
         if (localStorage.getItem("open_manager_after_login") === "true") {
             localStorage.removeItem("open_manager_after_login");
             setTimeout(() => {
-                if (window.fbDB && typeof window.openManagerPanel === "function") window.openManagerPanel();
-            }, 1500);
+                if (window.fbDB && typeof openManagerPanel === "function") openManagerPanel();
+            }, 2000);
         }
-
+    // --- TRAVA DE SEGURANÇA (ADICIONE ISTO AQUI) ---
+        // Isso impede que os botões sejam duplicados quando o banco atualiza
         document.body.setAttribute('data-app-ready', 'true');
+
     }
     
 // --- FUNÇÕES ADMIN (ATUALIZADAS E LEGÍVEIS) ---
@@ -572,6 +499,7 @@ window.openAdminPanel = async function() {
                     <td class="p-3 flex flex-wrap gap-2">
                         <button onclick="editUserData('${uid}', '${u.name}', '${cpf}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Editar Dados"><i class="fas fa-pen"></i></button>
                         
+                        <!-- BOTÃO NOVO: ALTERAR CURSO -->
                         <button onclick="changeUserCourse('${uid}', '${cursoCodigo}')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-1.5 rounded text-xs shadow" title="Alterar Curso (BC/SP)"><i class="fas fa-graduation-cap"></i></button>
                         
                         <button onclick="editUserNote('${uid}', '${(u.adminNote || '').replace(/'/g, "\\'")}')" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 px-2 py-1.5 rounded text-xs shadow" title="Nota Admin"><i class="fas fa-sticky-note ${noteIconColor}"></i></button>
@@ -846,12 +774,6 @@ function updateAdminStats(stats) {
                 localStorage.removeItem('my_session_id'); 
                 await FirebaseCourse.signInWithEmail(email, password);
                 feedback.textContent = "Verificando...";
-                
-                // CORREÇÃO: Força a verificação de auth imediatamente após login manual
-                FirebaseCourse.checkAuth((user, userData) => {
-                    onLoginSuccess(user, userData);
-                });
-
             } catch (error) {
                 feedback.className = "text-center text-sm mt-4 text-red-400 font-semibold";
                 feedback.textContent = "Erro ao entrar. Verifique seus dados.";
@@ -878,12 +800,6 @@ function updateAdminStats(stats) {
             try {
                 await FirebaseCourse.signUpWithEmail(name, email, password, cpf, company, phone, courseType);
                 feedback.textContent = "Sucesso! Iniciando...";
-                
-                // CORREÇÃO: Força a verificação de auth imediatamente após cadastro
-                FirebaseCourse.checkAuth((user, userData) => {
-                    onLoginSuccess(user, userData);
-                });
-
             } catch (error) {
                 feedback.className = "text-center text-sm mt-4 text-red-400 font-semibold";
                 feedback.textContent = error.message || "Erro ao criar conta.";
@@ -1450,7 +1366,8 @@ function updateAdminStats(stats) {
         document.getElementById('sim-next-btn').addEventListener('click', () => navigateSimulado(1, moduleData.id));
         document.getElementById('sim-prev-btn').addEventListener('click', () => navigateSimulado(-1, moduleData.id));
     }
-// --- FUNÇÃO AUXILIAR: EXIBIR QUESTÃO (CORRIGIDA - USO DE INDEX) ---
+    
+    // --- FUNÇÃO AUXILIAR: EXIBIR QUESTÃO (CORRIGIDA - USO DE INDEX) ---
     function showSimuladoQuestion(index) {
         const q = activeSimuladoQuestions[index];
         const container = document.getElementById('question-display-area');
@@ -1812,16 +1729,8 @@ function updateAdminStats(stats) {
             setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
         }
     }
-    // === SUBSTITUA A FUNÇÃO openSidebar POR ESTA ===
     function openSidebar() {
-        // 1. Garante que o Sidebar existe e tira o "invisível"
-        if (sidebar) {
-            sidebar.classList.remove('hidden'); 
-            // Pequeno delay para o navegador perceber que o elemento existe antes de animar
-            setTimeout(() => sidebar.classList.add('open'), 10);
-        }
-        
-        // 2. Faz o mesmo com o Fundo Escuro (Overlay)
+        if (sidebar) sidebar.classList.add('open');
         if (sidebarOverlay) {
             sidebarOverlay.classList.remove('hidden');
             setTimeout(() => sidebarOverlay.classList.add('show'), 10);
@@ -2543,8 +2452,7 @@ window.scrollToStory = function() {
 // Entra no sistema e verifica login (VERSÃO OTIMIZADA PARA MOBILE)
 window.enterSystem = function() {
     const landing = document.getElementById('landing-hero');
-    const carousel = document.getElementById('intro-carousel-wrapper'); // PEGA O CARROSSEL
-
+    
     if (landing) {
         // 1. Prepara a animação (Hardware Acceleration)
         landing.style.willChange = 'transform, opacity';
@@ -2561,7 +2469,6 @@ window.enterSystem = function() {
     // 3. Aguarda a animação terminar para destravar o scroll e remover a capa
     setTimeout(() => {
         if (landing) landing.classList.add('hidden'); // Remove do DOM
-        if (carousel) carousel.style.display = 'none'; // REMOVE O CARROSSEL TAMBÉM
         document.body.classList.remove('landing-active'); // Destrava a rolagem do corpo principal SÓ AGORA
         
         // Verifica autenticação
