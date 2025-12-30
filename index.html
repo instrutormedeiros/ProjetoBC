@@ -48,24 +48,25 @@
 
     <!-- ESTILOS ESPECÍFICOS DO CARROSSEL -->
     <style>
-        /* Container Geral para garantir a rolagem */
+        /* Container Geral */
         html, body {
-            overflow-x: hidden; /* Evita rolagem lateral */
-            scroll-behavior: smooth; /* Garante a suavidade ao descer */
+            overflow-x: hidden; 
+            scroll-behavior: smooth;
         }
 
-        /* Container do Carrossel */
+        /* Container do Carrossel - GARANTIA DE POSIÇÃO */
         #intro-carousel-wrapper {
-            position: relative;
+            position: relative; /* Mantém no fluxo normal */
             width: 100%;
-            height: 100vh; 
+            height: 100vh; /* Ocupa 100% da altura da tela */
             overflow: hidden; 
             background-color: #050505;
             cursor: pointer;
-            z-index: 50;
+            z-index: 50; /* Garante visibilidade */
+            display: block; /* Garante que é renderizado como bloco */
         }
 
-        /* --- CSS DO CARROSSEL (COPIADO DO SEU ARQUIVO) --- */
+        /* --- CSS DO CARROSSEL --- */
         #intro-carousel-wrapper .vignette {
             position: absolute;
             inset: 0;
@@ -80,7 +81,6 @@
             flex-shrink: 0;
             border-right: 1px solid rgba(255,255,255,0.05);
             overflow: hidden;
-            /* cursor: pointer; Já está no pai */
         }
         
         #intro-carousel-wrapper .bg-image-zoom {
@@ -157,8 +157,7 @@
 
     <!-- 
     ================================================================
-    PARTE 1: O CARROSSEL (INTRODUÇÃO)
-    O usuário deve clicar aqui para descer para o site.
+    PARTE 1: O CARROSSEL (CAPA NOVA)
     ================================================================ 
     -->
     <div id="intro-carousel-wrapper" title="Clique em qualquer lugar para entrar no site">
@@ -166,7 +165,6 @@
         
             <div class="vignette"></div>
     
-            <!-- Botões com stopPropagation para não acionar a descida ao clicar neles -->
             <button id="btn-prev" class="nav-arrow left-6 md:left-10 arrow-left-anim" onclick="event.stopPropagation()">
                 <i class="fas fa-chevron-left text-xl"></i>
             </button>
@@ -268,12 +266,13 @@
 
     <!-- 
     ================================================================
-    PARTE 2: O SITE ATUAL
-    Modificação IMPORTANTE: 'fixed inset-0' removido e trocado por 
-    'relative min-h-screen' para ficar ABAIXO do carrossel e permitir rolagem.
+    PARTE 2: CAPA ANTIGA (AGORA ABAIXO DO CARROSSEL)
+    CORREÇÃO FEITA: Removido 'fixed inset-0 z-[10000]'
+    Alterado para 'relative w-full min-h-screen z-40'
+    Isso garante que ela fique DEPOIS do carrossel, e não em cima dele.
     ================================================================ 
     -->
-    <div id="landing-hero" class="relative min-h-screen w-full bg-[#050a14] overflow-visible custom-scrollbar transition-all duration-1000 ease-in-out font-sans z-40">
+    <div id="landing-hero" class="relative w-full min-h-screen bg-[#050a14] overflow-visible custom-scrollbar transition-all duration-1000 ease-in-out font-sans z-40">
         
         <nav class="fixed top-0 left-0 w-full z-50 py-3 px-4 md:py-4 md:px-12 flex justify-between items-center bg-gradient-to-b from-black/90 to-transparent backdrop-blur-sm">
             <div class="flex items-center gap-3 md:gap-4">
