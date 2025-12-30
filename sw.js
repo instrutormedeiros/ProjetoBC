@@ -1,7 +1,8 @@
-/* sw.js — Service Worker V8 (Forçando atualização para exibir Ferramentas)
+/* sw.js — Service Worker V9 (Atualização Forçada para Carrossel)
    - Cache-then-network strategy
+   - Força a limpeza de caches antigos imediatamente
 */
-const CACHE_NAME = 'pbc-static-v8'; // <--- MUDAMOS PARA V8
+const CACHE_NAME = 'pbc-static-v9'; // <--- ALTERADO PARA V9 PARA FORÇAR ATUALIZAÇÃO
 const PRECACHE_URLS = [
   '/', 
   '/index.html',
@@ -14,26 +15,44 @@ const PRECACHE_URLS = [
 ];
 
 self.addEventListener('install', event => {
-  self.skipWaiting(); // Força o novo SW a assumir imediatamente
+  self.skipWaiting(); // Força o novo SW a assumir imediatamente, ignorando o antigo
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(PRECACHE_URLS.map(u => new Request(u, {cache: 'reload'}))).catch(()=>{ return; });
+      // Tenta buscar os arquivos novos. Se falhar algum, não trava a instalação.
+      return cache.addAll(PRECACHE_URLS.map(u => new Request(u, {cache: 'reload'}))).catch(err => {
+          console.warn('Falha ao cachear alguns arquivos:', err);
+      });
     })
   );
 });
 
 self.addEventListener('activate', event => {
-  clients.claim(); 
+  clients.claim(); // Assume o controle de todas as abas abertas imediatamente
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
-      keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)) // Limpa cache antigo
+      keys.map(k => {
+        if (k !== CACHE_NAME) {
+            console.log('Limpando cache antigo:', k);
+            return caches.delete(k); // Apaga caches antigos (v8, v7...)
+        }
+      })
     ))
   );
 });
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+  
+  // Estratégia: Network First (Tenta pegar do servidor; se falhar, pega do cache)
+  // Isso garante que você veja as alterações mais rápido durante o desenvolvimento
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request)) 
+    fetch(event.request)
+      .then(networkResponse => {
+        return caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, networkResponse.clone());
+          return networkResponse;
+        });
+      })
+      .catch(() => caches.match(event.request)) // Se estiver offline, usa o cache
   );
 });
