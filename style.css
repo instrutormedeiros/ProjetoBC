@@ -1030,3 +1030,79 @@ details[open] summary ~ * {
         min-height: 250px; /* Evita pulo de layout */
     }
 }
+
+/* ==========================================================================
+   CORREÇÕES CRÍTICAS (ADD-ON) - ERROS 3 e 4
+   ========================================================================== */
+
+/* CORREÇÃO ERRO 4: Animação do Botão Próximo */
+@keyframes blink-animation {
+    0% { 
+        opacity: 1; 
+        transform: scale(1); 
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); /* Verde suave */
+    }
+    50% { 
+        opacity: 1; 
+        transform: scale(1.03); 
+        box-shadow: 0 0 20px 0 rgba(34, 197, 94, 0.4); 
+    }
+    100% { 
+        opacity: 1; 
+        transform: scale(1); 
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); 
+    }
+}
+
+.blinking-button {
+    animation: blink-animation 1.5s infinite ease-in-out !important;
+    border: 2px solid #22c55e !important; /* Borda verde para destaque */
+    background-color: #15803d !important; /* Fundo verde escuro */
+    color: #ffffff !important;
+    font-weight: bold !important;
+    transition: all 0.3s ease;
+}
+
+/* CORREÇÃO ERRO 3: Toast/Notificação travando na tela */
+/* Garante que o container não bloqueie cliques quando invisível */
+#toast-container {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 99999; /* Acima de qualquer modal */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none; /* CRÍTICO: Permite clicar 'através' da área vazia */
+}
+
+.toast {
+    background-color: #1f2937; /* Cinza escuro moderno */
+    color: #f3f4f6;
+    padding: 12px 24px;
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    border-left: 4px solid #22c55e; /* Faixa verde indicando sucesso */
+    
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    
+    pointer-events: auto; /* A notificação em si pode receber cliques/toque */
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    min-width: 300px;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* CORREÇÃO EXTRA: Rolagem Suave Global */
+html {
+    scroll-behavior: smooth;
+}
