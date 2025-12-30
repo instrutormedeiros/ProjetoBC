@@ -1863,9 +1863,11 @@ function updateAdminStats(stats) {
                     let showIt = true;
 
                     if (!isManager) {
-                        if (userType === 'BC' && isSpContent) showIt = false; 
-                        if (userType === 'SP' && !isSpContent) showIt = false; 
-                    }
+  // Aluno só vê módulos compatíveis com a categoria
+  if (cat.isSP && !isSpContent) showIt = false;
+  if (!cat.isSP && isSpContent) showIt = false;
+}
+
 
                     if (showIt) {
                         catTotal++;
@@ -3066,6 +3068,52 @@ window.clearLocalUserData = function() {
 
     console.log("🧹 Dados locais limpos com sucesso.");
 };
+    // =====================================================
+// FIX: ABERTURA / FECHAMENTO PAINEL ADMINISTRATIVO
+// =====================================================
+document.addEventListener('DOMContentLoaded', () => {
+
+  const adminBtn = document.getElementById('admin-panel-btn');
+  const adminBtnMobile = document.getElementById('mobile-admin-btn');
+  const adminModal = document.getElementById('admin-modal');
+  const adminOverlay = document.getElementById('admin-modal-overlay');
+  const closeAdmin = document.getElementById('close-admin-modal');
+
+  if (adminBtn && adminModal && adminOverlay) {
+    adminBtn.onclick = () => {
+      adminModal.classList.remove('hidden');
+      adminOverlay.classList.remove('hidden');
+    };
+  }
+
+  if (adminBtnMobile && adminModal && adminOverlay) {
+    adminBtnMobile.onclick = () => {
+      adminModal.classList.remove('hidden');
+      adminOverlay.classList.remove('hidden');
+    };
+  }
+
+  if (closeAdmin && adminModal && adminOverlay) {
+    closeAdmin.onclick = () => {
+      adminModal.classList.add('hidden');
+      adminOverlay.classList.add('hidden');
+    };
+  }
+
+  // =====================================================
+  // FIX: ABERTURA / FECHAMENTO PAINEL GESTOR
+  // =====================================================
+  const managerModal = document.getElementById('manager-modal');
+  const closeManager = document.getElementById('close-manager-modal');
+
+  if (closeManager && managerModal) {
+    closeManager.onclick = () => {
+      managerModal.classList.add('hidden');
+    };
+  }
+
+});
+
     
     init(); // <--- Inicia o app
 }); // <--- Fecha o DOMContentLoaded
