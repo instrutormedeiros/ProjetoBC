@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Curso de Formação | Bombeiro Civil e Brigadista</title>
     
+    <!-- SCRIPT NUCLEAR PARA LIMPAR CACHE ANTIGO -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    // Desregistra SWs antigos para forçar atualização
+                    registration.unregister();
+                }
+            });
+            // Força recarregamento se detectar versão antiga (opcional, removido para não criar loop infinito, mas o unregister acima resolve)
+        }
+    </script>
+
     <!-- PWA e Meta Tags -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#0b1220">
@@ -34,7 +47,7 @@
       }
     </script>
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=forceupdate1"> <!-- Versão na URL para quebrar cache -->
     
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -48,22 +61,24 @@
 
     <!-- ESTILOS ESPECÍFICOS DO CARROSSEL -->
     <style>
-        /* Container Geral */
+        /* Força o comportamento de rolagem */
         html, body {
             overflow-x: hidden; 
             scroll-behavior: smooth;
+            height: auto !important; /* Garante que o corpo possa crescer */
+            overflow-y: auto !important; /* Garante rolagem */
         }
 
-        /* Container do Carrossel - GARANTIA DE POSIÇÃO */
+        /* Container do Carrossel */
         #intro-carousel-wrapper {
-            position: relative; /* Mantém no fluxo normal */
+            position: relative !important; /* Importante para não ser coberto */
             width: 100%;
-            height: 100vh; /* Ocupa 100% da altura da tela */
+            height: 100vh; 
             overflow: hidden; 
             background-color: #050505;
             cursor: pointer;
-            z-index: 50; /* Garante visibilidade */
-            display: block; /* Garante que é renderizado como bloco */
+            z-index: 50;
+            display: block;
         }
 
         /* --- CSS DO CARROSSEL --- */
@@ -267,12 +282,11 @@
     <!-- 
     ================================================================
     PARTE 2: CAPA ANTIGA (AGORA ABAIXO DO CARROSSEL)
-    CORREÇÃO FEITA: Removido 'fixed inset-0 z-[10000]'
-    Alterado para 'relative w-full min-h-screen z-40'
-    Isso garante que ela fique DEPOIS do carrossel, e não em cima dele.
+    IMPORTANTE: Adicionei 'style="position: relative !important; z-index: 40 !important;"'
+    Isso força ela a sair da frente do carrossel, mesmo que o cache tente segurar.
     ================================================================ 
     -->
-    <div id="landing-hero" class="relative w-full min-h-screen bg-[#050a14] overflow-visible custom-scrollbar transition-all duration-1000 ease-in-out font-sans z-40">
+    <div id="landing-hero" style="position: relative !important; z-index: 40 !important; top: auto !important; bottom: auto !important; left: auto !important; right: auto !important; inset: auto !important;" class="w-full min-h-screen bg-[#050a14] overflow-visible custom-scrollbar transition-all duration-1000 ease-in-out font-sans">
         
         <nav class="fixed top-0 left-0 w-full z-50 py-3 px-4 md:py-4 md:px-12 flex justify-between items-center bg-gradient-to-b from-black/90 to-transparent backdrop-blur-sm">
             <div class="flex items-center gap-3 md:gap-4">
@@ -1100,6 +1114,9 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             
+            // Força a rolagem para o topo ao carregar a página
+            window.scrollTo(0, 0);
+
             // --- LÓGICA DE ROLAGEM SUAVE AO CLICAR ---
             const introWrapper = document.getElementById('intro-carousel-wrapper');
             const landingHero = document.getElementById('landing-hero');
