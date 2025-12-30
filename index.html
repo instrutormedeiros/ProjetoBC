@@ -1280,32 +1280,44 @@
             }
         });
 
-        // =========================================================================
-        // SCRIPT DE SEGURANÇA PARA ABERTURA DO LOGIN
-        // =========================================================================
-        // Este script roda independente do app_final.js para garantir que o painel abra
-        // e não recarregue a página caso o JS externo falhe ou demore.
-        // AVISO: A função principal foi movida para o HEAD para evitar problemas de carregamento tardio.
-        // Este bloco permanece para outras inicializações se necessário.
-    </script>
-                <style>
-  #name-modal-overlay {
-    position: fixed !important;
-    inset: 0 !important;
-    background: rgba(0,0,0,0.8) !important;
-    z-index: 9999998 !important;
-    display: none;
-  }
+      <div id="name-modal-overlay" onclick="window.closeLocalLogin()" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm transition-opacity duration-300" style="z-index: 2147483640; display: none;"></div>
 
-  #name-prompt-modal {
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    z-index: 9999999 !important;
-    display: none;
-  }
-</style>
+    <div id="name-prompt-modal" class="hidden fixed flex-col w-11/12 max-w-lg mx-auto overflow-hidden rounded-2xl shadow-2xl" style="z-index: 2147483647; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; background: #0f172a; border: 1px solid #334155;">
+        
+        <div class="relative bg-gradient-to-b from-orange-600 to-gray-900 p-5 text-center flex-shrink-0">
+            <button type="button" onclick="window.closeLocalLogin()" class="absolute top-4 right-4 text-white hover:text-orange-200 text-xl z-50 cursor-pointer">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="relative z-10 flex flex-col items-center">
+                <div class="inline-block p-3 bg-black/40 rounded-full border-2 border-orange-500/50 mb-2 shadow-[0_0_20px_rgba(249,115,22,0.5)]">
+                    <i class="fas fa-user-shield text-3xl text-orange-500"></i>
+                </div>
+                <h2 id="auth-title" class="text-2xl font-serif font-bold text-white tracking-wide drop-shadow-lg leading-tight">
+                    Acesso ao Sistema
+                </h2>
+            </div>
+        </div>
 
+        <div class="p-6 bg-gray-900 overflow-y-auto max-h-[70vh] custom-scrollbar">
+            <div class="space-y-4 text-left">
+                <div id="name-field-container" class="transition-all duration-300">
+                    <label class="text-sm font-bold text-orange-500 ml-1 uppercase tracking-wider">Nome Completo</label>
+                    <div class="relative mt-1">
+                        <i class="fas fa-user absolute left-4 top-3.5 text-gray-400 text-lg"></i>
+                        <input type="text" id="name-input" class="w-full pl-12 p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 text-white outline-none" placeholder="Seu nome completo">
+                    </div>
+                </div>
+            </div>
+            
+            <p id="auth-feedback" class="text-center text-sm mt-4 text-orange-400 min-h-[24px] font-semibold"></p>
+            
+            <div id="login-button-group" class="w-full mt-5 space-y-3">
+                <button id="login-button" class="w-full py-3.5 px-6 bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 hover:scale-[1.02] text-white font-bold text-base rounded-xl shadow-lg transition-all uppercase tracking-wide cursor-pointer">
+                    ACESSAR PLATAFORMA <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
