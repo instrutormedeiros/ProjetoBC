@@ -298,37 +298,70 @@ setTimeout(() => {
         setupRippleEffects();
     }
 
+    // === SUBSTITUA A FUNÇÃO onLoginSuccess INTEIRA POR ESTA ===
     function onLoginSuccess(user, userData) {
-        // Remove capa, carrossel e libera scroll
+        console.log("🚀 LOGIN CONFIRMADO: Iniciando desbloqueio da tela...");
+
+        // 1. FORÇA BRUTA: Destruir visualmente os modais de login
+        const loginModal = document.getElementById('name-prompt-modal');
+        const loginOverlay = document.getElementById('name-modal-overlay');
+        const expiredModal = document.getElementById('expired-modal');
+
+        // Remove classes E força o display none (sobreescreve o index.html)
+        if (loginModal) {
+            loginModal.classList.remove('show');
+            loginModal.classList.add('hidden');
+            loginModal.style.display = 'none'; // <--- O SEGREDO ESTÁ AQUI
+        }
+        if (loginOverlay) {
+            loginOverlay.classList.remove('show');
+            loginOverlay.classList.add('hidden');
+            loginOverlay.style.display = 'none'; // <--- E AQUI
+        }
+        if (expiredModal) {
+            expiredModal.classList.remove('show');
+            expiredModal.style.display = 'none';
+        }
+
+        // 2. FORÇA BRUTA: Sumir com a Capa e o Carrossel
         const landing = document.getElementById('landing-hero');
-        const carousel = document.getElementById('intro-carousel-wrapper'); // CORREÇÃO: Pega o carrossel
+        const carousel = document.getElementById('intro-carousel-wrapper');
 
-        if (landing) landing.classList.add('hidden'); 
-        if (carousel) carousel.style.display = 'none'; // CORREÇÃO: Esconde o carrossel
+        if (landing) {
+            landing.classList.add('hidden');
+            landing.style.display = 'none'; // Garante que suma
+        }
+        
+        if (carousel) {
+            carousel.classList.add('hidden'); // Adiciona classe auxiliar se tiver
+            carousel.style.display = 'none';  // Força o desaparecimento
+        }
 
-        document.body.classList.remove('landing-active'); 
+        // 3. Destravar o Scroll do Corpo do Site
+        document.body.classList.remove('landing-active');
+        document.body.style.overflow = 'auto'; 
+        document.body.style.overflowX = 'hidden';
 
+        // 4. Carregar dados do usuário
         if (userData && user) {
             currentUserData = { ...userData, uid: user.uid };
         } else {
             currentUserData = userData;
         }
 
+        // Evita re-executar lógica se já estiver pronto
         if (document.body.getAttribute('data-app-ready') === 'true') return;
-        
-        document.getElementById('name-prompt-modal')?.classList.remove('show');
-        document.getElementById('name-modal-overlay')?.classList.remove('show');
-        document.getElementById('expired-modal')?.classList.remove('show');
-        
+
+        // Atualiza saudação e marca d'água
         const greetingEl = document.getElementById('welcome-greeting');
-        if(greetingEl) greetingEl.textContent = `Olá, ${userData.name.split(' ')[0]}!`;
+        if(greetingEl && userData.name) greetingEl.textContent = `Olá, ${userData.name.split(' ')[0]}!`;
         
         const printWatermark = document.getElementById('print-watermark');
         if (printWatermark) {
             printWatermark.textContent = `Licenciado para ${userData.name} (CPF: ${userData.cpf || '...'}) - Proibida a Cópia`;
         }
 
-        // Admin e Gestor Buttons
+        // Libera botões de Admin/Gestor
         const adminBtn = document.getElementById('admin-panel-btn');
         const mobileAdminBtn = document.getElementById('mobile-admin-btn');
         const managerFab = document.getElementById("manager-fab");
@@ -341,51 +374,37 @@ setTimeout(() => {
             if (managerFab) managerFab.classList.remove("hidden");
         }
 
+        // Verifica validade do plano
         checkTrialStatus(userData.acesso_ate);
 
-        // --- PROGRESSO SINCRONIZADO (CORRIGIDO) ---
-        // Se o usuário tem dados na nuvem, usa a nuvem (Prioridade Máxima)
+        // 5. Sincronia de Progresso (Nuvem vs Local)
         if (userData.completedModules && Array.isArray(userData.completedModules)) {
             completedModules = userData.completedModules;
-            // Atualiza o localStorage para ficar igual à nuvem
             localStorage.setItem('gateBombeiroCompletedModules_v3', JSON.stringify(completedModules));
-            console.log("Progresso sincronizado da nuvem:", completedModules.length);
-        } 
-        // Se a nuvem está vazia, mas temos dados locais E parece ser o mesmo usuário (sessão), envia.
-        // Se for um login fresco sem sessão anterior, ignoramos o local para evitar contaminação.
-        else if (completedModules.length > 0 && localStorage.getItem('my_session_id') === userData.current_session_id) {
-            console.log("Sincronizando progresso local para a nuvem...");
+        } else if (completedModules.length > 0 && localStorage.getItem('my_session_id') === userData.current_session_id) {
             saveProgressToCloud();
-        } 
-        else {
-            // Se não tem na nuvem e não é sessão contínua, assume zero.
+        } else {
             completedModules = [];
-            localStorage.removeItem('gateBombeiroCompletedModules_v3');
         }
 
-        // --- CORREÇÃO DA CONTAGEM DE MÓDULOS (62 vs 4) ---
-        // Aqui recalculamos o totalModules baseado APENAS no que o aluno pode ver
+        // 6. Recalcula Módulos Visíveis (BC vs SP)
         let count = 0;
         const userCourse = userData.courseType || 'BC';
         const isAdm = userData.isAdmin || userData.courseType === 'GESTOR';
 
         Object.keys(window.moduleContent || {}).forEach(modId => {
             const isSp = modId.startsWith('sp_');
-            
             if (isAdm) {
-                count++; // Admin vê tudo (66)
+                count++;
             } else {
-                // Aluno BC: conta se NÃO for SP
                 if (userCourse === 'BC' && !isSp) count++;
-                // Aluno SP: conta se FOR SP
                 else if (userCourse === 'SP' && isSp) count++;
             }
         });
         
-        totalModules = count; // Atualiza a variável global
-        // --------------------------------------------------
+        totalModules = count;
 
-        // Atualiza a interface com o número correto
+        // Atualiza Interface
         const totalEl = document.getElementById('total-modules');
         const courseCountEl = document.getElementById('course-modules-count');
         if(totalEl) totalEl.textContent = totalModules;
@@ -397,16 +416,15 @@ setTimeout(() => {
         handleInitialLoad();
         startOnboardingTour(false); 
 
+        // Redirecionamento automático para gestor (se aplicável)
         if (localStorage.getItem("open_manager_after_login") === "true") {
             localStorage.removeItem("open_manager_after_login");
             setTimeout(() => {
                 if (window.fbDB && typeof openManagerPanel === "function") openManagerPanel();
             }, 2000);
         }
-    // --- TRAVA DE SEGURANÇA (ADICIONE ISTO AQUI) ---
-        // Isso impede que os botões sejam duplicados quando o banco atualiza
-        document.body.setAttribute('data-app-ready', 'true');
 
+        document.body.setAttribute('data-app-ready', 'true');
     }
     
 // --- FUNÇÕES ADMIN (ATUALIZADAS E LEGÍVEIS) ---
