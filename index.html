@@ -2,15 +2,22 @@
 <html lang="pt-BR" class="">
 <head>
     <meta charset="UTF-8">
+    <!-- Meta Tags para FORÇAR o navegador a não usar cache -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Curso de Formação | Bombeiro Civil e Brigadista</title>
     
-    <!-- SCRIPT NUCLEAR PARA LIMPAR CACHE ANTIGO -->
+    <!-- SCRIPT NUCLEAR PARA LIMPAR CACHE ANTIGO (Versão Reforçada) -->
     <script>
+        // Força recarregamento se detectar cache antigo de Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
                 for(let registration of registrations) {
                     registration.unregister();
+                    console.log('Service Worker desregistrado para forçar atualização.');
                 }
             });
         }
@@ -45,7 +52,8 @@
       }
     </script>
 
-    <link rel="stylesheet" href="style.css?v=forceupdate4">
+    <!-- CACHE BUSTER: Versão adicionada em TUDO -->
+    <link rel="stylesheet" href="style.css?v=GH_FIX_FINAL_01">
     
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
