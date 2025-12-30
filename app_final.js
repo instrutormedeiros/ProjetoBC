@@ -298,183 +298,131 @@ setTimeout(() => {
         setupRippleEffects();
     }
 
-    // === FUNÇÃO onLoginSuccess (VERSÃO FINAL V13 - LIGAÇÃO TOTAL) ===
+    // === SUBSTITUA A FUNÇÃO onLoginSuccess POR ESTA ===
     function onLoginSuccess(user, userData) {
-        console.log("🚀 LOGIN CONFIRMADO: Ativando TODOS os controles...");
+        console.log("🚀 LOGIN SUCESSO: Iniciando sistema...");
 
-        // 1. LIMPEZA VISUAL (Esconde Login/Capa/Carrossel)
-        const elementsToHide = [
-            'name-prompt-modal', 'name-modal-overlay', 'expired-modal',
-            'landing-hero', 'intro-carousel-wrapper'
-        ];
-        
-        elementsToHide.forEach(id => {
+        // 1. Limpeza Visual (Esconde Capa e Login)
+        ['name-prompt-modal', 'name-modal-overlay', 'expired-modal', 'landing-hero', 'intro-carousel-wrapper'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) {
-                el.classList.remove('show');
-                el.classList.add('hidden');
-                el.style.display = 'none'; // Força bruta para sumir
-            }
+            if (el) { el.classList.remove('show'); el.classList.add('hidden'); el.style.display = 'none'; }
         });
 
-        // 2. REVELAR O SITE (Painel Principal)
+        // 2. Revelar o Site
         const mainWrapper = document.getElementById('main-wrapper');
         if (mainWrapper) {
             mainWrapper.classList.remove('hidden');
-            mainWrapper.style.display = 'block'; 
-            setTimeout(() => mainWrapper.style.opacity = '1', 50);
+            mainWrapper.style.display = 'block';
+            setTimeout(() => mainWrapper.style.opacity = '1', 100);
         }
 
-        // 3. DESTRAVAR SCROLL
+        // 3. Destravar Rolagem
         document.body.classList.remove('landing-active');
         document.body.style.overflow = 'auto';
-        document.body.style.overflowX = 'hidden';
 
-        // 4. CARREGAR DADOS DO USUÁRIO
-        if (userData && user) {
-            currentUserData = { ...userData, uid: user.uid };
-        } else {
-            currentUserData = userData;
-        }
-
-        // Atualiza Saudação e Marca D'água
-        const greetingEl = document.getElementById('welcome-greeting');
-        if(greetingEl && userData.name) greetingEl.textContent = `Olá, ${userData.name.split(' ')[0]}!`;
+        // 4. Salvar Dados
+        currentUserData = user ? { ...userData, uid: user.uid } : userData;
         
-        const printWatermark = document.getElementById('print-watermark');
-        if (printWatermark) printWatermark.textContent = `Licenciado para ${userData.name} (CPF: ${userData.cpf || '...'}) - Proibida a Cópia`;
-
-        // ===============================================================
-        // 5. LIGAÇÃO DIRETA DOS BOTÕES (CORREÇÃO DE GESTOR, ADMIN E RESET)
-        // ===============================================================
+        // Atualiza Textos
+        const greeting = document.getElementById('welcome-greeting');
+        if(greeting && userData.name) greeting.textContent = `Olá, ${userData.name.split(' ')[0]}!`;
         
-        // A) Botão ASSINAR (Já funcionava, mantido)
-        const openPay = () => {
-            const m = document.getElementById('expired-modal');
-            const o = document.getElementById('name-modal-overlay');
-            if(m) { m.classList.remove('hidden'); m.classList.add('show'); m.style.display = 'flex'; }
-            if(o) { o.classList.remove('hidden'); o.classList.add('show'); o.style.display = 'block'; o.style.zIndex = '20000'; }
+        // ===============================================
+        // 5. ATIVAÇÃO DOS BOTÕES (CORREÇÃO DE CLICK)
+        // ===============================================
+        
+        // Função segura para abrir painéis
+        const safeOpen = (fnName) => {
+            if (typeof window[fnName] === 'function') {
+                window[fnName]();
+            } else {
+                console.warn(`Função ${fnName} ainda não carregada.`);
+                alert("O painel está carregando. Tente novamente em alguns segundos.");
+            }
         };
-        document.querySelectorAll('#header-subscribe-btn, #mobile-subscribe-btn').forEach(btn => {
-            btn.onclick = openPay;
-            btn.style.pointerEvents = 'auto';
-        });
 
-        // --- COPIE E COLE ISTO DENTRO DE onLoginSuccess (SUBSTITUINDO OS ITENS B e C) ---
-
-        // B) Botão GESTOR (FAB Flutuante) - CORREÇÃO DE FORÇA
+        // A) Botão GESTOR (FAB)
         const mgrFab = document.getElementById('manager-fab');
-        // Verificação flexível (aceita true, "true" ou 1)
         if (userData.isManager || userData.isAdmin) {
             if (mgrFab) {
                 mgrFab.classList.remove("hidden");
-                mgrFab.style.display = 'flex'; 
-                mgrFab.style.zIndex = '999999';
-                
-                const fabBtn = mgrFab.querySelector('button');
-                if(fabBtn) {
-                    // Remove qualquer clone anterior para garantir limpeza
-                    const newFab = fabBtn.cloneNode(true);
-                    fabBtn.parentNode.replaceChild(newFab, fabBtn);
-                    
-                    newFab.onclick = function(e) {
+                mgrFab.style.display = 'flex';
+                // Clone para remover listeners antigos e adicionar o novo limpo
+                const btn = mgrFab.querySelector('button');
+                if(btn) {
+                    const newBtn = btn.cloneNode(true);
+                    btn.parentNode.replaceChild(newBtn, btn);
+                    newBtn.addEventListener('click', (e) => {
                         e.preventDefault();
-                        e.stopPropagation();
-                        console.log("🔘 Botão Gestor Clicado!");
-                        if(typeof window.openManagerPanel === 'function') {
-                            window.openManagerPanel();
-                        } else {
-                            alert("Painel carregando... Tente novamente em alguns segundos.");
-                        }
-                    };
+                        safeOpen('openManagerPanel');
+                    });
                 }
             }
         }
 
-        // C) Botão ADMIN (Cabeçalho e Mobile) - CORREÇÃO DE FORÇA
+        // B) Botão ADMIN (Header e Mobile)
         if (userData.isAdmin) {
-            const adminBtn = document.getElementById('admin-panel-btn');
-            const mobileAdminBtn = document.getElementById('mobile-admin-btn');
-            
-            // Função única para abrir
-            const forceOpenAdmin = (e) => { 
-                e.preventDefault(); 
-                e.stopPropagation();
-                if(typeof window.openAdminPanel === 'function') window.openAdminPanel(); 
+            const setupAdminBtn = (id) => {
+                const btn = document.getElementById(id);
+                if(btn) {
+                    btn.classList.remove('hidden');
+                    // Garante que o clique funcione
+                    btn.onclick = (e) => { e.preventDefault(); safeOpen('openAdminPanel'); };
+                }
             };
-
-            if (adminBtn) {
-                adminBtn.classList.remove('hidden');
-                adminBtn.onclick = forceOpenAdmin;
-            }
-            if (mobileAdminBtn) {
-                mobileAdminBtn.classList.remove('hidden');
-                mobileAdminBtn.onclick = forceOpenAdmin;
-            }
+            setupAdminBtn('admin-panel-btn');
+            setupAdminBtn('mobile-admin-btn');
         }
 
-        // D) Botão RESETAR (Rodapé) - CORRIGIDO
+        // C) Botão RESETAR
         const resetBtn = document.getElementById('reset-progress');
-        if (resetBtn) {
-            resetBtn.onclick = function(e) {
+        if(resetBtn) {
+            resetBtn.onclick = (e) => {
                 e.preventDefault();
-                const m = document.getElementById('reset-modal');
-                const o = document.getElementById('reset-modal-overlay');
-                if(m) { m.classList.remove('hidden'); m.classList.add('show'); m.style.display = 'block'; m.style.zIndex = '30000'; }
-                if(o) { o.classList.remove('hidden'); o.classList.add('show'); o.style.display = 'block'; o.style.zIndex = '29999'; }
+                document.getElementById('reset-modal')?.classList.add('show');
+                document.getElementById('reset-modal-overlay')?.classList.add('show');
             };
         }
+        
+        // D) Botão ASSINAR
+        const openPay = () => {
+             document.getElementById('expired-modal')?.classList.add('show');
+             document.getElementById('name-modal-overlay')?.classList.add('show');
+        };
+        document.querySelectorAll('#header-subscribe-btn, #mobile-subscribe-btn').forEach(b => b.onclick = openPay);
 
-        // ===============================================================
+        // ===============================================
 
         checkTrialStatus(userData.acesso_ate);
 
-        // Sincronia de Progresso
+        // Lógica de Progresso e Módulos
         if (userData.completedModules && Array.isArray(userData.completedModules)) {
             completedModules = userData.completedModules;
             localStorage.setItem('gateBombeiroCompletedModules_v3', JSON.stringify(completedModules));
-        } else if (completedModules.length > 0 && localStorage.getItem('my_session_id') === userData.current_session_id) {
-            saveProgressToCloud();
         } else {
             completedModules = [];
         }
 
-        // Contagem de Módulos (Filtragem BC/SP)
+        // Recalcula Total de Módulos
         let count = 0;
         const userCourse = userData.courseType || 'BC';
         const isAdm = userData.isAdmin || userData.courseType === 'GESTOR';
-
         Object.keys(window.moduleContent || {}).forEach(modId => {
             const isSp = modId.startsWith('sp_');
             if (isAdm) count++;
-            else {
-                if (userCourse === 'BC' && !isSp) count++;
-                else if (userCourse === 'SP' && isSp) count++;
-            }
+            else if ((userCourse === 'BC' && !isSp) || (userCourse === 'SP' && isSp)) count++;
         });
-        
         totalModules = count;
-
-        const totalEl = document.getElementById('total-modules');
-        const courseCountEl = document.getElementById('course-modules-count');
-        if(totalEl) totalEl.textContent = totalModules;
-        if(courseCountEl) courseCountEl.textContent = totalModules;
         
-        // RECARREGA OS EVENTOS GERAIS (Para garantir que todo o resto funcione)
+        const totalEl = document.getElementById('total-modules');
+        if(totalEl) totalEl.textContent = totalModules;
+
+        // Inicia Interface
         populateModuleLists();
         updateProgress();
-        addEventListeners(); 
+        addEventListeners(); // Chama os ouvintes corrigidos
         handleInitialLoad();
-        startOnboardingTour(false);
-
-        // Redirecionamento automático pós-login (Gestor)
-        if (localStorage.getItem("open_manager_after_login") === "true") {
-            localStorage.removeItem("open_manager_after_login");
-            setTimeout(() => {
-                if (window.fbDB && typeof window.openManagerPanel === "function") window.openManagerPanel();
-            }, 1500);
-        }
-
+        
         document.body.setAttribute('data-app-ready', 'true');
     }
     
@@ -2131,217 +2079,110 @@ function updateAdminStats(stats) {
         });
     }
 
+// === 1. SUBSTITUA A FUNÇÃO addEventListeners INTEIRA POR ESTA ===
     function addEventListeners() {
-        // 1. Botões de Navegação (CORRIGIDO PARA SUPORTAR SP E BC)
+        // 1. Botões de Navegação (Anterior/Próximo)
         const nextButton = document.getElementById('next-module');
         const prevButton = document.getElementById('prev-module');
 
-        prevButton?.addEventListener('click', () => {
-            if (!currentModuleId) return;
-            
-            // Detecta prefixo correto (module ou sp_module)
-            let prefix = 'module';
-            let n = 0;
-
-            if (currentModuleId.startsWith('sp_module')) {
-                prefix = 'sp_module';
-                n = parseInt(currentModuleId.replace('sp_module', ''));
-            } else {
-                n = parseInt(currentModuleId.replace('module', ''));
-            }
-
-            if(n > 1) {
-                loadModuleContent(`${prefix}${n-1}`);
-            }
-            nextButton?.classList.remove('blinking-button');
-        });
-
-        nextButton?.addEventListener('click', () => {
-            if (!currentModuleId) return;
-            
-            // Detecta prefixo correto
-            let prefix = 'module';
-            let n = 0;
-
-            if (currentModuleId.startsWith('sp_module')) {
-                prefix = 'sp_module';
-                n = parseInt(currentModuleId.replace('sp_module', ''));
-            } else {
-                n = parseInt(currentModuleId.replace('module', ''));
-            }
-
-            // Usa totalModules (que já é filtrado por curso no login)
-            if(n < totalModules) {
-                loadModuleContent(`${prefix}${n+1}`);
-            }
-            nextButton?.classList.remove('blinking-button');
-        });
-const managerPanelBtn = document.getElementById("manager-panel-btn");
-if (managerPanelBtn) {
-    managerPanelBtn.addEventListener("click", () => {
-        console.log("🔓 Botão de gestor clicado!");
-        openManagerPanel();
-    });
-}
-
-// --- NOVO: Botão Manual de Salvar Progresso (Rodapé) ---
-document.getElementById('manual-sync-btn')?.addEventListener('click', async () => {
-    const btn = document.getElementById('manual-sync-btn');
-    const originalText = btn.innerHTML;
-    
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Salvando...';
-    btn.disabled = true;
-
-    try {
-        await window.saveProgressToCloud(); // Chama a função blindada que já criamos
-        alert("✅ Sucesso!\nSeu progresso foi salvo na nuvem.");
-    } catch (error) {
-        alert("❌ Erro ao salvar: " + error.message);
-    } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    }
-});
-            // --- ADICIONE ISTO NO FINAL DA FUNÇÃO addEventListeners ---
-        
-        // Botão manual do Tour (Garante que funcione mesmo clicando várias vezes)
-        const tourBtn = document.getElementById('restart-tour-btn');
-        if (tourBtn) {
-            // Removemos clone para limpar ouvintes antigos e adicionamos o novo
-            const newTourBtn = tourBtn.cloneNode(true);
-            tourBtn.parentNode.replaceChild(newTourBtn, tourBtn);
-            
-            newTourBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                console.log("Iniciando tour manual..."); 
-                startOnboardingTour(true);
+        if(prevButton) {
+            const newPrev = prevButton.cloneNode(true);
+            prevButton.parentNode.replaceChild(newPrev, prevButton);
+            newPrev.addEventListener('click', () => {
+                if (!currentModuleId) return;
+                let n = parseInt(currentModuleId.replace(/\D/g, ''));
+                let prefix = currentModuleId.includes('sp_') ? 'sp_module' : 'module';
+                if(n > 1) loadModuleContent(`${prefix}${n-1}`);
             });
         }
-        
 
-        // 2. Busca
+        if(nextButton) {
+            const newNext = nextButton.cloneNode(true);
+            nextButton.parentNode.replaceChild(newNext, nextButton);
+            newNext.addEventListener('click', () => {
+                if (!currentModuleId) return;
+                let n = parseInt(currentModuleId.replace(/\D/g, ''));
+                let prefix = currentModuleId.includes('sp_') ? 'sp_module' : 'module';
+                if(n < totalModules) loadModuleContent(`${prefix}${n+1}`);
+            });
+        }
+
+        // 2. Busca Inteligente
         document.body.addEventListener('input', e => {
             if(e.target.matches('.module-search')) {
                 const s = e.target.value.toLowerCase();
-                const container = e.target.closest('div.relative');
+                const container = e.target.closest('div.relative')?.nextElementSibling;
                 if (container) {
-                    const accordionContainer = container.nextElementSibling;
-                    if (accordionContainer) {
-                            accordionContainer.querySelectorAll('.module-list-item').forEach(i => {
-                            const text = i.textContent.toLowerCase();
-                            const match = text.includes(s);
-                            i.style.display = match ? 'flex' : 'none';
-                            if(match && s.length > 0) {
-                                const panel = i.closest('.accordion-panel');
-                                const btn = panel.previousElementSibling;
-                                if(!btn.classList.contains('active')) {
-                                    btn.classList.add('active');
-                                    panel.style.maxHeight = panel.scrollHeight + "px";
-                                }
+                    container.querySelectorAll('.module-list-item').forEach(i => {
+                        const match = i.textContent.toLowerCase().includes(s);
+                        i.style.display = match ? 'flex' : 'none';
+                        if(match && s.length > 0) {
+                            const panel = i.closest('.accordion-panel');
+                            const btn = panel?.previousElementSibling;
+                            if(btn && !btn.classList.contains('active')) {
+                                btn.classList.add('active');
+                                panel.style.maxHeight = panel.scrollHeight + "px";
                             }
-                        });
-                        if(s.length === 0) {
-                            accordionContainer.querySelectorAll('.accordion-button').forEach(btn => {
-                                btn.classList.remove('active');
-                                btn.nextElementSibling.style.maxHeight = null;
-                            });
                         }
-                    }
+                    });
                 }
             }
         });
 
-        // 3. Admin Panel (Correção Mobile)
-        adminBtn?.addEventListener('click', window.openAdminPanel);
-        mobileAdminBtn?.addEventListener('click', window.openAdminPanel);
+        // 3. DETECTOR UNIVERSAL DE CLIQUES (CORREÇÃO DOS MÓDULOS)
+        document.body.addEventListener('click', e => {
+            // A) Clique no Módulo (Funciona em Mobile e Desktop)
+            const moduleItem = e.target.closest('.module-list-item');
+            if (moduleItem) {
+                e.preventDefault();
+                const modId = moduleItem.dataset.module;
+                console.log("📂 Abrindo módulo:", modId);
+                loadModuleContent(modId);
+                closeSidebar(); // Fecha menu mobile
+            }
 
-        closeAdminBtn?.addEventListener('click', () => {
-            adminModal.classList.remove('show');
-            adminOverlay.classList.remove('show');
-        });
-        adminOverlay?.addEventListener('click', () => {
-            adminModal.classList.remove('show');
-            adminOverlay.classList.remove('show');
-        });
-
-        // 4. Reset com Limpeza de Nuvem
-        document.getElementById('reset-progress')?.addEventListener('click', () => { 
-            document.getElementById('reset-modal')?.classList.add('show'); 
-            document.getElementById('reset-modal-overlay')?.classList.add('show'); 
-        });
-        
-        document.getElementById('cancel-reset-button')?.addEventListener('click', () => { 
-            document.getElementById('reset-modal')?.classList.remove('show'); 
-            document.getElementById('reset-modal-overlay')?.classList.remove('show'); 
-        });
-        
-        document.getElementById('confirm-reset-button')?.addEventListener('click', async () => {
-            const btn = document.getElementById('confirm-reset-button');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'Resetando...';
-            btn.disabled = true;
-
-            try {
-                // 1. Limpa no Banco de Dados (Firestore) se estiver logado
-                if (currentUserData && currentUserData.uid) {
-                    const db = window.__fbDB || window.fbDB;
-                    await db.collection('users').doc(currentUserData.uid).update({
-                        completedModules: [] // Zera no banco
+            // B) Clique no Acordeão (Sanfona)
+            const accordionBtn = e.target.closest('.accordion-button');
+            if (accordionBtn) {
+                const panel = accordionBtn.nextElementSibling;
+                if (!panel) return;
+                const isActive = accordionBtn.classList.contains('active');
+                
+                // Fecha outros (opcional)
+                const container = accordionBtn.closest('.module-accordion-container');
+                if(container) {
+                    container.querySelectorAll('.accordion-button').forEach(btn => {
+                        if(btn !== accordionBtn) {
+                            btn.classList.remove('active');
+                            if(btn.nextElementSibling) btn.nextElementSibling.style.maxHeight = null;
+                        }
                     });
                 }
 
-                // 2. Limpa Local
-                window.clearLocalUserData();
-
-                alert('Progresso resetado com sucesso!');
-                window.location.reload();
-            } catch (error) {
-                console.error(error);
-                alert("Erro ao resetar na nuvem, mas o local foi limpo.");
-                window.location.reload();
-            }
-        });
-        
-        // 5. Back to Top
-        document.getElementById('back-to-top')?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-        window.addEventListener('scroll', () => {
-            const btn = document.getElementById('back-to-top');
-            if(btn) {
-                if (window.scrollY > 300) { btn.style.display = 'flex'; setTimeout(() => { btn.style.opacity = '1'; btn.style.transform = 'translateY(0)'; }, 10); } 
-                else { btn.style.opacity = '0'; btn.style.transform = 'translateY(20px)'; setTimeout(() => btn.style.display = 'none', 300); }
-            }
-        });
-
-        // 6. Cliques
-        document.body.addEventListener('click', e => {
-            const moduleItem = e.target.closest('.module-list-item');
-            if (moduleItem) {
-                loadModuleContent(moduleItem.dataset.module);
-                const nextButton = document.getElementById('next-module');
-                if(nextButton) nextButton.classList.remove('blinking-button');
-            }
-
-            if (e.target.closest('.accordion-button')) {
-                const b = e.target.closest('.accordion-button');
-                const p = b.nextElementSibling;
-                if (!p) return;
-                const isActive = b.classList.contains('active');
-                const allPanels = b.closest('.module-accordion-container, .sidebar, #mobile-module-container').querySelectorAll('.accordion-panel');
-                allPanels.forEach(op => {
-                    if (op !== p && op.previousElementSibling) {
-                            op.style.maxHeight = null;
-                            op.previousElementSibling.classList.remove('active');
-                    }
-                });
                 if (!isActive) {
-                    b.classList.add('active');
-                    p.style.maxHeight = p.scrollHeight + "px";
+                    accordionBtn.classList.add('active');
+                    panel.style.maxHeight = panel.scrollHeight + "px";
                 } else {
-                    b.classList.remove('active');
-                    p.style.maxHeight = null;
+                    accordionBtn.classList.remove('active');
+                    panel.style.maxHeight = null;
                 }
             }
         });
+        
+        // 4. Interface Geral
+        document.getElementById('mobile-menu-button')?.addEventListener('click', openSidebar);
+        document.getElementById('close-sidebar-button')?.addEventListener('click', closeSidebar);
+        sidebarOverlay?.addEventListener('click', closeSidebar);
+        document.getElementById('back-to-top')?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        
+        window.addEventListener('scroll', () => {
+            const btn = document.getElementById('back-to-top');
+            if(btn) {
+                if (window.scrollY > 300) { btn.classList.remove('hidden'); btn.style.display = 'flex'; } 
+                else { btn.classList.add('hidden'); btn.style.display = 'none'; }
+            }
+        });
+    }
 
         document.getElementById('mobile-menu-button')?.addEventListener('click', openSidebar);
         document.getElementById('close-sidebar-button')?.addEventListener('click', closeSidebar);
