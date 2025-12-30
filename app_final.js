@@ -1,4 +1,4 @@
-/* === ARQUIVO app_final.js (VERSÃO FINAL V10.1 - CORREÇÃO TOTAL MODULES) === */
+/* === ARQUIVO app_final.js (VERSÃO FINAL V10.2 - CORREÇÃO LOGIN E CARROSSEL) === */
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -299,9 +299,13 @@ setTimeout(() => {
     }
 
     function onLoginSuccess(user, userData) {
-        // Remove capa e libera scroll
+        // Remove capa, carrossel e libera scroll
         const landing = document.getElementById('landing-hero');
+        const carousel = document.getElementById('intro-carousel-wrapper'); // CORREÇÃO: Pega o carrossel
+
         if (landing) landing.classList.add('hidden'); 
+        if (carousel) carousel.style.display = 'none'; // CORREÇÃO: Esconde o carrossel
+
         document.body.classList.remove('landing-active'); 
 
         if (userData && user) {
@@ -499,7 +503,6 @@ window.openAdminPanel = async function() {
                     <td class="p-3 flex flex-wrap gap-2">
                         <button onclick="editUserData('${uid}', '${u.name}', '${cpf}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1.5 rounded text-xs shadow" title="Editar Dados"><i class="fas fa-pen"></i></button>
                         
-                        <!-- BOTÃO NOVO: ALTERAR CURSO -->
                         <button onclick="changeUserCourse('${uid}', '${cursoCodigo}')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-1.5 rounded text-xs shadow" title="Alterar Curso (BC/SP)"><i class="fas fa-graduation-cap"></i></button>
                         
                         <button onclick="editUserNote('${uid}', '${(u.adminNote || '').replace(/'/g, "\\'")}')" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 px-2 py-1.5 rounded text-xs shadow" title="Nota Admin"><i class="fas fa-sticky-note ${noteIconColor}"></i></button>
@@ -774,6 +777,12 @@ function updateAdminStats(stats) {
                 localStorage.removeItem('my_session_id'); 
                 await FirebaseCourse.signInWithEmail(email, password);
                 feedback.textContent = "Verificando...";
+                
+                // CORREÇÃO: Força a verificação de auth imediatamente após login manual
+                FirebaseCourse.checkAuth((user, userData) => {
+                    onLoginSuccess(user, userData);
+                });
+
             } catch (error) {
                 feedback.className = "text-center text-sm mt-4 text-red-400 font-semibold";
                 feedback.textContent = "Erro ao entrar. Verifique seus dados.";
@@ -800,6 +809,12 @@ function updateAdminStats(stats) {
             try {
                 await FirebaseCourse.signUpWithEmail(name, email, password, cpf, company, phone, courseType);
                 feedback.textContent = "Sucesso! Iniciando...";
+                
+                // CORREÇÃO: Força a verificação de auth imediatamente após cadastro
+                FirebaseCourse.checkAuth((user, userData) => {
+                    onLoginSuccess(user, userData);
+                });
+
             } catch (error) {
                 feedback.className = "text-center text-sm mt-4 text-red-400 font-semibold";
                 feedback.textContent = error.message || "Erro ao criar conta.";
@@ -1366,8 +1381,7 @@ function updateAdminStats(stats) {
         document.getElementById('sim-next-btn').addEventListener('click', () => navigateSimulado(1, moduleData.id));
         document.getElementById('sim-prev-btn').addEventListener('click', () => navigateSimulado(-1, moduleData.id));
     }
-    
-    // --- FUNÇÃO AUXILIAR: EXIBIR QUESTÃO (CORRIGIDA - USO DE INDEX) ---
+// --- FUNÇÃO AUXILIAR: EXIBIR QUESTÃO (CORRIGIDA - USO DE INDEX) ---
     function showSimuladoQuestion(index) {
         const q = activeSimuladoQuestions[index];
         const container = document.getElementById('question-display-area');
@@ -2452,7 +2466,8 @@ window.scrollToStory = function() {
 // Entra no sistema e verifica login (VERSÃO OTIMIZADA PARA MOBILE)
 window.enterSystem = function() {
     const landing = document.getElementById('landing-hero');
-    
+    const carousel = document.getElementById('intro-carousel-wrapper'); // PEGA O CARROSSEL
+
     if (landing) {
         // 1. Prepara a animação (Hardware Acceleration)
         landing.style.willChange = 'transform, opacity';
@@ -2469,6 +2484,7 @@ window.enterSystem = function() {
     // 3. Aguarda a animação terminar para destravar o scroll e remover a capa
     setTimeout(() => {
         if (landing) landing.classList.add('hidden'); // Remove do DOM
+        if (carousel) carousel.style.display = 'none'; // REMOVE O CARROSSEL TAMBÉM
         document.body.classList.remove('landing-active'); // Destrava a rolagem do corpo principal SÓ AGORA
         
         // Verifica autenticação
