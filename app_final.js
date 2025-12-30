@@ -298,9 +298,9 @@ setTimeout(() => {
         setupRippleEffects();
     }
 
-    // === FUNÇÃO onLoginSuccess (VERSÃO FINAL V12 - LIGAÇÃO DIRETA DOS BOTÕES) ===
+    // === FUNÇÃO onLoginSuccess (VERSÃO FINAL V13 - LIGAÇÃO TOTAL) ===
     function onLoginSuccess(user, userData) {
-        console.log("🚀 LOGIN CONFIRMADO: Ativando controles...");
+        console.log("🚀 LOGIN CONFIRMADO: Ativando TODOS os controles...");
 
         // 1. LIMPEZA VISUAL (Esconde Login/Capa/Carrossel)
         const elementsToHide = [
@@ -322,7 +322,7 @@ setTimeout(() => {
         if (mainWrapper) {
             mainWrapper.classList.remove('hidden');
             mainWrapper.style.display = 'block'; 
-            setTimeout(() => mainWrapper.style.opacity = '1', 50); // Animação suave
+            setTimeout(() => mainWrapper.style.opacity = '1', 50);
         }
 
         // 3. DESTRAVAR SCROLL
@@ -345,10 +345,10 @@ setTimeout(() => {
         if (printWatermark) printWatermark.textContent = `Licenciado para ${userData.name} (CPF: ${userData.cpf || '...'}) - Proibida a Cópia`;
 
         // ===============================================================
-        // 5. LIGAÇÃO DIRETA DOS BOTÕES (A CORREÇÃO PRINCIPAL ESTÁ AQUI)
+        // 5. LIGAÇÃO DIRETA DOS BOTÕES (CORREÇÃO DE GESTOR, ADMIN E RESET)
         // ===============================================================
         
-        // A) Botão ASSINAR (Cabeçalho e Mobile)
+        // A) Botão ASSINAR (Já funcionava, mantido)
         const openPay = () => {
             const m = document.getElementById('expired-modal');
             const o = document.getElementById('name-modal-overlay');
@@ -356,37 +356,69 @@ setTimeout(() => {
             if(o) { o.classList.remove('hidden'); o.classList.add('show'); o.style.display = 'block'; o.style.zIndex = '20000'; }
         };
         document.querySelectorAll('#header-subscribe-btn, #mobile-subscribe-btn').forEach(btn => {
-            btn.onclick = openPay; // Conecta direto, sem depender de setup anterior
-            btn.style.pointerEvents = 'auto'; // Garante que seja clicável
+            btn.onclick = openPay;
+            btn.style.pointerEvents = 'auto';
         });
 
-        // B) Botão GESTOR (FAB Flutuante)
+        // B) Botão GESTOR (FAB Flutuante) - CORRIGIDO
         const mgrFab = document.getElementById('manager-fab');
+        // Verifica se é Gestor OU Admin (Admins também podem ver)
         if (userData.isManager === true || userData.isAdmin === true) {
             if (mgrFab) {
                 mgrFab.classList.remove("hidden");
-                mgrFab.style.display = 'flex';
-                mgrFab.style.zIndex = '999999'; // Traz para frente de tudo
+                mgrFab.style.display = 'flex'; // Força aparecer
+                mgrFab.style.zIndex = '999999'; // Força ficar na frente
                 
-                // Força o clique no botão roxo dentro da div
+                // Pega o botão dentro da div e força o clique
                 const fabBtn = mgrFab.querySelector('button');
                 if(fabBtn) {
-                    fabBtn.onclick = function() {
+                    fabBtn.onclick = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log("Clicou no Gestor via JS Forçado");
                         if(typeof window.openManagerPanel === 'function') {
                             window.openManagerPanel();
                         } else {
-                            alert("O painel de gestor ainda está carregando. Tente em instantes.");
+                            alert("Painel carregando... Tente novamente em 2 segundos.");
                         }
                     };
                 }
             }
         }
 
-        // C) Botão ADMIN (Cabeçalho)
+        // C) Botão ADMIN (Cabeçalho) - CORRIGIDO
         const adminBtn = document.getElementById('admin-panel-btn');
-        if (userData.isAdmin === true && adminBtn) {
-            adminBtn.classList.remove('hidden');
-            adminBtn.onclick = window.openAdminPanel;
+        const mobileAdminBtn = document.getElementById('mobile-admin-btn');
+        
+        if (userData.isAdmin === true) {
+            // Desktop
+            if (adminBtn) {
+                adminBtn.classList.remove('hidden');
+                adminBtn.onclick = function(e) {
+                    e.preventDefault();
+                    if(typeof window.openAdminPanel === 'function') window.openAdminPanel();
+                };
+            }
+            // Mobile
+            if (mobileAdminBtn) {
+                mobileAdminBtn.classList.remove('hidden');
+                mobileAdminBtn.onclick = function(e) {
+                    e.preventDefault();
+                    if(typeof window.openAdminPanel === 'function') window.openAdminPanel();
+                };
+            }
+        }
+
+        // D) Botão RESETAR (Rodapé) - CORRIGIDO
+        const resetBtn = document.getElementById('reset-progress');
+        if (resetBtn) {
+            resetBtn.onclick = function(e) {
+                e.preventDefault();
+                const m = document.getElementById('reset-modal');
+                const o = document.getElementById('reset-modal-overlay');
+                if(m) { m.classList.remove('hidden'); m.classList.add('show'); m.style.display = 'block'; m.style.zIndex = '30000'; }
+                if(o) { o.classList.remove('hidden'); o.classList.add('show'); o.style.display = 'block'; o.style.zIndex = '29999'; }
+            };
         }
 
         // ===============================================================
@@ -424,14 +456,12 @@ setTimeout(() => {
         if(totalEl) totalEl.textContent = totalModules;
         if(courseCountEl) courseCountEl.textContent = totalModules;
         
-        // Inicia o resto do sistema se ainda não tiver iniciado
-        if (document.body.getAttribute('data-app-ready') !== 'true') {
-            populateModuleLists();
-            updateProgress();
-            addEventListeners(); 
-            handleInitialLoad();
-            startOnboardingTour(false);
-        }
+        // RECARREGA OS EVENTOS GERAIS (Para garantir que todo o resto funcione)
+        populateModuleLists();
+        updateProgress();
+        addEventListeners(); 
+        handleInitialLoad();
+        startOnboardingTour(false);
 
         // Redirecionamento automático pós-login (Gestor)
         if (localStorage.getItem("open_manager_after_login") === "true") {
