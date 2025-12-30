@@ -994,3 +994,39 @@ details[open] summary ~ * {
     100% { opacity: 1; transform: translateY(0); }
 }
 
+/* === CORREÇÃO DO CARROSSEL E LOGIN (V10) === */
+
+/* Garante que o carrossel fique abaixo do Modal de Login */
+#intro-carousel-wrapper {
+    position: relative;
+    z-index: 10; /* Baixo */
+    width: 100%;
+    overflow: hidden;
+    transition: opacity 0.5s ease;
+}
+
+/* O Modal de Login deve ter z-index altíssimo */
+#name-prompt-modal, 
+#expired-modal, 
+#admin-modal,
+#manager-modal {
+    z-index: 9999 !important; /* Acima de tudo */
+}
+
+/* O Overlay (fundo escuro do modal) também */
+#name-modal-overlay,
+#admin-modal-overlay {
+    z-index: 9998 !important;
+}
+
+/* Classe auxiliar para esconder o carrossel via JS */
+.hidden-force {
+    display: none !important;
+}
+
+/* Ajuste para telas de celular (evita corte lateral) */
+@media (max-width: 768px) {
+    #intro-carousel-wrapper {
+        min-height: 250px; /* Evita pulo de layout */
+    }
+}
