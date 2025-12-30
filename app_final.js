@@ -360,52 +360,56 @@ setTimeout(() => {
             btn.style.pointerEvents = 'auto';
         });
 
-        // B) Botão GESTOR (FAB Flutuante) - CORRIGIDO
+        // --- COPIE E COLE ISTO DENTRO DE onLoginSuccess (SUBSTITUINDO OS ITENS B e C) ---
+
+        // B) Botão GESTOR (FAB Flutuante) - CORREÇÃO DE FORÇA
         const mgrFab = document.getElementById('manager-fab');
-        // Verifica se é Gestor OU Admin (Admins também podem ver)
-        if (userData.isManager === true || userData.isAdmin === true) {
+        // Verificação flexível (aceita true, "true" ou 1)
+        if (userData.isManager || userData.isAdmin) {
             if (mgrFab) {
                 mgrFab.classList.remove("hidden");
-                mgrFab.style.display = 'flex'; // Força aparecer
-                mgrFab.style.zIndex = '999999'; // Força ficar na frente
+                mgrFab.style.display = 'flex'; 
+                mgrFab.style.zIndex = '999999';
                 
-                // Pega o botão dentro da div e força o clique
                 const fabBtn = mgrFab.querySelector('button');
                 if(fabBtn) {
-                    fabBtn.onclick = function(e) {
+                    // Remove qualquer clone anterior para garantir limpeza
+                    const newFab = fabBtn.cloneNode(true);
+                    fabBtn.parentNode.replaceChild(newFab, fabBtn);
+                    
+                    newFab.onclick = function(e) {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log("Clicou no Gestor via JS Forçado");
+                        console.log("🔘 Botão Gestor Clicado!");
                         if(typeof window.openManagerPanel === 'function') {
                             window.openManagerPanel();
                         } else {
-                            alert("Painel carregando... Tente novamente em 2 segundos.");
+                            alert("Painel carregando... Tente novamente em alguns segundos.");
                         }
                     };
                 }
             }
         }
 
-        // C) Botão ADMIN (Cabeçalho) - CORRIGIDO
-        const adminBtn = document.getElementById('admin-panel-btn');
-        const mobileAdminBtn = document.getElementById('mobile-admin-btn');
-        
-        if (userData.isAdmin === true) {
-            // Desktop
+        // C) Botão ADMIN (Cabeçalho e Mobile) - CORREÇÃO DE FORÇA
+        if (userData.isAdmin) {
+            const adminBtn = document.getElementById('admin-panel-btn');
+            const mobileAdminBtn = document.getElementById('mobile-admin-btn');
+            
+            // Função única para abrir
+            const forceOpenAdmin = (e) => { 
+                e.preventDefault(); 
+                e.stopPropagation();
+                if(typeof window.openAdminPanel === 'function') window.openAdminPanel(); 
+            };
+
             if (adminBtn) {
                 adminBtn.classList.remove('hidden');
-                adminBtn.onclick = function(e) {
-                    e.preventDefault();
-                    if(typeof window.openAdminPanel === 'function') window.openAdminPanel();
-                };
+                adminBtn.onclick = forceOpenAdmin;
             }
-            // Mobile
             if (mobileAdminBtn) {
                 mobileAdminBtn.classList.remove('hidden');
-                mobileAdminBtn.onclick = function(e) {
-                    e.preventDefault();
-                    if(typeof window.openAdminPanel === 'function') window.openAdminPanel();
-                };
+                mobileAdminBtn.onclick = forceOpenAdmin;
             }
         }
 
@@ -1808,8 +1812,16 @@ function updateAdminStats(stats) {
             setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
         }
     }
+    // === SUBSTITUA A FUNÇÃO openSidebar POR ESTA ===
     function openSidebar() {
-        if (sidebar) sidebar.classList.add('open');
+        // 1. Garante que o Sidebar existe e tira o "invisível"
+        if (sidebar) {
+            sidebar.classList.remove('hidden'); 
+            // Pequeno delay para o navegador perceber que o elemento existe antes de animar
+            setTimeout(() => sidebar.classList.add('open'), 10);
+        }
+        
+        // 2. Faz o mesmo com o Fundo Escuro (Overlay)
         if (sidebarOverlay) {
             sidebarOverlay.classList.remove('hidden');
             setTimeout(() => sidebarOverlay.classList.add('show'), 10);
