@@ -10,12 +10,10 @@
     <title>Curso de Formação | Bombeiro Civil e Brigadista</title>
     
     <script>
-        // Força recarregamento se detectar cache antigo de Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
                 for(let registration of registrations) {
                     registration.unregister();
-                    console.log('Service Worker desregistrado para forçar atualização.');
                 }
             });
         }
@@ -48,7 +46,7 @@
       }
     </script>
 
-    <link rel="stylesheet" href="style.css?v=GH_FIX_FINAL_02">
+    <link rel="stylesheet" href="style.css?v=GH_FIX_FINAL_03">
     
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -57,188 +55,76 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
     <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
 
     <style>
-        /* Container Geral */
-        html, body {
-            overflow-x: hidden; 
-            scroll-behavior: smooth;
-            height: auto !important;
-            overflow-y: auto !important;
-        }
-
-        /* Container do Carrossel */
-        #intro-carousel-wrapper {
-            position: relative !important;
-            width: 100%;
-            height: 100vh; 
-            overflow: hidden; 
-            background-color: #050505;
-            cursor: pointer;
-            z-index: 50;
-            display: block;
-        }
-
-        /* --- CSS DO CARROSSEL --- */
-        #intro-carousel-wrapper .vignette {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.8) 100%);
-            pointer-events: none;
-            z-index: 20;
-        }
-
-        #intro-carousel-wrapper .epic-panel {
-            position: relative;
-            height: 100vh;
-            flex-shrink: 0;
-            border-right: 1px solid rgba(255,255,255,0.05);
-            overflow: hidden;
-        }
+        html, body { overflow-x: hidden; scroll-behavior: smooth; height: auto !important; overflow-y: auto !important; }
         
-        #intro-carousel-wrapper .bg-image-zoom {
-            transition: transform 1.5s cubic-bezier(0.19, 1, 0.22, 1);
-            will-change: transform;
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            background-position: center;
-            filter: saturate(0.9) contrast(1.1);
-        }
+        /* Carrossel */
+        #intro-carousel-wrapper { position: relative !important; width: 100%; height: 100vh; overflow: hidden; background-color: #050505; cursor: pointer; z-index: 50; display: block; }
+        #intro-carousel-wrapper .vignette { position: absolute; inset: 0; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.8) 100%); pointer-events: none; z-index: 20; }
+        #intro-carousel-wrapper .epic-panel { position: relative; height: 100vh; flex-shrink: 0; border-right: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
+        #intro-carousel-wrapper .bg-image-zoom { transition: transform 1.5s cubic-bezier(0.19, 1, 0.22, 1); will-change: transform; width: 100%; height: 100%; background-size: cover; background-position: center; filter: saturate(0.9) contrast(1.1); }
+        #intro-carousel-wrapper .epic-panel:hover .bg-image-zoom { transform: scale(1.08); filter: saturate(1.1) contrast(1.1); }
+        #intro-carousel-wrapper .panel-content { transform: translateY(20px); opacity: 0.8; transition: all 0.5s ease; }
+        #intro-carousel-wrapper .epic-panel:hover .panel-content { transform: translateY(0); opacity: 1; }
         
-        #intro-carousel-wrapper .epic-panel:hover .bg-image-zoom {
-            transform: scale(1.08); 
-            filter: saturate(1.1) contrast(1.1);
-        }
-
-        #intro-carousel-wrapper .panel-content {
-            transform: translateY(20px);
-            opacity: 0.8;
-            transition: all 0.5s ease;
-        }
-
-        #intro-carousel-wrapper .epic-panel:hover .panel-content {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        #intro-carousel-wrapper .nav-arrow {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            cursor: pointer;
-            z-index: 50;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        #intro-carousel-wrapper .nav-arrow:hover {
-            background: rgba(234, 88, 12, 0.9);
-            border-color: rgba(234, 88, 12, 1);
-            box-shadow: 0 0 20px rgba(234, 88, 12, 0.4);
-            transform: translateY(-50%) scale(1.1);
-        }
-
+        /* Setas do Carrossel */
+        #intro-carousel-wrapper .nav-arrow { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); color: white; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; z-index: 50; transition: all 0.3s ease; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); }
+        #intro-carousel-wrapper .nav-arrow:hover { background: rgba(234, 88, 12, 0.9); border-color: rgba(234, 88, 12, 1); transform: translateY(-50%) scale(1.1); }
+        
+        /* Animações */
         @keyframes driftLeft { 0%, 100% { transform: translate(0, -50%); } 50% { transform: translate(-8px, -50%); } }
         @keyframes driftRight { 0%, 100% { transform: translate(0, -50%); } 50% { transform: translate(8px, -50%); } }
-
         .arrow-left-anim { animation: driftLeft 3s infinite ease-in-out; }
         .arrow-right-anim { animation: driftRight 3s infinite ease-in-out; }
         #intro-carousel-wrapper .nav-arrow:hover { animation: none; }
-
-        #carousel-track {
-            display: flex;
-            height: 100%;
-            width: max-content;
-            will-change: transform;
-        }
+        #carousel-track { display: flex; height: 100%; width: max-content; will-change: transform; }
         
-        /* Classe utilitária para forçar exibição do modal */
-        .force-flex {
-            display: flex !important;
-        }
+        .force-flex { display: flex !important; }
     </style>
     
     <script>
-        // Função Global para abrir o Login
         window.openLocalLogin = function(isManager = false) {
             console.log("🚀 AÇÃO DE LOGIN INICIADA | Modo Gestor:", isManager);
-            
-            // Tenta capturar os elementos
             const modal = document.getElementById('name-prompt-modal');
             const overlay = document.getElementById('name-modal-overlay');
             const title = document.getElementById('auth-title');
             
-            // Verificação de Segurança
             if (modal && overlay) {
-                // 1. Garante que estão visíveis removendo 'hidden'
                 modal.classList.remove('hidden');
                 overlay.classList.remove('hidden');
-                
-                // 2. Força display via Style direto (sobrepõe qualquer classe CSS)
                 modal.style.display = 'flex';
                 overlay.style.display = 'block';
-                
-                // 3. Z-Index Supremo (Garante que fique na frente de tudo)
-                modal.style.zIndex = "2147483647"; // MAX INT
+                // Z-Index Maximo
+                modal.style.zIndex = "2147483647"; 
                 overlay.style.zIndex = "2147483640";
                 
-                // 4. Ajusta Título
-                if(title) {
-                    title.innerText = isManager ? "Acesso Administrativo" : "Acesso ao Sistema";
-                }
-                
-                console.log("✅ Sucesso: Modal de login ativado.");
+                if(title) title.innerText = isManager ? "Acesso Administrativo" : "Acesso ao Sistema";
+                console.log("✅ Modal aberto com sucesso.");
             } else {
-                // Feedback visual para você saber se o elemento sumiu
-                alert("Erro Crítico: O modal de login não foi encontrado no código HTML. Verifique se o ID 'name-prompt-modal' existe lá embaixo.");
-                console.error("❌ ERRO: Modal ou Overlay não encontrados pelo ID.");
+                alert("Erro: Modal não encontrado. O sistema ainda está carregando?");
             }
         };
 
-        // Função para fechar o modal ao clicar no overlay
         window.closeLocalLogin = function() {
              const modal = document.getElementById('name-prompt-modal');
              const overlay = document.getElementById('name-modal-overlay');
-             if(modal) {
-                 modal.classList.add('hidden');
-                 modal.classList.remove('force-flex');
-                 modal.style.display = 'none';
-             }
-             if(overlay) {
-                 overlay.classList.add('hidden');
-                 overlay.style.display = 'none';
-             }
+             if(modal) { modal.classList.add('hidden'); modal.style.display = 'none'; }
+             if(overlay) { overlay.classList.add('hidden'); overlay.style.display = 'none'; }
         }
     </script>
 </head>
 
 <body class="antialiased overflow-x-hidden bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
 
-    <div id="intro-carousel-wrapper" title="Clique em qualquer lugar para entrar no site">
+    <div id="intro-carousel-wrapper">
         <div class="relative w-full h-full bg-black overflow-hidden">
             <div class="vignette"></div>
-    
-            <button id="btn-prev" class="nav-arrow left-6 md:left-10 arrow-left-anim" onclick="event.stopPropagation()">
-                <i class="fas fa-chevron-left text-xl"></i>
-            </button>
-            <button id="btn-next" class="nav-arrow right-6 md:right-10 arrow-right-anim" onclick="event.stopPropagation()">
-                <i class="fas fa-chevron-right text-xl"></i>
-            </button>
-    
+            <button id="btn-prev" class="nav-arrow left-6 md:left-10 arrow-left-anim" onclick="event.stopPropagation()"><i class="fas fa-chevron-left text-xl"></i></button>
+            <button id="btn-next" class="nav-arrow right-6 md:right-10 arrow-right-anim" onclick="event.stopPropagation()"><i class="fas fa-chevron-right text-xl"></i></button>
             <div class="h-full w-full">
                 <div id="carousel-track">
                     <div class="epic-panel w-[100vw] md:w-[33.333vw] group" onclick="selectCourse('BC')">
@@ -246,70 +132,39 @@
                         <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-500"></div>
                         <div class="absolute bottom-0 left-0 p-8 md:p-12 w-full z-30 panel-content">
                             <div class="w-12 h-1 bg-red-600 mb-6 shadow-[0_0_15px_rgba(220,38,38,0.6)]"></div>
-                            <div class="flex items-center gap-3 mb-3">
-                                <i class="fas fa-fire-extinguisher text-2xl text-red-500"></i>
-                                <span class="text-xs font-mono text-red-500 uppercase tracking-widest border border-red-500/30 px-2 py-1 rounded bg-red-500/10 backdrop-blur-sm">Formação Técnica</span>
-                            </div>
-                            <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-4 drop-shadow-lg">
-                                Bombeiro<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">Civil</span>
-                            </h2>
-                            <p class="text-gray-300 text-sm font-medium max-w-xs leading-relaxed border-l-2 border-gray-700 pl-4">
-                                Prevenção e combate a incêndio, resgate técnico e primeiros socorros. A elite da segurança.
-                            </p>
+                            <div class="flex items-center gap-3 mb-3"><i class="fas fa-fire-extinguisher text-2xl text-red-500"></i><span class="text-xs font-mono text-red-500 uppercase tracking-widest border border-red-500/30 px-2 py-1 rounded bg-red-500/10 backdrop-blur-sm">Formação Técnica</span></div>
+                            <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-4 drop-shadow-lg">Bombeiro<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">Civil</span></h2>
+                            <p class="text-gray-300 text-sm font-medium max-w-xs leading-relaxed border-l-2 border-gray-700 pl-4">Prevenção e combate a incêndio, resgate técnico e primeiros socorros.</p>
                         </div>
                     </div>
-    
                     <div class="epic-panel w-[100vw] md:w-[33.333vw] group" onclick="selectCourse('SP')">
                         <div class="bg-image-zoom" style="background-image: url('https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/SP.jpg');"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-500"></div>
                         <div class="absolute bottom-0 left-0 p-8 md:p-12 w-full z-30 panel-content">
                             <div class="w-12 h-1 bg-blue-600 mb-6 shadow-[0_0_15px_rgba(37,99,235,0.6)]"></div>
-                            <div class="flex items-center gap-3 mb-3">
-                                <i class="fas fa-shield-alt text-2xl text-blue-500"></i>
-                                <span class="text-xs font-mono text-blue-500 uppercase tracking-widest border border-blue-500/30 px-2 py-1 rounded bg-blue-500/10 backdrop-blur-sm">Tático Operacional</span>
-                            </div>
-                            <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-4 drop-shadow-lg">
-                                Segurança<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-500">Privada</span>
-                            </h2>
-                            <p class="text-gray-300 text-sm font-medium max-w-xs leading-relaxed border-l-2 border-gray-700 pl-4">
-                                Estratégias de vigilância, controle de acesso e proteção de ativos de alto valor.
-                            </p>
+                            <div class="flex items-center gap-3 mb-3"><i class="fas fa-shield-alt text-2xl text-blue-500"></i><span class="text-xs font-mono text-blue-500 uppercase tracking-widest border border-blue-500/30 px-2 py-1 rounded bg-blue-500/10 backdrop-blur-sm">Tático Operacional</span></div>
+                            <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-4 drop-shadow-lg">Segurança<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-500">Privada</span></h2>
+                            <p class="text-gray-300 text-sm font-medium max-w-xs leading-relaxed border-l-2 border-gray-700 pl-4">Estratégias de vigilância, controle de acesso e proteção.</p>
                         </div>
                     </div>
-    
                     <div class="epic-panel w-[100vw] md:w-[33.333vw] group" onclick="selectCourse('GE')">
                         <div class="bg-image-zoom" style="background-image: url('https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/GE.jpg');"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-500"></div>
                         <div class="absolute bottom-0 left-0 p-8 md:p-12 w-full z-30 panel-content">
                             <div class="w-12 h-1 bg-purple-600 mb-6 shadow-[0_0_15px_rgba(147,51,234,0.6)]"></div>
-                            <div class="flex items-center gap-3 mb-3">
-                                <i class="fas fa-chart-line text-2xl text-purple-500"></i>
-                                <span class="text-xs font-mono text-purple-500 uppercase tracking-widest border border-purple-500/30 px-2 py-1 rounded bg-purple-500/10 backdrop-blur-sm">Administrativo</span>
-                            </div>
-                            <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-4 drop-shadow-lg">
-                                Gestão<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-fuchsia-500">& Liderança</span>
-                            </h2>
-                            <p class="text-gray-300 text-sm font-medium max-w-xs leading-relaxed border-l-2 border-gray-700 pl-4">
-                                Painel de controle para líderes de equipe. Monitore métricas e desempenho em tempo real.
-                            </p>
+                            <div class="flex items-center gap-3 mb-3"><i class="fas fa-chart-line text-2xl text-purple-500"></i><span class="text-xs font-mono text-purple-500 uppercase tracking-widest border border-purple-500/30 px-2 py-1 rounded bg-purple-500/10 backdrop-blur-sm">Administrativo</span></div>
+                            <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-4 drop-shadow-lg">Gestão<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-fuchsia-500">& Liderança</span></h2>
+                            <p class="text-gray-300 text-sm font-medium max-w-xs leading-relaxed border-l-2 border-gray-700 pl-4">Painel de controle para líderes de equipe.</p>
                         </div>
                     </div>
-    
                     <div class="epic-panel w-[100vw] md:w-[33.333vw] group" onclick="selectCourse('INS')">
                         <div class="bg-image-zoom" style="background-image: url('https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/INS8.png');"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-500"></div>
                         <div class="absolute bottom-0 left-0 p-8 md:p-12 w-full z-30 panel-content">
                             <div class="w-12 h-1 bg-emerald-500 mb-6 shadow-[0_0_15px_rgba(16,185,129,0.6)]"></div>
-                            <div class="flex items-center gap-3 mb-3">
-                                <i class="fas fa-chalkboard-user text-2xl text-emerald-500"></i>
-                                <span class="text-xs font-mono text-emerald-500 uppercase tracking-widest border border-emerald-500/30 px-2 py-1 rounded bg-emerald-500/10 backdrop-blur-sm">Docência</span>
-                            </div>
-                            <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-4 drop-shadow-lg">
-                                Instrutor<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-600">de Cursos</span>
-                            </h2>
-                            <p class="text-gray-300 text-sm font-medium max-w-xs leading-relaxed border-l-2 border-gray-700 pl-4">
-                                Metodologia de ensino, oratória e técnicas avançadas para formar profissionais de elite.
-                            </p>
+                            <div class="flex items-center gap-3 mb-3"><i class="fas fa-chalkboard-user text-2xl text-emerald-500"></i><span class="text-xs font-mono text-emerald-500 uppercase tracking-widest border border-emerald-500/30 px-2 py-1 rounded bg-emerald-500/10 backdrop-blur-sm">Docência</span></div>
+                            <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-4 drop-shadow-lg">Instrutor<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-600">de Cursos</span></h2>
+                            <p class="text-gray-300 text-sm font-medium max-w-xs leading-relaxed border-l-2 border-gray-700 pl-4">Metodologia de ensino, oratória e técnicas avançadas.</p>
                         </div>
                     </div>
                 </div>
@@ -454,8 +309,7 @@
                     </div>
                 </div>
             </div>
-        </section>
-<section class="bg-[#080b12] py-24 px-4 border-t border-white/5">
+        </section><section class="bg-[#080b12] py-24 px-4 border-t border-white/5">
             <div class="max-w-3xl mx-auto">
                 <h2 class="text-3xl md:text-4xl font-bold text-center text-white mb-12 uppercase">
                     Perguntas <span class="text-orange-600">Frequentes</span>
@@ -593,18 +447,15 @@
                     </div>
 
                     <div class="hidden lg:flex items-center space-x-4">
-                        
                         <button id="admin-panel-btn" class="hidden bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-3 rounded-full shadow-md transition-all" title="Painel Administrativo">
                             <i class="fas fa-crown"></i>
                         </button>
                         <button id="install-app-btn" class="hidden bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-full text-sm font-bold shadow-md transition-all flex items-center">
                             <i class="fas fa-download mr-2"></i> Instalar App
                         </button>
-
                         <button id="header-subscribe-btn" class="action-button pulse-button bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-6 rounded-full shadow-lg border-2 border-green-400 transform hover:scale-105 transition-all">
                             <i class="fas fa-crown mr-2"></i> ASSINAR
                         </button>
-                        
                         <button id="home-button-desktop" title="Voltar ao Início" class="text-gray-800 dark:text-gray-100 text-xl hover:text-orange-500 transition-colors">
                             <i class="fas fa-home"></i>
                         </button>
@@ -627,7 +478,6 @@
                         <button id="mobile-admin-btn" class="hidden bg-yellow-500 text-white text-sm px-3 py-1.5 rounded-full shadow-lg border border-yellow-400">
                             <i class="fas fa-crown"></i>
                         </button>
-
                         <button id="mobile-subscribe-btn" class="pulse-button bg-green-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg border border-green-400">
                             <i class="fas fa-crown"></i>
                         </button>
@@ -708,27 +558,23 @@
                     <p class="developer-credit mb-2">Desenvolvido por Instrutor Medeiros</p>
                     <p>© 2013-2025 Curso de Formação Profissional. Todos os direitos reservados.</p>
                     <div class="mt-6 flex flex-wrap justify-center items-center gap-4">
-                       
                         <button id="manual-sync-btn" class="text-xs text-blue-400 hover:text-blue-300 underline transition flex items-center">
-    <i class="fas fa-cloud-upload-alt mr-1"></i> Salvar Progresso
-</button>
-<span class="text-gray-600">|</span> 
+                            <i class="fas fa-cloud-upload-alt mr-1"></i> Salvar Progresso
+                        </button>
+                        <span class="text-gray-600">|</span> 
                         <button id="logout-button" class="text-xs text-yellow-500 hover:text-yellow-400 underline transition flex items-center">
                             <i class="fas fa-sign-out-alt mr-1"></i> Sair
                         </button>
-                        
                         <span class="text-gray-600">|</span>
-
                         <button id="restart-tour-btn" class="text-xs text-blue-400 hover:text-blue-300 underline transition flex items-center">
                             <i class="fas fa-question-circle mr-1"></i> Ver Tutorial
                         </button>
-
                         <span class="text-gray-600">|</span>
-
                         <button id="reset-progress" class="text-xs text-red-500 hover:text-red-400 underline transition flex items-center">
                             <i class="fas fa-trash-alt mr-1"></i> Resetar
                         </button>
                     </div>
+                </div>
         </footer>
     </div>
 <button id="back-to-top" class="action-button fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full hidden justify-center items-center shadow-lg text-2xl hidden"><i class="fas fa-arrow-up"></i></button>
@@ -738,17 +584,10 @@
     <div id="name-prompt-modal" class="hidden fixed flex-col w-11/12 max-w-lg mx-auto overflow-hidden rounded-2xl shadow-2xl" style="z-index: 2147483647; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; background: #0f172a; border: 1px solid #334155;">
         
         <div class="relative bg-gradient-to-b from-orange-600 to-gray-900 p-5 text-center flex-shrink-0">
-            <button type="button" onclick="window.closeLocalLogin()" class="absolute top-4 right-4 text-white hover:text-orange-200 text-xl z-50 cursor-pointer">
-                <i class="fas fa-times"></i>
-            </button>
-            
+            <button type="button" onclick="window.closeLocalLogin()" class="absolute top-4 right-4 text-white hover:text-orange-200 text-xl z-50 cursor-pointer"><i class="fas fa-times"></i></button>
             <div class="relative z-10 flex flex-col items-center">
-                <div class="inline-block p-3 bg-black/40 rounded-full border-2 border-orange-500/50 mb-2 shadow-[0_0_20px_rgba(249,115,22,0.5)]">
-                    <i class="fas fa-user-shield text-3xl text-orange-500"></i>
-                </div>
-                <h2 id="auth-title" class="text-2xl font-serif font-bold text-white tracking-wide drop-shadow-lg leading-tight">
-                    Acesso ao Sistema
-                </h2>
+                <div class="inline-block p-3 bg-black/40 rounded-full border-2 border-orange-500/50 mb-2 shadow-[0_0_20px_rgba(249,115,22,0.5)]"><i class="fas fa-user-shield text-3xl text-orange-500"></i></div>
+                <h2 id="auth-title" class="text-2xl font-serif font-bold text-white tracking-wide drop-shadow-lg leading-tight">Acesso ao Sistema</h2>
             </div>
         </div>
 
@@ -818,18 +657,14 @@
             <p id="auth-feedback" class="text-center text-sm mt-4 text-orange-400 min-h-[24px] font-semibold"></p>
             
             <div id="login-button-group" class="w-full mt-5 space-y-3">
-                <button id="login-button" class="w-full py-3.5 px-6 bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 bg-[length:200%_auto] animate-gradient hover:scale-[1.02] text-white font-bold text-base rounded-xl shadow-[0_10px_20px_rgba(234,88,12,0.3)] transition-all transform uppercase tracking-wide cursor-pointer">
+                <button id="login-button" class="w-full py-3.5 px-6 bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 hover:scale-[1.02] text-white font-bold text-base rounded-xl shadow-lg transition-all uppercase tracking-wide cursor-pointer">
                     ACESSAR PLATAFORMA <i class="fas fa-arrow-right ml-2"></i>
                 </button>
                 
                 <div class="flex flex-col space-y-3 pt-4 items-center border-t border-gray-800 mt-4">
                     <div class="grid grid-cols-2 gap-4 w-full">
-                        <button id="show-signup-button" class="text-sm text-gray-300 hover:text-white hover:bg-gray-800 border border-gray-700 rounded-lg py-3 transition-all font-medium">
-                            Criar Conta
-                        </button>
-                        <button id="open-payment-login-btn" class="text-sm text-green-400 hover:text-white hover:bg-green-600/20 border border-green-500/30 rounded-lg py-3 font-bold transition-all pulse-button-slow">
-                            <i class="fas fa-gem mr-1"></i> Ver Planos
-                        </button>
+                        <button id="show-signup-button" class="text-sm text-gray-300 hover:text-white hover:bg-gray-800 border border-gray-700 rounded-lg py-3 transition-all font-medium">Criar Conta</button>
+                        <button id="open-payment-login-btn" class="text-sm text-green-400 hover:text-white hover:bg-green-600/20 border border-green-500/30 rounded-lg py-3 font-bold transition-all pulse-button-slow"><i class="fas fa-gem mr-1"></i> Ver Planos</button>
                     </div>
                 </div>
             </div>
@@ -838,12 +673,8 @@
                 <div class="my-2 border-y border-orange-500/30 py-2 px-2 bg-black/20 rounded text-center">
                     <p id="auth-message" class="text-sm text-orange-200">Cadastre-se para o Acesso Degustação.</p>
                 </div>
-                <button id="signup-button" class="w-full py-3.5 px-6 bg-gradient-to-r from-green-600 to-teal-600 text-white font-bold text-base rounded-xl shadow-lg hover:scale-[1.02] transition-all uppercase">
-                    Confirmar Cadastro
-                </button>
-                <button id="show-login-button" class="w-full text-sm text-gray-400 hover:text-white hover:underline block text-center mt-2">
-                    <i class="fas fa-arrow-left mr-1"></i> Voltar para Login
-                </button>
+                <button id="signup-button" class="w-full py-3.5 px-6 bg-gradient-to-r from-green-600 to-teal-600 text-white font-bold text-base rounded-xl shadow-lg hover:scale-[1.02] transition-all uppercase">Confirmar Cadastro</button>
+                <button id="show-login-button" class="w-full text-sm text-gray-400 hover:text-white hover:underline block text-center mt-2"><i class="fas fa-arrow-left mr-1"></i> Voltar para Login</button>
             </div>
         </div>
     </div>
@@ -934,32 +765,17 @@
     <div id="manager-modal" class="modal w-[95%] max-w-7xl mx-auto overflow-hidden flex flex-col max-h-[90vh] hidden" style="background: #f8f9fa; border: 1px solid #e2e8f0; color: #1a202c; z-index: 20002 !important;">
         <div class="bg-blue-900 p-4 border-b border-blue-800 flex justify-between items-center flex-shrink-0">
             <div>
-                <h2 class="text-xl font-bold text-white flex items-center">
-                    <i class="fas fa-building mr-2 text-orange-500"></i> Painel da Empresa
-                </h2>
+                <h2 class="text-xl font-bold text-white flex items-center"><i class="fas fa-building mr-2 text-orange-500"></i> Painel da Empresa</h2>
                 <p class="text-xs text-blue-200" id="manager-company-name">Gestão de Equipe</p>
             </div>
             <button id="close-manager-modal" class="text-white hover:text-orange-500 text-2xl transition-colors"><i class="fas fa-times"></i></button>
         </div>
-        
         <div class="p-4 bg-gray-100 overflow-y-auto flex-grow custom-scrollbar">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div class="bg-white p-4 rounded shadow border-l-4 border-blue-500">
-                    <p class="text-xs text-gray-500 uppercase font-bold">Total de Alunos</p>
-                    <p class="text-2xl font-bold text-gray-800" id="mgr-total-users">0</p>
-                </div>
-                <div class="bg-white p-4 rounded shadow border-l-4 border-green-500">
-                    <p class="text-xs text-gray-500 uppercase font-bold">Concluídos</p>
-                    <p class="text-2xl font-bold text-gray-800" id="mgr-completed">0</p>
-                </div>
-                <div class="bg-white p-4 rounded shadow border-l-4 border-yellow-500">
-                    <p class="text-xs text-gray-500 uppercase font-bold">Em Andamento</p>
-                    <p class="text-2xl font-bold text-gray-800" id="mgr-progress">0</p>
-                </div>
-                <div class="bg-white p-4 rounded shadow border-l-4 border-red-500">
-                    <p class="text-xs text-gray-500 uppercase font-bold">Pendentes (Início)</p>
-                    <p class="text-2xl font-bold text-gray-800" id="mgr-pending">0</p>
-                </div>
+                <div class="bg-white p-4 rounded shadow border-l-4 border-blue-500"><p class="text-xs text-gray-500 uppercase font-bold">Total</p><p class="text-2xl font-bold text-gray-800" id="mgr-total-users">0</p></div>
+                <div class="bg-white p-4 rounded shadow border-l-4 border-green-500"><p class="text-xs text-gray-500 uppercase font-bold">Concluídos</p><p class="text-2xl font-bold text-gray-800" id="mgr-completed">0</p></div>
+                <div class="bg-white p-4 rounded shadow border-l-4 border-yellow-500"><p class="text-xs text-gray-500 uppercase font-bold">Em Curso</p><p class="text-2xl font-bold text-gray-800" id="mgr-progress">0</p></div>
+                <div class="bg-white p-4 rounded shadow border-l-4 border-red-500"><p class="text-xs text-gray-500 uppercase font-bold">Pendentes</p><p class="text-2xl font-bold text-gray-800" id="mgr-pending">0</p></div>
             </div>
             <div class="flex justify-between items-center mb-4">
                 <div class="flex items-center gap-2">
@@ -972,19 +788,8 @@
             <div class="bg-white rounded-lg shadow overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Nome do Aluno</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Contato</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Turma</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Progresso</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Vencimento</th>
-                            </tr>
-                        </thead>
-                        <tbody id="manager-table-body" class="bg-white divide-y divide-gray-200 text-sm">
-                            <tr><td colspan="5" class="p-4 text-center text-gray-500">Carregando dados da equipe...</td></tr>
-                        </tbody>
+                        <thead class="bg-gray-50"><tr><th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Nome</th><th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Contato</th><th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Turma</th><th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Progresso</th><th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Status</th><th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Vencimento</th></tr></thead>
+                        <tbody id="manager-table-body" class="bg-white divide-y divide-gray-200 text-sm"><tr><td colspan="6" class="p-4 text-center text-gray-500">Carregando...</td></tr></tbody>
                     </table>
                 </div>
             </div>
@@ -993,32 +798,15 @@
 
     <div id="admin-modal" class="modal w-[95%] max-w-6xl mx-auto overflow-hidden flex flex-col max-h-[90vh] hidden" style="background: #f8f9fa; border: 1px solid #e2e8f0; color: #1a202c; z-index: 20002 !important;">
         <div class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
-            <h2 class="text-xl font-bold text-white flex items-center">
-                <i class="fas fa-users-cog mr-2 text-yellow-500"></i> Painel Administrativo
-            </h2>
+            <h2 class="text-xl font-bold text-white flex items-center"><i class="fas fa-users-cog mr-2 text-yellow-500"></i> Painel Admin</h2>
             <button id="close-admin-modal" class="text-gray-400 hover:text-white text-2xl"><i class="fas fa-times"></i></button>
         </div>
-        
         <div class="p-4 bg-gray-100 overflow-y-auto flex-grow">
             <div class="overflow-x-auto bg-white rounded-lg shadow">
-                 <div id="admin-stats" class="mb-2 text-xs text-gray-600 flex gap-4">
-                  <span>Total: <strong id="admin-total-users">0</strong></span>
-                  <span>Premium: <strong id="admin-total-premium">0</strong></span>
-                  <span>Trial: <strong id="admin-total-trial">0</strong></span>
-                </div>
+                 <div id="admin-stats" class="mb-2 text-xs text-gray-600 flex gap-4"><span>Total: <strong id="admin-total-users">0</strong></span><span>Premium: <strong id="admin-total-premium">0</strong></span><span>Trial: <strong id="admin-total-trial">0</strong></span></div>
                 <table class="min-w-full divide-y divide-gray-200" id="admin-users-table">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email / CPF</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dispositivo</th> <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vencimento</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200 text-sm" id="admin-table-body">
-                        <tr><td colspan="6" class="p-4 text-center text-gray-500">Carregando usuários...</td></tr>
-                    </tbody>
+                    <thead class="bg-gray-50"><tr><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nome</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email/CPF</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Disp.</th> <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vencimento</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th></tr></thead>
+                    <tbody class="bg-white divide-y divide-gray-200 text-sm" id="admin-table-body"><tr><td colspan="6" class="p-4 text-center text-gray-500">Carregando...</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -1030,22 +818,16 @@
             <i class="fab fa-apple text-5xl text-gray-300 mb-4"></i>
             <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Instalar no iPhone</h2>
             <div class="text-left text-gray-600 dark:text-gray-300 space-y-4 mb-6">
-                <p>Para instalar o aplicativo no seu iPhone, siga os passos:</p>
-                <div class="flex items-start">
-                    <span class="bg-gray-200 dark:bg-gray-700 text-sm font-bold rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0">1</span>
-                    <p>Toque no botão <strong>Compartilhar</strong> <img src="https://img.icons8.com/ios-glyphs/30/000000/share-rounded.png" class="inline w-5 h-5 dark:invert"> na barra inferior do navegador.</p>
-                </div>
-                <div class="flex items-start">
-                    <span class="bg-gray-200 dark:bg-gray-700 text-sm font-bold rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0">2</span>
-                    <p>Role para cima e selecione <strong>Adicionar à Tela de Início</strong> <i class="fas fa-plus-square"></i>.</p>
-                </div>
+                <p>Para instalar, siga os passos:</p>
+                <div class="flex items-start"><span class="bg-gray-200 dark:bg-gray-700 text-sm font-bold rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0">1</span><p>Toque em <strong>Compartilhar</strong> <img src="https://img.icons8.com/ios-glyphs/30/000000/share-rounded.png" class="inline w-5 h-5 dark:invert"></p></div>
+                <div class="flex items-start"><span class="bg-gray-200 dark:bg-gray-700 text-sm font-bold rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0">2</span><p>Selecione <strong>Adicionar à Tela de Início</strong> <i class="fas fa-plus-square"></i>.</p></div>
             </div>
             <button id="close-ios-modal" class="action-button w-full">Entendi</button>
         </div>
     </div>
     <div id="ios-modal-overlay" class="modal-overlay hidden"></div>
 
-    <div id="reset-modal" class="modal hidden"><div class="p-4"><i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i><h2 class="text-2xl font-bold mb-2">Resetar Progresso?</h2><div class="flex justify-center gap-4"><button id="cancel-reset-button" class="action-button bg-gray-500">Cancelar</button><button id="confirm-reset-button" class="action-button bg-red-600">Confirmar</button></div></div></div>
+    <div id="reset-modal" class="modal hidden"><div class="p-4"><i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i><h2 class="text-2xl font-bold mb-2">Resetar?</h2><div class="flex justify-center gap-4"><button id="cancel-reset-button" class="action-button bg-gray-500">Cancelar</button><button id="confirm-reset-button" class="action-button bg-red-600">Confirmar</button></div></div></div>
     <div id="reset-modal-overlay" class="modal-overlay hidden"></div>
     <div id="congratulations-modal" class="modal hidden"><div class="p-4"><i class="fas fa-trophy text-4xl text-yellow-500 mb-4"></i><h2 class="text-2xl font-bold mb-2">Parabéns!</h2><button id="close-congrats" class="action-button">Fechar</button></div></div>
     <div id="modal-overlay" class="modal-overlay hidden"></div>
@@ -1060,14 +842,12 @@
             <button id="bottom-nav-theme" class="flex flex-col items-center text-gray-600 dark:text-gray-300"><i class="fas fa-moon text-xl"></i><span class="text-[10px]">Tema</span></button>
         </div>
     </nav>
-    
     <nav id="focus-nav-bar" class="md:hidden fixed bottom-0 left-0 w-full z-40 bg-white dark:bg-gray-800 shadow-lg border-t dark:border-gray-700 hidden">
         <div class="flex justify-around items-center h-16">
             <button id="focus-nav-modules" class="flex flex-col items-center text-gray-600 dark:text-gray-300"><i class="fas fa-list-ul text-xl"></i><span class="text-[10px]">Módulos</span></button>
             <button id="focus-nav-exit" class="flex flex-col items-center text-red-500"><i class="fas fa-times-circle text-xl"></i><span class="text-[10px]">Sair</span></button>
         </div>
     </nav>
-
     <div id="focus-menu-desktop" class="hidden fixed top-4 right-4 z-50 items-center space-x-2 hidden">
          <button id="focus-menu-modules" title="Módulos" class="action-button w-12 h-12 rounded-full p-0 flex items-center justify-center"><i class="fas fa-list-ul"></i></button>
          <button id="focus-menu-exit" title="Sair" class="action-button w-12 h-12 rounded-full p-0 flex items-center justify-center bg-gray-600"><i class="fas fa-times"></i></button>
@@ -1089,9 +869,7 @@
               url: 'https://general-runtime.voiceflow.com',
               versionID: 'production',
               render: { mode: 'overlay' }, 
-              voice: {
-                url: "https://runtime-api.voiceflow.com"
-              }
+              voice: { url: "https://runtime-api.voiceflow.com" }
             }).then(() => {
                 const checkChat = setInterval(() => {
                     const chatHost = document.getElementById('voiceflow-chat');
@@ -1100,28 +878,9 @@
                         const style = document.createElement('style');
                         style.textContent = `
                             @media (max-width: 768px) {
-                                .vfrc-launcher {
-                                    bottom: 110px !important; 
-                                    left: 20px !important;
-                                    right: auto !important;
-                                    position: fixed !important;
-                                    opacity: 0.6 !important;
-                                    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
-                                }
-                                .vfrc-widget--chat {
-                                    bottom: 110px !important; 
-                                    height: 65vh !important; 
-                                    width: 85vw !important;
-                                    left: 20px !important;
-                                    right: auto !important;
-                                    border-radius: 16px !important;
-                                }
-                                .vfrc-widget.is-mobile {
-                                    background: transparent !important;
-                                    width: auto !important;
-                                    height: auto !important;
-                                    position: static !important;
-                                }
+                                .vfrc-launcher { bottom: 110px !important; left: 20px !important; right: auto !important; position: fixed !important; opacity: 0.6 !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; }
+                                .vfrc-widget--chat { bottom: 110px !important; height: 65vh !important; width: 85vw !important; left: 20px !important; right: auto !important; border-radius: 16px !important; }
+                                .vfrc-widget.is-mobile { background: transparent !important; width: auto !important; height: auto !important; position: static !important; }
                             }
                             .vfrc-launcher:active, .vfrc-launcher:hover { opacity: 1 !important; }
                         `;
@@ -1139,107 +898,41 @@
                 class="flex items-center justify-center w-12 h-12 bg-purple-600 text-white rounded-full shadow-lg hover:bg-purple-500 hover:scale-110 transition-all duration-300 border-2 border-white/20">
             <i class="fas fa-chart-line text-xl"></i>
         </button>
-        <span class="absolute right-14 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs font-bold px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-white/10 shadow-xl">
-            Painel Gestor
-        </span>
+        <span class="absolute right-14 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs font-bold px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-white/10 shadow-xl">Painel Gestor</span>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             window.scrollTo(0, 0);
-
             const introWrapper = document.getElementById('intro-carousel-wrapper');
             const landingHero = document.getElementById('landing-hero');
-
             if(introWrapper && landingHero) {
-                introWrapper.addEventListener('click', () => {
-                    landingHero.scrollIntoView({ 
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                });
+                introWrapper.addEventListener('click', () => { landingHero.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
             }
-
-            window.selectCourse = function(type) {
-                console.log(`Curso selecionado: ${type}`);
-            };
-
+            window.selectCourse = function(type) { console.log(`Curso selecionado: ${type}`); };
             const track = document.getElementById('carousel-track');
             const prevBtn = document.getElementById('btn-prev');
             const nextBtn = document.getElementById('btn-next');
-            
             if (track && prevBtn && nextBtn) {
                 const originalItems = Array.from(track.children);
-                [...originalItems, ...originalItems].forEach(item => {
-                    const clone = item.cloneNode(true);
-                    clone.removeAttribute('id'); 
-                    track.appendChild(clone);
-                });
-
-                let currentX = 0;
-                let speed = 0.3; 
-                let isAnimating = true; 
-                let itemWidth = 0;
-                let totalOriginalWidth = 0;
-
-                function calculateDimensions() {
-                    const firstItem = track.children[0];
-                    if(firstItem) {
-                        itemWidth = firstItem.offsetWidth;
-                        totalOriginalWidth = itemWidth * originalItems.length;
-                    }
-                }
-                
-                window.addEventListener('resize', calculateDimensions);
-                setTimeout(calculateDimensions, 100);
-
-                function animate() {
-                    if (isAnimating) {
-                        currentX -= speed;
-                        if (Math.abs(currentX) >= totalOriginalWidth) {
-                            currentX = 0;
-                        }
-                        track.style.transform = `translate3d(${currentX}px, 0, 0)`;
-                    }
-                    requestAnimationFrame(animate);
-                }
+                [...originalItems, ...originalItems].forEach(item => { const clone = item.cloneNode(true); clone.removeAttribute('id'); track.appendChild(clone); });
+                let currentX = 0; let speed = 0.3; let isAnimating = true; let itemWidth = 0; let totalOriginalWidth = 0;
+                function calculateDimensions() { const firstItem = track.children[0]; if(firstItem) { itemWidth = firstItem.offsetWidth; totalOriginalWidth = itemWidth * originalItems.length; } }
+                window.addEventListener('resize', calculateDimensions); setTimeout(calculateDimensions, 100);
+                function animate() { if (isAnimating) { currentX -= speed; if (Math.abs(currentX) >= totalOriginalWidth) { currentX = 0; } track.style.transform = `translate3d(${currentX}px, 0, 0)`; } requestAnimationFrame(animate); }
                 requestAnimationFrame(animate);
-
                 function moveCarousel(direction) {
-                    isAnimating = false; 
-                    const targetMove = direction === 'next' ? -itemWidth : itemWidth;
-                    const startX = currentX;
-                    const duration = 900; 
-                    const startTime = performance.now();
-
+                    isAnimating = false; const targetMove = direction === 'next' ? -itemWidth : itemWidth; const startX = currentX; const duration = 900; const startTime = performance.now();
                     function step(currentTime) {
-                        const elapsed = currentTime - startTime;
-                        const progress = Math.min(elapsed / duration, 1);
-                        const ease = 1 - Math.pow(1 - progress, 4);
-                        
-                        currentX = startX + (targetMove * ease);
-                        
-                        if (Math.abs(currentX) >= totalOriginalWidth) {
-                            if (direction === 'next') currentX += totalOriginalWidth;
-                            else currentX -= totalOriginalWidth;
-                        } 
-                        else if (currentX > 0) {
-                             currentX -= totalOriginalWidth;
-                        }
-
+                        const elapsed = currentTime - startTime; const progress = Math.min(elapsed / duration, 1); const ease = 1 - Math.pow(1 - progress, 4); currentX = startX + (targetMove * ease);
+                        if (Math.abs(currentX) >= totalOriginalWidth) { if (direction === 'next') currentX += totalOriginalWidth; else currentX -= totalOriginalWidth; } 
+                        else if (currentX > 0) { currentX -= totalOriginalWidth; }
                         track.style.transform = `translate3d(${currentX}px, 0, 0)`;
-
-                        if (progress < 1) {
-                            requestAnimationFrame(step);
-                        } else {
-                            isAnimating = true; 
-                        }
+                        if (progress < 1) { requestAnimationFrame(step); } else { isAnimating = true; }
                     }
                     requestAnimationFrame(step);
                 }
-
-                nextBtn.addEventListener('click', () => moveCarousel('next'));
-                prevBtn.addEventListener('click', () => moveCarousel('prev'));
+                nextBtn.addEventListener('click', () => moveCarousel('next')); prevBtn.addEventListener('click', () => moveCarousel('prev'));
             }
         });
     </script>
