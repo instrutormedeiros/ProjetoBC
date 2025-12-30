@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Curso de Formação | Bombeiro Civil e Brigadista</title>
     
-    <!-- SCRIPT NUCLEAR PARA LIMPAR CACHE -->
+    <!-- SCRIPT NUCLEAR PARA LIMPAR CACHE ANTIGO -->
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
@@ -16,6 +16,7 @@
         }
     </script>
 
+    <!-- PWA e Meta Tags -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#0b1220">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -23,6 +24,7 @@
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png">
     <link rel="shortcut icon" href="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png" type="image/png">
     
+    <!-- Bibliotecas Externas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = { 
@@ -56,16 +58,12 @@
     <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
 
     <style>
+        /* Container Geral */
         html, body {
             overflow-x: hidden; 
             scroll-behavior: smooth;
             height: auto !important;
             overflow-y: auto !important;
-        }
-
-        /* Classe utilitária para esconder forçadamente */
-        .force-hidden {
-            display: none !important;
         }
 
         /* Container do Carrossel */
@@ -76,34 +74,9 @@
             overflow: hidden; 
             background-color: #050505;
             cursor: pointer;
-            z-index: 50; /* Z-Index Base */
+            z-index: 50;
             display: block;
         }
-
-        /* --- CORREÇÃO DO MODAL (ESTILOS CRÍTICOS) --- */
-        /* Isso garante que o modal seja FIXO na tela e não relativo ao pai */
-        .modal-safe-style {
-            position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            z-index: 100000 !important;
-            display: none; /* Controlado via JS */
-        }
-        
-        .overlay-safe-style {
-            position: fixed !important;
-            inset: 0 !important;
-            background-color: rgba(0,0,0,0.9) !important;
-            z-index: 99999 !important;
-            display: none;
-            backdrop-filter: blur(5px);
-        }
-
-        /* Mostra quando tiver a classe active */
-        .modal-safe-style.active { display: flex !important; flex-direction: column; }
-        .overlay-safe-style.active { display: block !important; }
-
 
         /* --- CSS DO CARROSSEL --- */
         #intro-carousel-wrapper .vignette {
@@ -189,7 +162,64 @@
             width: max-content;
             will-change: transform;
         }
+        
+        /* Classe utilitária para forçar exibição do modal */
+        .force-flex {
+            display: flex !important;
+        }
     </style>
+    
+    <!-- SCRIPT DE LOGIN GLOBAL (MUITO IMPORTANTE: FORA DE QUALQUER BLOCO) -->
+    <script>
+        // Função Global para abrir o Login
+        window.openLocalLogin = function(isManager = false) {
+            console.log("🚀 AÇÃO DE LOGIN INICIADA | Modo Gestor:", isManager);
+            
+            const modal = document.getElementById('name-prompt-modal');
+            const overlay = document.getElementById('name-modal-overlay');
+            const title = document.getElementById('auth-title');
+            
+            if (modal && overlay) {
+                // 1. Remove classe hidden
+                modal.classList.remove('hidden');
+                overlay.classList.remove('hidden');
+                
+                // 2. Força display flex via classe e style direto
+                modal.classList.add('force-flex');
+                modal.style.display = 'flex';
+                overlay.style.display = 'block';
+                
+                // 3. Força Z-Index Supremo
+                modal.style.zIndex = "9999999";
+                overlay.style.zIndex = "9999998";
+                
+                // 4. Ajusta Título
+                if(title) {
+                    title.innerText = isManager ? "Acesso Administrativo" : "Acesso ao Sistema";
+                }
+                
+                console.log("✅ Modal de login deve estar visível agora.");
+            } else {
+                alert("Erro Crítico: Elementos do modal de login não encontrados no DOM.");
+                console.error("❌ Modal não encontrado. Verifique os IDs 'name-prompt-modal' e 'name-modal-overlay'.");
+            }
+        };
+
+        // Função para fechar o modal ao clicar no overlay
+        window.closeLocalLogin = function() {
+             const modal = document.getElementById('name-prompt-modal');
+             const overlay = document.getElementById('name-modal-overlay');
+             if(modal) {
+                 modal.classList.add('hidden');
+                 modal.classList.remove('force-flex');
+                 modal.style.display = 'none';
+             }
+             if(overlay) {
+                 overlay.classList.add('hidden');
+                 overlay.style.display = 'none';
+             }
+        }
+    </script>
 </head>
 
 <body class="antialiased overflow-x-hidden bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
@@ -198,11 +228,17 @@
     <div id="intro-carousel-wrapper" title="Clique em qualquer lugar para entrar no site">
         <div class="relative w-full h-full bg-black overflow-hidden">
             <div class="vignette"></div>
-            <button id="btn-prev" class="nav-arrow left-6 md:left-10 arrow-left-anim" onclick="event.stopPropagation()"><i class="fas fa-chevron-left text-xl"></i></button>
-            <button id="btn-next" class="nav-arrow right-6 md:right-10 arrow-right-anim" onclick="event.stopPropagation()"><i class="fas fa-chevron-right text-xl"></i></button>
+    
+            <button id="btn-prev" class="nav-arrow left-6 md:left-10 arrow-left-anim" onclick="event.stopPropagation()">
+                <i class="fas fa-chevron-left text-xl"></i>
+            </button>
+            <button id="btn-next" class="nav-arrow right-6 md:right-10 arrow-right-anim" onclick="event.stopPropagation()">
+                <i class="fas fa-chevron-right text-xl"></i>
+            </button>
+    
             <div class="h-full w-full">
                 <div id="carousel-track">
-                    <!-- Slides -->
+                    <!-- Slides (Mantidos Iguais) -->
                     <div class="epic-panel w-[100vw] md:w-[33.333vw] group" onclick="selectCourse('BC')">
                         <div class="bg-image-zoom" style="background-image: url('https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/BC.jpg');"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-500"></div>
@@ -212,10 +248,15 @@
                                 <i class="fas fa-fire-extinguisher text-2xl text-red-500"></i>
                                 <span class="text-xs font-mono text-red-500 uppercase tracking-widest border border-red-500/30 px-2 py-1 rounded bg-red-500/10 backdrop-blur-sm">Formação Técnica</span>
                             </div>
-                            <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-4 drop-shadow-lg">Bombeiro<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">Civil</span></h2>
-                            <p class="text-gray-300 text-sm font-medium max-w-xs leading-relaxed border-l-2 border-gray-700 pl-4">Prevenção e combate a incêndio, resgate técnico e primeiros socorros. A elite da segurança.</p>
+                            <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-4 drop-shadow-lg">
+                                Bombeiro<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">Civil</span>
+                            </h2>
+                            <p class="text-gray-300 text-sm font-medium max-w-xs leading-relaxed border-l-2 border-gray-700 pl-4">
+                                Prevenção e combate a incêndio, resgate técnico e primeiros socorros. A elite da segurança.
+                            </p>
                         </div>
                     </div>
+    
                     <div class="epic-panel w-[100vw] md:w-[33.333vw] group" onclick="selectCourse('SP')">
                         <div class="bg-image-zoom" style="background-image: url('https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/SP.jpg');"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-500"></div>
@@ -225,10 +266,15 @@
                                 <i class="fas fa-shield-alt text-2xl text-blue-500"></i>
                                 <span class="text-xs font-mono text-blue-500 uppercase tracking-widest border border-blue-500/30 px-2 py-1 rounded bg-blue-500/10 backdrop-blur-sm">Tático Operacional</span>
                             </div>
-                            <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-4 drop-shadow-lg">Segurança<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-500">Privada</span></h2>
-                            <p class="text-gray-300 text-sm font-medium max-w-xs leading-relaxed border-l-2 border-gray-700 pl-4">Estratégias de vigilância, controle de acesso e proteção de ativos de alto valor.</p>
+                            <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-4 drop-shadow-lg">
+                                Segurança<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-500">Privada</span>
+                            </h2>
+                            <p class="text-gray-300 text-sm font-medium max-w-xs leading-relaxed border-l-2 border-gray-700 pl-4">
+                                Estratégias de vigilância, controle de acesso e proteção de ativos de alto valor.
+                            </p>
                         </div>
                     </div>
+    
                     <div class="epic-panel w-[100vw] md:w-[33.333vw] group" onclick="selectCourse('GE')">
                         <div class="bg-image-zoom" style="background-image: url('https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/GE.jpg');"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-500"></div>
@@ -238,10 +284,15 @@
                                 <i class="fas fa-chart-line text-2xl text-purple-500"></i>
                                 <span class="text-xs font-mono text-purple-500 uppercase tracking-widest border border-purple-500/30 px-2 py-1 rounded bg-purple-500/10 backdrop-blur-sm">Administrativo</span>
                             </div>
-                            <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-4 drop-shadow-lg">Gestão<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-fuchsia-500">& Liderança</span></h2>
-                            <p class="text-gray-300 text-sm font-medium max-w-xs leading-relaxed border-l-2 border-gray-700 pl-4">Painel de controle para líderes de equipe. Monitore métricas e desempenho em tempo real.</p>
+                            <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-4 drop-shadow-lg">
+                                Gestão<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-fuchsia-500">& Liderança</span>
+                            </h2>
+                            <p class="text-gray-300 text-sm font-medium max-w-xs leading-relaxed border-l-2 border-gray-700 pl-4">
+                                Painel de controle para líderes de equipe. Monitore métricas e desempenho em tempo real.
+                            </p>
                         </div>
                     </div>
+    
                     <div class="epic-panel w-[100vw] md:w-[33.333vw] group" onclick="selectCourse('INS')">
                         <div class="bg-image-zoom" style="background-image: url('https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/INS8.png');"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-500"></div>
@@ -251,8 +302,12 @@
                                 <i class="fas fa-chalkboard-user text-2xl text-emerald-500"></i>
                                 <span class="text-xs font-mono text-emerald-500 uppercase tracking-widest border border-emerald-500/30 px-2 py-1 rounded bg-emerald-500/10 backdrop-blur-sm">Docência</span>
                             </div>
-                            <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-4 drop-shadow-lg">Instrutor<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-600">de Cursos</span></h2>
-                            <p class="text-gray-300 text-sm font-medium max-w-xs leading-relaxed border-l-2 border-gray-700 pl-4">Metodologia de ensino, oratória e técnicas avançadas para formar profissionais de elite.</p>
+                            <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-4 drop-shadow-lg">
+                                Instrutor<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-600">de Cursos</span>
+                            </h2>
+                            <p class="text-gray-300 text-sm font-medium max-w-xs leading-relaxed border-l-2 border-gray-700 pl-4">
+                                Metodologia de ensino, oratória e técnicas avançadas para formar profissionais de elite.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -263,23 +318,32 @@
         </div>
     </div>
 
-    <!-- PARTE 2: CAPA ANTIGA -->
+    <!-- 
+    PARTE 2: CAPA ANTIGA 
+    -->
     <div id="landing-hero" style="position: relative !important; z-index: 40 !important;" class="w-full min-h-screen bg-[#050a14] overflow-visible custom-scrollbar transition-all duration-1000 ease-in-out font-sans">
         
+        <!-- NAV CORRIGIDO: Adicionado type="button" e chamada para window.openLocalLogin -->
         <nav class="absolute top-0 left-0 w-full z-50 py-3 px-4 md:py-4 md:px-12 flex justify-between items-center bg-gradient-to-b from-black/90 to-transparent backdrop-blur-sm">
             <div class="flex items-center gap-3 md:gap-4">
                 <div class="leading-none">
-                    <span class="block font-serif font-black italic text-xl md:text-2xl tracking-tight"><span class="text-white">FOCO.</span><span class="text-orange-600">AÇÃO.</span></span>
-                    <span class="block font-serif font-black italic text-xl md:text-2xl tracking-tight text-white mt-1">RESULTADO.</span>
+                    <span class="block font-serif font-black italic text-xl md:text-2xl tracking-tight">
+                        <span class="text-white">FOCO.</span><span class="text-orange-600">AÇÃO.</span>
+                    </span>
+                    <span class="block font-serif font-black italic text-xl md:text-2xl tracking-tight text-white mt-1">
+                        RESULTADO.
+                    </span>
                 </div>
             </div>
+            
             <div class="flex items-center gap-3">
-                <!-- MODIFICADO: Usando funções seguras openManagerLogin() -->
-                <button onclick="openManagerLogin()" class="hidden md:flex items-center gap-2 text-gray-300 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors mr-2">
+                <!-- Botão GESTOR -->
+                <button type="button" onclick="event.stopPropagation(); window.openLocalLogin(true);" class="hidden md:flex items-center gap-2 text-gray-300 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors mr-2 cursor-pointer z-50">
                     <i class="fas fa-building text-orange-500"></i> Sou Gestor
                 </button>
-                <!-- MODIFICADO: Usando funções seguras openStudentLogin() -->
-                <button onclick="openStudentLogin()" class="group flex items-center gap-2 bg-white/5 hover:bg-orange-600 text-white px-4 py-2 md:px-6 md:py-2 rounded border border-white/10 hover:border-orange-500 transition-all duration-300 backdrop-blur-md">
+
+                <!-- Botão ALUNO -->
+                <button type="button" onclick="event.stopPropagation(); window.openLocalLogin(false);" class="group flex items-center gap-2 bg-white/5 hover:bg-orange-600 text-white px-4 py-2 md:px-6 md:py-2 rounded border border-white/10 hover:border-orange-500 transition-all duration-300 backdrop-blur-md cursor-pointer z-50">
                     <span class="text-[10px] md:text-xs font-bold uppercase tracking-widest">Área do Aluno</span>
                     <i class="fas fa-lock text-[10px] md:text-xs text-orange-500 group-hover:text-white transition-colors"></i>
                 </button>
@@ -289,16 +353,27 @@
         <section class="relative min-h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden pt-20">
             <div class="absolute inset-0 bg-[url('https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/01.webp')] bg-cover bg-center md:bg-fixed grayscale-[30%] contrast-125 brightness-[0.4]"></div>
             <div class="absolute inset-0 bg-gradient-to-t from-[#050a14] via-transparent to-black/60"></div>
+
             <div class="relative z-10 max-w-7xl mx-auto flex flex-col items-center">
                 <div class="reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 mb-6">
-                    <span class="inline-block py-1 px-4 rounded border border-orange-500/50 bg-orange-500/10 text-orange-400 text-xs md:text-sm font-bold tracking-[0.4em] uppercase backdrop-blur-md shadow-[0_0_20px_rgba(234,88,12,0.3)]">PROJETO</span>
+                    <span class="inline-block py-1 px-4 rounded border border-orange-500/50 bg-orange-500/10 text-orange-400 text-xs md:text-sm font-bold tracking-[0.4em] uppercase backdrop-blur-md shadow-[0_0_20px_rgba(234,88,12,0.3)]">
+                        PROJETO
+                    </span>
                 </div>
+
                 <div class="reveal-on-scroll opacity-0 scale-95 transition-all duration-1000 delay-200 overflow-visible">
-                    <h1 class="text-5xl sm:text-7xl md:text-9xl font-black text-white mb-6 tracking-tighter uppercase italic leading-[0.9]" style="text-shadow: 0 10px 40px rgba(0,0,0,0.9);">BRAVO <br class="md:hidden"><span class="inline-block text-transparent bg-clip-text bg-gradient-to-t from-orange-600 to-orange-400 pr-6 md:pr-8">CHARLIE</span></h1>
+                    <h1 class="text-5xl sm:text-7xl md:text-9xl font-black text-white mb-6 tracking-tighter uppercase italic leading-[0.9]" style="text-shadow: 0 10px 40px rgba(0,0,0,0.9);">
+                        BRAVO <br class="md:hidden">
+                        <span class="inline-block text-transparent bg-clip-text bg-gradient-to-t from-orange-600 to-orange-400 pr-6 md:pr-8">CHARLIE</span>
+                    </h1>
                 </div>
+
                 <div class="reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000 delay-400 w-full px-2">
-                    <p class="text-lg sm:text-xl md:text-2xl text-gray-300 font-light max-w-3xl mx-auto leading-relaxed drop-shadow-md border-l-4 border-orange-600 pl-6 text-left md:text-center md:border-l-0 md:border-b-4 md:pb-4 md:pl-0">"A dor é temporária. O orgulho de pertencer à elite é para sempre."</p>
+                    <p class="text-lg sm:text-xl md:text-2xl text-gray-300 font-light max-w-3xl mx-auto leading-relaxed drop-shadow-md border-l-4 border-orange-600 pl-6 text-left md:text-center md:border-l-0 md:border-b-4 md:pb-4 md:pl-0">
+                        "A dor é temporária. O orgulho de pertencer à elite é para sempre."
+                    </p>
                 </div>
+                
                 <button onclick="scrollToNextSection()" class="mt-16 md:mt-24 animate-bounce p-4 group">
                     <div class="w-10 h-14 border-2 border-white/20 rounded-full flex justify-center pt-2 group-hover:border-orange-500 transition-colors">
                         <div class="w-1 h-3 bg-white/50 rounded-full animate-scroll-down group-hover:bg-orange-500"></div>
@@ -319,6 +394,7 @@
                             <p class="text-gray-400 text-sm">Domínio absoluto dos equipamentos e protocolos.</p>
                         </div>
                     </div>
+
                     <div class="group relative h-[400px] rounded-xl overflow-hidden border border-white/10 hover:border-orange-500/50 transition-all duration-500 reveal-on-scroll opacity-0 translate-y-10 delay-200">
                         <div class="absolute inset-0 bg-[url('https://github.com/instrutormedeiros/ProjetoBC/blob/main/assets/img/3.webp?raw=true')] bg-cover bg-center transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-90 group-hover:opacity-80 transition-opacity"></div>
@@ -328,6 +404,7 @@
                             <p class="text-gray-400 text-sm">Reação imediata e eficiente sob pressão.</p>
                         </div>
                     </div>
+
                     <div class="group relative h-[400px] rounded-xl overflow-hidden border border-white/10 hover:border-orange-500/50 transition-all duration-500 reveal-on-scroll opacity-0 translate-y-10 delay-300">
                         <div class="absolute inset-0 bg-[url('https://github.com/instrutormedeiros/ProjetoBC/blob/main/assets/img/4.webp?raw=true')] bg-cover bg-center transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-90 group-hover:opacity-80 transition-opacity"></div>
@@ -343,44 +420,92 @@
 
         <section class="bg-[#050a14] py-24 px-4 overflow-hidden relative">
             <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-orange-600/10 rounded-full blur-[150px] pointer-events-none"></div>
+
             <div class="max-w-5xl mx-auto text-center relative z-10">
                 <div class="reveal-on-scroll opacity-0 translate-y-10 transition-all duration-1000">
-                    <h2 class="text-3xl md:text-5xl font-bold text-white mb-4 uppercase">A Plataforma de <span class="text-orange-600">Elite</span></h2>
-                    <p class="text-gray-400 max-w-2xl mx-auto mb-16">Tecnologia e metodologia unidas para forjar os melhores profissionais do mercado.</p>
+                    <h2 class="text-3xl md:text-5xl font-bold text-white mb-4 uppercase">
+                        A Plataforma de <span class="text-orange-600">Elite</span>
+                    </h2>
+                    <p class="text-gray-400 max-w-2xl mx-auto mb-16">
+                        Tecnologia e metodologia unidas para forjar os melhores profissionais do mercado.
+                    </p>
                 </div>
+
                 <div class="laptop-wrapper w-full max-w-4xl mx-auto h-[250px] md:h-[450px] relative">
                     <div id="notebook-tap-hint" class="md:hidden absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 flex flex-col items-center cursor-pointer pointer-events-none transition-opacity duration-500">
                         <div class="relative">
-                            <div class="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(234,88,12,0.6)] animate-bounce"><i class="fas fa-hand-pointer text-white text-xl"></i></div>
+                            <div class="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(234,88,12,0.6)] animate-bounce">
+                                <i class="fas fa-hand-pointer text-white text-xl"></i>
+                            </div>
                             <div class="absolute inset-0 bg-orange-500 rounded-full animate-ping opacity-75"></div>
                         </div>
-                        <span class="mt-3 text-white text-[10px] font-bold uppercase tracking-widest bg-black/60 px-3 py-1 rounded-full border border-white/10 backdrop-blur-md shadow-lg">Toque para Abrir</span>
+                        <span class="mt-3 text-white text-[10px] font-bold uppercase tracking-widest bg-black/60 px-3 py-1 rounded-full border border-white/10 backdrop-blur-md shadow-lg">
+                            Toque para Abrir
+                        </span>
                     </div>
+
                     <div id="laptop-lid" class="laptop-lid absolute top-0 left-[5%] md:left-[10%] w-[90%] md:w-[80%] h-[85%] bg-[#0a0a0a] rounded-t-xl border-[3px] border-gray-700 border-b-0 overflow-hidden shadow-2xl z-20 relative">
-                        <div class="absolute top-0 left-0 w-full h-6 bg-[#0a0a0a] flex items-center justify-center z-30"><div class="w-1.5 h-1.5 bg-gray-600 rounded-full"></div></div>
-                        <div class="absolute top-6 left-0 w-full h-[calc(100%-24px)] bg-black overflow-hidden"><img src="https://github.com/instrutormedeiros/ProjetoBC/blob/main/assets/img/TELA%20DA%20PLATAFORMA.png?raw=true" class="w-full h-full object-cover object-top opacity-95 hover:scale-105 transition-transform duration-1000"></div>
+                        <div class="absolute top-0 left-0 w-full h-6 bg-[#0a0a0a] flex items-center justify-center z-30">
+                            <div class="w-1.5 h-1.5 bg-gray-600 rounded-full"></div>
+                        </div>
+                        <div class="absolute top-6 left-0 w-full h-[calc(100%-24px)] bg-black overflow-hidden">
+                            <img src="https://github.com/instrutormedeiros/ProjetoBC/blob/main/assets/img/TELA%20DA%20PLATAFORMA.png?raw=true" class="w-full h-full object-cover object-top opacity-95 hover:scale-105 transition-transform duration-1000">
+                        </div>
                         <div class="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none z-40"></div>
                     </div>
-                    <div class="absolute bottom-0 left-0 w-full h-[15px] md:h-[25px] bg-gradient-to-b from-gray-700 to-gray-800 rounded-b-2xl z-30 shadow-[0_20px_70px_rgba(0,0,0,0.9)] border-t border-gray-600 relative"><div class="absolute top-0 left-1/2 -translate-x-1/2 w-[150px] h-[10px] bg-gray-800/50 rounded-b-lg border-b border-white/10"></div></div>
+
+                    <div class="absolute bottom-0 left-0 w-full h-[15px] md:h-[25px] bg-gradient-to-b from-gray-700 to-gray-800 rounded-b-2xl z-30 shadow-[0_20px_70px_rgba(0,0,0,0.9)] border-t border-gray-600 relative">
+                        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[150px] h-[10px] bg-gray-800/50 rounded-b-lg border-b border-white/10"></div>
+                    </div>
                 </div>
             </div>
         </section>
 
         <section class="bg-[#080b12] py-24 px-4 border-t border-white/5">
             <div class="max-w-3xl mx-auto">
-                <h2 class="text-3xl md:text-4xl font-bold text-center text-white mb-12 uppercase">Perguntas <span class="text-orange-600">Frequentes</span></h2>
+                <h2 class="text-3xl md:text-4xl font-bold text-center text-white mb-12 uppercase">
+                    Perguntas <span class="text-orange-600">Frequentes</span>
+                </h2>
+
                 <div class="space-y-4">
                     <details class="group bg-[#0f1623] border border-gray-800 rounded-lg overflow-hidden transition-all duration-300 hover:border-orange-500/30 open:border-orange-500/50 open:bg-[#131a2a]">
-                        <summary class="flex justify-between items-center p-6 cursor-pointer text-white font-bold select-none"><span>O curso é 100% online?</span><i class="fas fa-chevron-down text-orange-500 transition-transform group-open:rotate-180"></i></summary>
-                        <div class="px-6 pb-6 text-gray-400 leading-relaxed text-sm border-t border-white/5 pt-4">Sim. A plataforma Bravo Charlie é um ambiente digital completo.</div>
+                        <summary class="flex justify-between items-center p-6 cursor-pointer text-white font-bold select-none">
+                            <span>O curso é 100% online?</span>
+                            <i class="fas fa-chevron-down text-orange-500 transition-transform group-open:rotate-180"></i>
+                        </summary>
+                        <div class="px-6 pb-6 text-gray-400 leading-relaxed text-sm border-t border-white/5 pt-4">
+                            Sim. A plataforma Bravo Charlie é um ambiente digital completo. Você terá acesso a aulas interativas, simulados táticos e ferramentas de gestão de estudo acessíveis de qualquer dispositivo (celular, tablet ou computador), 24 horas por dia.
+                        </div>
                     </details>
+
                     <details class="group bg-[#0f1623] border border-gray-800 rounded-lg overflow-hidden transition-all duration-300 hover:border-orange-500/30 open:border-orange-500/50 open:bg-[#131a2a]">
-                        <summary class="flex justify-between items-center p-6 cursor-pointer text-white font-bold select-none"><span>Como funciona o acesso?</span><i class="fas fa-chevron-down text-orange-500 transition-transform group-open:rotate-180"></i></summary>
-                        <div class="px-6 pb-6 text-gray-400 leading-relaxed text-sm border-t border-white/5 pt-4">O acesso é imediato. Após a inscrição, você recebe suas credenciais exclusivas.</div>
+                        <summary class="flex justify-between items-center p-6 cursor-pointer text-white font-bold select-none">
+                            <span>Como funciona o acesso?</span>
+                            <i class="fas fa-chevron-down text-orange-500 transition-transform group-open:rotate-180"></i>
+                        </summary>
+                        <div class="px-6 pb-6 text-gray-400 leading-relaxed text-sm border-t border-white/5 pt-4">
+                            O acesso é imediato. Após a inscrição, você recebe suas credenciais exclusivas para entrar na "Área do Aluno". O sistema memoriza seu progresso, permitindo que você continue exatamente de onde parou, mesmo trocando de dispositivo.
+                        </div>
                     </details>
+
                     <details class="group bg-[#0f1623] border border-gray-800 rounded-lg overflow-hidden transition-all duration-300 hover:border-orange-500/30 open:border-orange-500/50 open:bg-[#131a2a]">
-                        <summary class="flex justify-between items-center p-6 cursor-pointer text-white font-bold select-none"><span>Qual o diferencial?</span><i class="fas fa-chevron-down text-orange-500 transition-transform group-open:rotate-180"></i></summary>
-                        <div class="px-6 pb-6 text-gray-400 leading-relaxed text-sm border-t border-white/5 pt-4">Focamos na realidade operacional.</div>
+                        <summary class="flex justify-between items-center p-6 cursor-pointer text-white font-bold select-none">
+                            <span>Qual o diferencial da metodologia?</span>
+                            <i class="fas fa-chevron-down text-orange-500 transition-transform group-open:rotate-180"></i>
+                        </summary>
+                        <div class="px-6 pb-6 text-gray-400 leading-relaxed text-sm border-t border-white/5 pt-4">
+                            Focamos na realidade operacional. Não ensinamos apenas "o que fazer", mas "como pensar" sob pressão. Nossos simulados replicam cenários reais de emergência para testar sua tomada de decisão, não apenas sua memória.
+                        </div>
+                    </details>
+
+                    <details class="group bg-[#0f1623] border border-gray-800 rounded-lg overflow-hidden transition-all duration-300 hover:border-orange-500/30 open:border-orange-500/50 open:bg-[#131a2a]">
+                        <summary class="flex justify-between items-center p-6 cursor-pointer text-white font-bold select-none">
+                            <span>Tenho suporte a dúvidas?</span>
+                            <i class="fas fa-chevron-down text-orange-500 transition-transform group-open:rotate-180"></i>
+                        </summary>
+                        <div class="px-6 pb-6 text-gray-400 leading-relaxed text-sm border-t border-white/5 pt-4">
+                            Absolutamente. Você conta com suporte técnico para a plataforma e suporte pedagógico para o conteúdo, garantindo que nenhuma dúvida atrapalhe sua evolução.
+                        </div>
                     </details>
                 </div>
             </div>
@@ -389,43 +514,66 @@
         <section class="py-24 px-4 text-center bg-[#050a14] relative overflow-hidden">
             <div class="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_var(--tw-gradient-stops))] from-orange-900/20 via-[#050a14] to-[#050a14]"></div>
             <div class="relative z-10">
-                <h2 class="text-3xl md:text-5xl font-black text-white mb-8 uppercase italic leading-none">Sua evolução não pode esperar</h2>
-                <!-- MODIFICADO: Usando funções seguras openStudentLogin() -->
-                <button onclick="openStudentLogin()" class="relative inline-flex group items-center justify-center px-12 py-6 overflow-hidden font-bold text-white transition-all duration-300 bg-gradient-to-r from-orange-700 to-orange-600 rounded hover:from-orange-600 hover:to-orange-500 hover:shadow-[0_0_50px_rgba(234,88,12,0.4)] active:scale-95 transform hover:-translate-y-1">
-                    <span class="relative flex items-center text-xl md:text-2xl tracking-widest uppercase">ACESSAR SISTEMA <i class="fas fa-sign-in-alt ml-4 animate-pulse"></i></span>
+                <h2 class="text-3xl md:text-5xl font-black text-white mb-8 uppercase italic leading-none">
+                    Sua evolução não pode esperar
+                </h2>
+                <!-- Botão de Acesso Principal - Corrigido -->
+                <button type="button" onclick="event.stopPropagation(); window.openLocalLogin(false);" class="relative inline-flex group items-center justify-center px-12 py-6 overflow-hidden font-bold text-white transition-all duration-300 bg-gradient-to-r from-orange-700 to-orange-600 rounded hover:from-orange-600 hover:to-orange-500 hover:shadow-[0_0_50px_rgba(234,88,12,0.4)] active:scale-95 transform hover:-translate-y-1">
+                    <span class="relative flex items-center text-xl md:text-2xl tracking-widest uppercase">
+                        ACESSAR SISTEMA <i class="fas fa-sign-in-alt ml-4 animate-pulse"></i>
+                    </span>
                 </button>
             </div>
         </section>
 
         <div class="bg-black py-12 mt-0 border-t border-white/10 relative z-50 text-center px-4">
-            <div class="mb-4 flex justify-center"><img src="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png" class="w-8 h-8 grayscale opacity-40"></div>
-            <p class="text-gray-500 text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold mb-2">Projeto Bravo Charlie © 2025</p>
-            <p class="text-gray-600 text-[10px] md:text-xs uppercase tracking-[0.1em] font-mono">CNPJ: 63.911.037/0001-91</p>
-            <p class="text-gray-700 text-[9px] mt-2">Todos os direitos reservados.</p>
+            <div class="mb-4 flex justify-center">
+                <img src="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png" class="w-8 h-8 grayscale opacity-40">
+            </div>
+
+            <p class="text-gray-500 text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold mb-2">
+                Projeto Bravo Charlie © 2025
+            </p>
+            <p class="text-gray-600 text-[10px] md:text-xs uppercase tracking-[0.1em] font-mono">
+                CNPJ: 63.911.037/0001-91
+            </p>
+            <p class="text-gray-700 text-[9px] mt-2">
+                Todos os direitos reservados.
+            </p>
             <div class="h-24 w-full"></div>
         </div>
+
     </div>
 
     <!-- 
     PARTE 3: APLICAÇÃO (ESCONDIDA POR PADRÃO)
     -->
-    <div id="accessibility-fab" title="Menu de Acessibilidade" class="force-hidden hidden"><i class="fas fa-universal-access"></i></div>
-    <div id="accessibility-menu" class="force-hidden hidden">
-        <button class="acc-btn" id="acc-font-plus"><i class="fas fa-search-plus"></i></button>
-        <button class="acc-btn" id="acc-font-minus"><i class="fas fa-search-minus"></i></button>
-        <button class="acc-btn" id="acc-dyslexic"><i class="fas fa-font"></i></button>
-        <button class="acc-btn" id="acc-spacing"><i class="fas fa-text-width"></i></button>
+    <div id="accessibility-fab" title="Menu de Acessibilidade" class="hidden">
+        <i class="fas fa-universal-access"></i>
+    </div>
+    <div id="accessibility-menu" class="hidden">
+        <button class="acc-btn" id="acc-font-plus"><i class="fas fa-search-plus"></i> Aumentar Fonte</button>
+        <button class="acc-btn" id="acc-font-minus"><i class="fas fa-search-minus"></i> Diminuir Fonte</button>
+        <button class="acc-btn" id="acc-dyslexic"><i class="fas fa-font"></i> Fonte Dislexia</button>
+        <button class="acc-btn" id="acc-spacing"><i class="fas fa-text-width"></i> Espaçamento</button>
     </div>
 
-    <div id="trial-floating-notify" class="force-hidden hidden fixed right-4 bg-white dark:bg-gray-800 border-l-4 border-yellow-500 text-gray-800 dark:text-white p-4 rounded-r shadow-2xl z-50 flex items-center gap-4 animate-slide-in max-w-sm" style="bottom: 160px;">
-        <div><p class="font-bold text-sm" id="trial-title-text">Período de Experiência</p><p class="text-xs text-gray-600 dark:text-gray-400"><span id="trial-days-left">...</span> dias restantes.</p></div>
-        <button id="trial-subscribe-btn" class="bg-green-600 hover:bg-green-500 text-white text-xs font-bold py-2 px-3 rounded transition-colors">ASSINAR</button>
-        <button id="close-trial-notify" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><i class="fas fa-times"></i></button>
+    <div id="trial-floating-notify" class="hidden fixed right-4 bg-white dark:bg-gray-800 border-l-4 border-yellow-500 text-gray-800 dark:text-white p-4 rounded-r shadow-2xl z-50 flex items-center gap-4 animate-slide-in max-w-sm" style="bottom: 160px;">
+        <div>
+            <p class="font-bold text-sm" id="trial-title-text">Período de Experiência</p>
+            <p class="text-xs text-gray-600 dark:text-gray-400"><span id="trial-days-left">...</span> dias restantes.</p>
+        </div>
+        <button id="trial-subscribe-btn" class="bg-green-600 hover:bg-green-500 text-white text-xs font-bold py-2 px-3 rounded transition-colors">
+            ASSINAR
+        </button>
+        <button id="close-trial-notify" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+            <i class="fas fa-times"></i>
+        </button>
     </div>
 
-    <div id="sidebar-overlay" class="force-hidden fixed inset-0 bg-black bg-opacity-60 z-40 opacity-0 pointer-events-none sidebar-overlay lg:hidden hidden"></div>
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-40 opacity-0 pointer-events-none sidebar-overlay lg:hidden hidden"></div>
     
-    <div id="off-canvas-sidebar" class="force-hidden hidden fixed top-0 left-0 h-full w-4/5 max-w-sm z-50 transform -translate-x-full transition-transform duration-300 ease-in-out">
+    <div id="off-canvas-sidebar" class="hidden fixed top-0 left-0 h-full w-4/5 max-w-sm z-50 transform -translate-x-full transition-transform duration-300 ease-in-out">
         <div class="p-0 h-full flex flex-col">
             <div class="p-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
                 <h2 class="text-xl font-semibold flex items-center text-blue-900 dark:text-white"><i class="fas fa-list-ul mr-3 text-orange-500"></i> Conteúdo</h2>
@@ -440,28 +588,62 @@
         </div>
     </div>
     
-    <div id="main-wrapper" class="force-hidden hidden">
+    <div id="main-wrapper" class="hidden">
         <header id="main-header" class="fixed top-0 left-0 w-full z-40 backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 shadow-md transition-all duration-500">
             <div class="container mx-auto px-4 md:px-6 max-w-7xl">
                 <div class="flex justify-between items-center py-4">
                     <div class="flex items-center space-x-4">
-                        <div class="bg-gradient-to-tr from-red-600 to-orange-500 p-3 rounded-full shadow-md"><i class="fas fa-shield-alt text-3xl md:text-4xl text-white"></i></div>
-                        <div><h1 class="text-2xl md:text-3xl lg:text-4xl font-serif font-bold text-gray-900 dark:text-white tracking-tight leading-tight">Projeto Bravo Charlie</h1><p class="text-gray-600 dark:text-gray-400 text-xs md:text-sm font-sans mt-1 font-medium">Formando Profissionais de Elite</p></div>
+                        <div class="bg-gradient-to-tr from-red-600 to-orange-500 p-3 rounded-full shadow-md">
+                            <i class="fas fa-shield-alt text-3xl md:text-4xl text-white"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl md:text-3xl lg:text-4xl font-serif font-bold text-gray-900 dark:text-white tracking-tight leading-tight">Projeto Bravo Charlie</h1>
+                            <p class="text-gray-600 dark:text-gray-400 text-xs md:text-sm font-sans mt-1 font-medium">Formando Profissionais de Elite</p>
+                        </div>
                     </div>
+
                     <div class="hidden lg:flex items-center space-x-4">
-                        <button id="admin-panel-btn" class="hidden bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-3 rounded-full shadow-md transition-all" title="Painel Administrativo"><i class="fas fa-crown"></i></button>
-                        <button id="install-app-btn" class="hidden bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-full text-sm font-bold shadow-md transition-all flex items-center"><i class="fas fa-download mr-2"></i> Instalar App</button>
-                        <button id="header-subscribe-btn" class="action-button pulse-button bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-6 rounded-full shadow-lg border-2 border-green-400 transform hover:scale-105 transition-all"><i class="fas fa-crown mr-2"></i> ASSINAR</button>
-                        <button id="home-button-desktop" title="Voltar ao Início" class="text-gray-800 dark:text-gray-100 text-xl hover:text-orange-500 transition-colors"><i class="fas fa-home"></i></button>
-                        <div class="bg-gray-100/60 dark:bg-gray-800/60 py-1.5 px-4 rounded-full text-sm font-semibold border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm"><i class="fas fa-book-open mr-2 text-orange-500"></i> <span id="course-modules-count">...</span> Módulos</div>
-                        <button id="focus-mode-toggle" title="Modo Revisão" class="text-xl text-gray-800 dark:text-gray-100 hover:text-orange-500 transition-colors"><i class="fas fa-book-reader"></i></button>
-                        <button id="dark-mode-toggle-desktop" title="Mudar Tema"><i class="fas fa-moon"></i></button>
-                        <button id="logout-button-header" title="Sair" class="text-gray-800 dark:text-gray-100 text-lg hover:text-red-500 transition-colors ml-2"><i class="fas fa-sign-out-alt"></i></button>
+                        
+                        <button id="admin-panel-btn" class="hidden bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-3 rounded-full shadow-md transition-all" title="Painel Administrativo">
+                            <i class="fas fa-crown"></i>
+                        </button>
+                        <button id="install-app-btn" class="hidden bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-full text-sm font-bold shadow-md transition-all flex items-center">
+                            <i class="fas fa-download mr-2"></i> Instalar App
+                        </button>
+
+                        <button id="header-subscribe-btn" class="action-button pulse-button bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-6 rounded-full shadow-lg border-2 border-green-400 transform hover:scale-105 transition-all">
+                            <i class="fas fa-crown mr-2"></i> ASSINAR
+                        </button>
+                        
+                        <button id="home-button-desktop" title="Voltar ao Início" class="text-gray-800 dark:text-gray-100 text-xl hover:text-orange-500 transition-colors">
+                            <i class="fas fa-home"></i>
+                        </button>
+                        <div class="bg-gray-100/60 dark:bg-gray-800/60 py-1.5 px-4 rounded-full text-sm font-semibold border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm">
+                            <i class="fas fa-book-open mr-2 text-orange-500"></i>
+                            <span id="course-modules-count">...</span> Módulos
+                        </div>
+                        <button id="focus-mode-toggle" title="Modo Revisão" class="text-xl text-gray-800 dark:text-gray-100 hover:text-orange-500 transition-colors">
+                            <i class="fas fa-book-reader"></i>
+                        </button>
+                        <button id="dark-mode-toggle-desktop" title="Mudar Tema">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                        <button id="logout-button-header" title="Sair" class="text-gray-800 dark:text-gray-100 text-lg hover:text-red-500 transition-colors ml-2">
+                             <i class="fas fa-sign-out-alt"></i>
+                        </button>
                     </div>
+
                     <div class="lg:hidden flex items-center gap-3">
-                        <button id="mobile-admin-btn" class="hidden bg-yellow-500 text-white text-sm px-3 py-1.5 rounded-full shadow-lg border border-yellow-400"><i class="fas fa-crown"></i></button>
-                        <button id="mobile-subscribe-btn" class="pulse-button bg-green-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg border border-green-400"><i class="fas fa-crown"></i></button>
-                        <button id="mobile-menu-button" class="text-gray-900 dark:text-white text-2xl hover:text-orange-500 transition-colors"><i class="fas fa-bars"></i></button>
+                        <button id="mobile-admin-btn" class="hidden bg-yellow-500 text-white text-sm px-3 py-1.5 rounded-full shadow-lg border border-yellow-400">
+                            <i class="fas fa-crown"></i>
+                        </button>
+
+                        <button id="mobile-subscribe-btn" class="pulse-button bg-green-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg border border-green-400">
+                            <i class="fas fa-crown"></i>
+                        </button>
+                        <button id="mobile-menu-button" class="text-gray-900 dark:text-white text-2xl hover:text-orange-500 transition-colors">
+                            <i class="fas fa-bars"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -489,7 +671,10 @@
                     <p class="text-gray-600 dark:text-gray-300">Que bom que voltou, seu futuro começa agora.</p>
                 </div>
                 <div id="breadcrumb-container" class="mb-4 text-sm text-gray-600 dark:text-gray-400"></div>
-                <div id="loading-spinner" class="hidden text-center p-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg"><div class="loader"></div><p class="mt-4 text-lg font-semibold text-blue-600 dark:text-blue-400">Carregando Módulo...</p></div>
+                <div id="loading-spinner" class="hidden text-center p-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+                    <div class="loader"></div>
+                    <p class="mt-4 text-lg font-semibold text-blue-600 dark:text-blue-400">Carregando Módulo...</p>
+                </div>
                 <main>
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                         <div id="content-area" class="p-6 md:p-10"></div>
@@ -507,14 +692,25 @@
        <footer class="bg-gray-800 dark:bg-black text-white py-10 mt-12">
             <div class="container mx-auto px-4 md:px-6 max-w-7xl">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div><h3 class="text-xl font-semibold mb-4 text-white">Formação Bombeiro Civil / Brigadista</h3><p class="text-gray-400">Capacitação profissional de excelência.</p></div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4 text-white">Formação Bombeiro Civil / Brigadista</h3>
+                        <p class="text-gray-400">Capacitação profissional de excelência.</p>
+                    </div>
                     <div>
                         <h3 class="text-xl font-semibold mb-4 text-white">Redes e Projetos</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-2">
-                            <a href="https://www.instagram.com/coordenadormedeiros/" class="flex items-center text-gray-300 hover:text-orange-500 transition-colors social-link" target="_blank"><i class="fab fa-instagram w-6 text-center"></i> Coordenador Medeiros</a>
-                            <a href="https://www.linkedin.com/in/chefemedeiros/" class="flex items-center text-gray-300 hover:text-blue-500 transition-colors social-link" target="_blank"><i class="fab fab fa-linkedin w-6 text-center"></i> Chefe Medeiros</a>
-                            <a href="https://instrutormedeiros.github.io/fardamento-acampamento/" class="flex items-center text-gray-300 hover:text-green-500 transition-colors social-link" target="_blank"><i class="fas fa-tshirt w-6 text-center"></i> Artigos Militares</a>
-                            <a href="https://www.instagram.com/bombeirocivilbrasilia/" class="flex items-center text-gray-300 hover:text-red-500 transition-colors social-link" target="_blank"><i class="fab fa-instagram w-6 text-center"></i> Bombeiro Civil Brasília</a>
+                            <a href="https://www.instagram.com/coordenadormedeiros/" class="flex items-center text-gray-300 hover:text-orange-500 transition-colors social-link" target="_blank">
+                                <i class="fab fa-instagram w-6 text-center"></i> Coordenador Medeiros
+                            </a>
+                            <a href="https://www.linkedin.com/in/chefemedeiros/" class="flex items-center text-gray-300 hover:text-blue-500 transition-colors social-link" target="_blank">
+                                <i class="fab fab fa-linkedin w-6 text-center"></i> Chefe Medeiros
+                            </a>
+                            <a href="https://instrutormedeiros.github.io/fardamento-acampamento/" class="flex items-center text-gray-300 hover:text-green-500 transition-colors social-link" target="_blank">
+                                <i class="fas fa-tshirt w-6 text-center"></i> Artigos Militares
+                            </a>
+                            <a href="https://www.instagram.com/bombeirocivilbrasilia/" class="flex items-center text-gray-300 hover:text-red-500 transition-colors social-link" target="_blank">
+                                <i class="fab fa-instagram w-6 text-center"></i> Bombeiro Civil Brasília
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -522,19 +718,38 @@
                     <p class="developer-credit mb-2">Desenvolvido por Instrutor Medeiros</p>
                     <p>© 2013-2025 Curso de Formação Profissional. Todos os direitos reservados.</p>
                    <div class="mt-6 flex flex-wrap justify-center items-center gap-4">
-                       <button id="manual-sync-btn" class="text-xs text-blue-400 hover:text-blue-300 underline transition flex items-center"><i class="fas fa-cloud-upload-alt mr-1"></i> Salvar Progresso</button><span class="text-gray-600">|</span> 
-                       <button id="logout-button" class="text-xs text-yellow-500 hover:text-yellow-400 underline transition flex items-center"><i class="fas fa-sign-out-alt mr-1"></i> Sair</button><span class="text-gray-600">|</span>
-                       <button id="restart-tour-btn" class="text-xs text-blue-400 hover:text-blue-300 underline transition flex items-center"><i class="fas fa-question-circle mr-1"></i> Ver Tutorial</button><span class="text-gray-600">|</span>
-                       <button id="reset-progress" class="text-xs text-red-500 hover:text-red-400 underline transition flex items-center"><i class="fas fa-trash-alt mr-1"></i> Resetar</button>
+                      
+                       <button id="manual-sync-btn" class="text-xs text-blue-400 hover:text-blue-300 underline transition flex items-center">
+    <i class="fas fa-cloud-upload-alt mr-1"></i> Salvar Progresso
+</button>
+<span class="text-gray-600">|</span> 
+                       <button id="logout-button" class="text-xs text-yellow-500 hover:text-yellow-400 underline transition flex items-center">
+                            <i class="fas fa-sign-out-alt mr-1"></i> Sair
+                        </button>
+                        
+                        <span class="text-gray-600">|</span>
+
+                        <button id="restart-tour-btn" class="text-xs text-blue-400 hover:text-blue-300 underline transition flex items-center">
+                            <i class="fas fa-question-circle mr-1"></i> Ver Tutorial
+                        </button>
+
+                        <span class="text-gray-600">|</span>
+
+                        <button id="reset-progress" class="text-xs text-red-500 hover:text-red-400 underline transition flex items-center">
+                            <i class="fas fa-trash-alt mr-1"></i> Resetar
+                        </button>
                     </div>
         </footer>
     </div>
     
     <button id="back-to-top" class="action-button fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full hidden justify-center items-center shadow-lg text-2xl hidden"><i class="fas fa-arrow-up"></i></button>
     
-    <!-- MODAL DE LOGIN DO ALUNO - Adicionado classe modal-safe-style -->
-    <div id="name-prompt-modal" class="modal-safe-style modal premium-login-modal w-11/12 max-w-lg mx-auto overflow-hidden bg-gray-900 border border-gray-700">
+    <div id="name-prompt-modal" onclick="if(event.target === this) window.closeLocalLogin()" class="modal premium-login-modal w-11/12 max-w-lg mx-auto overflow-hidden flex flex-col max-h-[90vh] hidden" style="background: #0f172a; border: 1px solid #334155; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999999;">
         <div class="relative bg-gradient-to-b from-orange-600 to-gray-900 p-5 text-center overflow-hidden flex-shrink-0">
+            <!-- Botão Fechar -->
+            <button onclick="window.closeLocalLogin()" class="absolute top-4 right-4 text-white hover:text-orange-200 text-xl z-50">
+                <i class="fas fa-times"></i>
+            </button>
             <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
             <div class="relative z-10 flex flex-col items-center">
                 <div class="inline-block p-3 bg-black/40 rounded-full border-2 border-orange-500/50 mb-2 shadow-[0_0_20px_rgba(249,115,22,0.5)]">
@@ -637,10 +852,9 @@
             </div>
         </div>
     </div>
-    
-    <div id="name-modal-overlay" class="overlay-safe-style modal-overlay bg-black/90 backdrop-blur-sm"></div>
+    <div id="name-modal-overlay" onclick="window.closeLocalLogin()" class="modal-overlay bg-black/90 backdrop-blur-sm hidden" style="z-index: 9999998; position: fixed; inset: 0; background-color: rgba(0,0,0,0.9);"></div>
 
-    <div id="expired-modal" class="modal-safe-style modal bg-gray-900 text-white p-0 rounded-2xl shadow-2xl border border-gray-700 w-full max-w-5xl mx-auto overflow-hidden max-h-[90vh]">
+    <div id="expired-modal" class="modal bg-gray-900 text-white p-0 rounded-2xl shadow-2xl border border-gray-700 w-full max-w-5xl mx-auto overflow-hidden max-h-[90vh] flex flex-col hidden">
         <div class="bg-gradient-to-r from-gray-900 to-gray-800 p-4 md:p-6 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
             <div>
                 <h2 class="text-xl md:text-2xl font-bold text-white"><i class="fas fa-crown text-yellow-500 mr-2"></i> Escolha seu Plano</h2>
@@ -722,7 +936,7 @@
             </div>
         </div>
     </div>
-                <div id="manager-modal" class="modal-safe-style modal w-[95%] max-w-7xl mx-auto overflow-hidden bg-[#f8f9fa] border border-gray-200">
+                <div id="manager-modal" class="modal w-[95%] max-w-7xl mx-auto overflow-hidden flex flex-col max-h-[90vh] hidden" style="background: #f8f9fa; border: 1px solid #e2e8f0; color: #1a202c; z-index: 20002 !important;">
         <div class="bg-blue-900 p-4 border-b border-blue-800 flex justify-between items-center flex-shrink-0">
             <div>
                 <h2 class="text-xl font-bold text-white flex items-center">
@@ -781,7 +995,7 @@
             </div>
         </div>
     </div>
-    <div id="admin-modal" class="modal-safe-style modal w-[95%] max-w-6xl mx-auto overflow-hidden bg-[#f8f9fa] border border-gray-200">
+    <div id="admin-modal" class="modal w-[95%] max-w-6xl mx-auto overflow-hidden flex flex-col max-h-[90vh] hidden" style="background: #f8f9fa; border: 1px solid #e2e8f0; color: #1a202c; z-index: 20002 !important;">
         <div class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
             <h2 class="text-xl font-bold text-white flex items-center">
                 <i class="fas fa-users-cog mr-2 text-yellow-500"></i> Painel Administrativo
@@ -813,9 +1027,9 @@
             </div>
         </div>
     </div>
-    <div id="admin-modal-overlay" class="overlay-safe-style modal-overlay bg-black/90 backdrop-blur-sm"></div>
+    <div id="admin-modal-overlay" class="modal-overlay bg-black/90 backdrop-blur-sm hidden" style="z-index: 20001 !important;"></div>
 
-    <div id="ios-install-modal" class="modal-safe-style modal">
+    <div id="ios-install-modal" class="modal hidden">
         <div class="p-6 text-center">
             <i class="fab fa-apple text-5xl text-gray-300 mb-4"></i>
             <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Instalar no iPhone</h2>
@@ -833,16 +1047,16 @@
             <button id="close-ios-modal" class="action-button w-full">Entendi</button>
         </div>
     </div>
-    <div id="ios-modal-overlay" class="overlay-safe-style modal-overlay"></div>
+    <div id="ios-modal-overlay" class="modal-overlay hidden"></div>
 
-    <div id="reset-modal" class="modal-safe-style modal"><div class="p-4"><i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i><h2 class="text-2xl font-bold mb-2">Resetar Progresso?</h2><div class="flex justify-center gap-4"><button id="cancel-reset-button" class="action-button bg-gray-500">Cancelar</button><button id="confirm-reset-button" class="action-button bg-red-600">Confirmar</button></div></div></div>
-    <div id="reset-modal-overlay" class="overlay-safe-style modal-overlay"></div>
-    <div id="congratulations-modal" class="modal-safe-style modal"><div class="p-4"><i class="fas fa-trophy text-4xl text-yellow-500 mb-4"></i><h2 class="text-2xl font-bold mb-2">Parabéns!</h2><button id="close-congrats" class="action-button">Fechar</button></div></div>
-    <div id="modal-overlay" class="overlay-safe-style modal-overlay"></div>
-    <div id="achievement-modal" class="modal-safe-style modal"><div id="ach-modal-icon-container" class="mb-4"></div><h2 class="text-2xl font-bold mb-2">Conquista!</h2><p id="ach-modal-title" class="mb-6">...</p><button id="close-ach-modal" class="action-button">Continuar</button></div>
-    <div id="achievement-modal-overlay" class="overlay-safe-style modal-overlay"></div>
+    <div id="reset-modal" class="modal hidden"><div class="p-4"><i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i><h2 class="text-2xl font-bold mb-2">Resetar Progresso?</h2><div class="flex justify-center gap-4"><button id="cancel-reset-button" class="action-button bg-gray-500">Cancelar</button><button id="confirm-reset-button" class="action-button bg-red-600">Confirmar</button></div></div></div>
+    <div id="reset-modal-overlay" class="modal-overlay hidden"></div>
+    <div id="congratulations-modal" class="modal hidden"><div class="p-4"><i class="fas fa-trophy text-4xl text-yellow-500 mb-4"></i><h2 class="text-2xl font-bold mb-2">Parabéns!</h2><button id="close-congrats" class="action-button">Fechar</button></div></div>
+    <div id="modal-overlay" class="modal-overlay hidden"></div>
+    <div id="achievement-modal" class="modal hidden"><div id="ach-modal-icon-container" class="mb-4"></div><h2 class="text-2xl font-bold mb-2">Conquista!</h2><p id="ach-modal-title" class="mb-6">...</p><button id="close-ach-modal" class="action-button">Continuar</button></div>
+    <div id="achievement-modal-overlay" class="modal-overlay hidden"></div>
 
-    <nav class="md:hidden fixed bottom-0 left-0 w-full z-40 bg-white dark:bg-gray-800 shadow-lg border-t dark:border-gray-700 hidden force-hidden">
+    <nav class="md:hidden fixed bottom-0 left-0 w-full z-40 bg-white dark:bg-gray-800 shadow-lg border-t dark:border-gray-700 hidden">
         <div class="flex justify-around items-center h-16">
             <button id="bottom-nav-home" class="flex flex-col items-center text-gray-600 dark:text-gray-300"><i class="fas fa-home text-xl"></i><span class="text-[10px]">Início</span></button>
             <button id="bottom-nav-modules" class="flex flex-col items-center text-gray-600 dark:text-gray-300"><i class="fas fa-list-ul text-xl"></i><span class="text-[10px]">Módulos</span></button>
@@ -851,14 +1065,14 @@
         </div>
     </nav>
     
-    <nav id="focus-nav-bar" class="md:hidden fixed bottom-0 left-0 w-full z-40 bg-white dark:bg-gray-800 shadow-lg border-t dark:border-gray-700 hidden force-hidden">
+    <nav id="focus-nav-bar" class="md:hidden fixed bottom-0 left-0 w-full z-40 bg-white dark:bg-gray-800 shadow-lg border-t dark:border-gray-700 hidden">
         <div class="flex justify-around items-center h-16">
             <button id="focus-nav-modules" class="flex flex-col items-center text-gray-600 dark:text-gray-300"><i class="fas fa-list-ul text-xl"></i><span class="text-[10px]">Módulos</span></button>
             <button id="focus-nav-exit" class="flex flex-col items-center text-red-500"><i class="fas fa-times-circle text-xl"></i><span class="text-[10px]">Sair</span></button>
         </div>
     </nav>
 
-    <div id="focus-menu-desktop" class="hidden fixed top-4 right-4 z-50 items-center space-x-2 hidden force-hidden">
+    <div id="focus-menu-desktop" class="hidden fixed top-4 right-4 z-50 items-center space-x-2 hidden">
          <button id="focus-menu-modules" title="Módulos" class="action-button w-12 h-12 rounded-full p-0 flex items-center justify-center"><i class="fas fa-list-ul"></i></button>
          <button id="focus-menu-exit" title="Sair" class="action-button w-12 h-12 rounded-full p-0 flex items-center justify-center bg-gray-600"><i class="fas fa-times"></i></button>
     </div>
@@ -1059,47 +1273,13 @@
             }
         });
 
-        // --- FUNÇÕES SEGURAS PARA ABRIR LOGIN SEM ESCONDER O SITE (SEM PULAR) ---
-        window.openStudentLogin = function() {
-            // Abre o modal
-            const modal = document.getElementById('name-prompt-modal');
-            const overlay = document.getElementById('name-modal-overlay');
-            if (modal) modal.classList.add('active');
-            if (overlay) overlay.classList.add('active');
-            
-            // Foca no input sem scrollar
-            setTimeout(() => {
-                const input = document.getElementById('name-input') || document.getElementById('cpf-input');
-                if(input) input.focus({ preventScroll: true });
-            }, 100);
-        };
-
-        window.openManagerLogin = function() {
-            // Se houver lógica de FB, use-a, mas apenas abra o modal, não esconda o hero
-            if((window.__fbDB || window.fbDB) && typeof openManagerPanel === 'function'){ 
-                // Tenta usar a função original se existir
-                // Mas garantimos que o modal abra
-                const mgrModal = document.getElementById('manager-modal');
-                if (mgrModal) mgrModal.classList.add('active');
-            } else { 
-                alert('Aguarde o carregamento do sistema...'); 
-            }
-        };
-
-        // Fecha modais ao clicar no overlay
-        document.addEventListener('click', function(e) {
-            if(e.target.classList.contains('overlay-safe-style') || e.target.classList.contains('modal-overlay')) {
-                document.querySelectorAll('.modal-safe-style, .overlay-safe-style').forEach(el => el.classList.remove('active'));
-            }
-        });
-        
-        // Fecha botões de fechar
-        document.querySelectorAll('#close-payment-modal-btn, #close-manager-modal, #close-admin-modal').forEach(btn => {
-            btn.addEventListener('click', () => {
-                 document.querySelectorAll('.modal-safe-style, .overlay-safe-style').forEach(el => el.classList.remove('active'));
-            });
-        });
-
+        // =========================================================================
+        // SCRIPT DE SEGURANÇA PARA ABERTURA DO LOGIN
+        // =========================================================================
+        // Este script roda independente do app_final.js para garantir que o painel abra
+        // e não recarregue a página caso o JS externo falhe ou demore.
+        // AVISO: A função principal foi movida para o HEAD para evitar problemas de carregamento tardio.
+        // Este bloco permanece para outras inicializações se necessário.
     </script>
 </body>
 </html>
