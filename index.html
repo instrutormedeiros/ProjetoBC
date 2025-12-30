@@ -2,7 +2,6 @@
 <html lang="pt-BR" class="">
 <head>
     <meta charset="UTF-8">
-    <!-- Meta Tags para FORÇAR o navegador a não usar cache -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -10,7 +9,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Curso de Formação | Bombeiro Civil e Brigadista</title>
     
-    <!-- SCRIPT NUCLEAR PARA LIMPAR CACHE ANTIGO (Versão Reforçada) -->
     <script>
         // Força recarregamento se detectar cache antigo de Service Worker
         if ('serviceWorker' in navigator) {
@@ -23,7 +21,6 @@
         }
     </script>
 
-    <!-- PWA e Meta Tags -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#0b1220">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -31,7 +28,6 @@
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png">
     <link rel="shortcut icon" href="https://raw.githubusercontent.com/instrutormedeiros/ProjetoBravoCharlie/refs/heads/main/assets/img/LOGO_QUADRADA.png" type="image/png">
     
-    <!-- Bibliotecas Externas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = { 
@@ -52,8 +48,7 @@
       }
     </script>
 
-    <!-- CACHE BUSTER: Versão adicionada em TUDO -->
-    <link rel="stylesheet" href="style.css?v=GH_FIX_FINAL_01">
+    <link rel="stylesheet" href="style.css?v=GH_FIX_FINAL_02">
     
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -177,7 +172,6 @@
         }
     </style>
     
-    <!-- SCRIPT DE LOGIN GLOBAL (MUITO IMPORTANTE: FORA DE QUALQUER BLOCO) -->
     <script>
         // Função Global para abrir o Login
         window.openLocalLogin = function(isManager = false) {
@@ -199,8 +193,8 @@
                 overlay.style.display = 'block';
                 
                 // 3. Z-Index Supremo (Garante que fique na frente de tudo)
-                modal.style.zIndex = "9999999";
-                overlay.style.zIndex = "9999998";
+                modal.style.zIndex = "2147483647"; // MAX INT
+                overlay.style.zIndex = "2147483640";
                 
                 // 4. Ajusta Título
                 if(title) {
@@ -215,13 +209,13 @@
             }
         };
 
-        // Função para fechar o modal
+        // Função para fechar o modal ao clicar no overlay
         window.closeLocalLogin = function() {
              const modal = document.getElementById('name-prompt-modal');
              const overlay = document.getElementById('name-modal-overlay');
-             
              if(modal) {
                  modal.classList.add('hidden');
+                 modal.classList.remove('force-flex');
                  modal.style.display = 'none';
              }
              if(overlay) {
@@ -234,7 +228,6 @@
 
 <body class="antialiased overflow-x-hidden bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
 
-    <!-- PARTE 1: CARROSSEL -->
     <div id="intro-carousel-wrapper" title="Clique em qualquer lugar para entrar no site">
         <div class="relative w-full h-full bg-black overflow-hidden">
             <div class="vignette"></div>
@@ -248,7 +241,6 @@
     
             <div class="h-full w-full">
                 <div id="carousel-track">
-                    <!-- Slides (Mantidos Iguais) -->
                     <div class="epic-panel w-[100vw] md:w-[33.333vw] group" onclick="selectCourse('BC')">
                         <div class="bg-image-zoom" style="background-image: url('https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/BC.jpg');"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-500"></div>
@@ -327,11 +319,7 @@
             </div>
         </div>
     </div>
-
-    <!-- 
-    PARTE 2: CAPA ANTIGA 
-    -->
-    <div id="landing-hero" style="position: relative !important; z-index: 40 !important;" class="w-full min-h-screen bg-[#050a14] overflow-visible custom-scrollbar transition-all duration-1000 ease-in-out font-sans">
+<div id="landing-hero" style="position: relative !important; z-index: 40 !important;" class="w-full min-h-screen bg-[#050a14] overflow-visible custom-scrollbar transition-all duration-1000 ease-in-out font-sans">
         
         <nav style="z-index: 999 !important; pointer-events: auto;" class="absolute top-0 left-0 w-full py-3 px-4 md:py-4 md:px-12 flex justify-between items-center bg-gradient-to-b from-black/90 to-transparent backdrop-blur-sm">
             <div class="flex items-center gap-3 md:gap-4">
@@ -467,8 +455,7 @@
                 </div>
             </div>
         </section>
-
-        <section class="bg-[#080b12] py-24 px-4 border-t border-white/5">
+<section class="bg-[#080b12] py-24 px-4 border-t border-white/5">
             <div class="max-w-3xl mx-auto">
                 <h2 class="text-3xl md:text-4xl font-bold text-center text-white mb-12 uppercase">
                     Perguntas <span class="text-orange-600">Frequentes</span>
@@ -524,7 +511,6 @@
                 <h2 class="text-3xl md:text-5xl font-black text-white mb-8 uppercase italic leading-none">
                     Sua evolução não pode esperar
                 </h2>
-                <!-- Botão de Acesso Principal - Corrigido -->
                 <button type="button" onclick="event.stopPropagation(); window.openLocalLogin(false);" class="relative inline-flex group items-center justify-center px-12 py-6 overflow-hidden font-bold text-white transition-all duration-300 bg-gradient-to-r from-orange-700 to-orange-600 rounded hover:from-orange-600 hover:to-orange-500 hover:shadow-[0_0_50px_rgba(234,88,12,0.4)] active:scale-95 transform hover:-translate-y-1">
                     <span class="relative flex items-center text-xl md:text-2xl tracking-widest uppercase">
                         ACESSAR SISTEMA <i class="fas fa-sign-in-alt ml-4 animate-pulse"></i>
@@ -552,9 +538,6 @@
 
     </div>
 
-    <!-- 
-    PARTE 3: APLICAÇÃO (ESCONDIDA POR PADRÃO)
-    -->
     <div id="accessibility-fab" title="Menu de Acessibilidade" class="hidden">
         <i class="fas fa-universal-access"></i>
     </div>
@@ -724,13 +707,13 @@
                 <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-500">
                     <p class="developer-credit mb-2">Desenvolvido por Instrutor Medeiros</p>
                     <p>© 2013-2025 Curso de Formação Profissional. Todos os direitos reservados.</p>
-                   <div class="mt-6 flex flex-wrap justify-center items-center gap-4">
-                      
-                       <button id="manual-sync-btn" class="text-xs text-blue-400 hover:text-blue-300 underline transition flex items-center">
+                    <div class="mt-6 flex flex-wrap justify-center items-center gap-4">
+                       
+                        <button id="manual-sync-btn" class="text-xs text-blue-400 hover:text-blue-300 underline transition flex items-center">
     <i class="fas fa-cloud-upload-alt mr-1"></i> Salvar Progresso
 </button>
 <span class="text-gray-600">|</span> 
-                       <button id="logout-button" class="text-xs text-yellow-500 hover:text-yellow-400 underline transition flex items-center">
+                        <button id="logout-button" class="text-xs text-yellow-500 hover:text-yellow-400 underline transition flex items-center">
                             <i class="fas fa-sign-out-alt mr-1"></i> Sair
                         </button>
                         
@@ -748,19 +731,20 @@
                     </div>
         </footer>
     </div>
+<button id="back-to-top" class="action-button fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full hidden justify-center items-center shadow-lg text-2xl hidden"><i class="fas fa-arrow-up"></i></button>
     
-    <button id="back-to-top" class="action-button fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full hidden justify-center items-center shadow-lg text-2xl hidden"><i class="fas fa-arrow-up"></i></button>
-    
-    <div id="name-prompt-modal" onclick="if(event.target === this) window.closeLocalLogin()" class="modal premium-login-modal w-11/12 max-w-lg mx-auto overflow-hidden flex flex-col max-h-[90vh] hidden" style="background: #0f172a; border: 1px solid #334155; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999999;">
-        <div class="relative bg-gradient-to-b from-orange-600 to-gray-900 p-5 text-center overflow-hidden flex-shrink-0">
-            <!-- Botão Fechar -->
-            <button onclick="window.closeLocalLogin()" class="absolute top-4 right-4 text-white hover:text-orange-200 text-xl z-50">
+    <div id="name-modal-overlay" onclick="window.closeLocalLogin()" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm transition-opacity duration-300" style="z-index: 2147483640; display: none;"></div>
+
+    <div id="name-prompt-modal" class="hidden fixed flex-col w-11/12 max-w-lg mx-auto overflow-hidden rounded-2xl shadow-2xl" style="z-index: 2147483647; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; background: #0f172a; border: 1px solid #334155;">
+        
+        <div class="relative bg-gradient-to-b from-orange-600 to-gray-900 p-5 text-center flex-shrink-0">
+            <button type="button" onclick="window.closeLocalLogin()" class="absolute top-4 right-4 text-white hover:text-orange-200 text-xl z-50 cursor-pointer">
                 <i class="fas fa-times"></i>
             </button>
-            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
+            
             <div class="relative z-10 flex flex-col items-center">
                 <div class="inline-block p-3 bg-black/40 rounded-full border-2 border-orange-500/50 mb-2 shadow-[0_0_20px_rgba(249,115,22,0.5)]">
-                        <i class="fas fa-user-shield text-3xl text-orange-500"></i>
+                    <i class="fas fa-user-shield text-3xl text-orange-500"></i>
                 </div>
                 <h2 id="auth-title" class="text-2xl font-serif font-bold text-white tracking-wide drop-shadow-lg leading-tight">
                     Acesso ao Sistema
@@ -768,38 +752,41 @@
             </div>
         </div>
 
-        <div class="p-6 bg-gray-900 overflow-y-auto custom-scrollbar">
+        <div class="p-6 bg-gray-900 overflow-y-auto max-h-[70vh] custom-scrollbar">
             <div class="space-y-4 text-left">
-                <div id="name-field-container" class="hidden transition-all duration-300">
+                <div id="name-field-container" class="transition-all duration-300">
                     <label class="text-sm font-bold text-orange-500 ml-1 uppercase tracking-wider">Nome Completo</label>
                     <div class="relative mt-1">
                         <i class="fas fa-user absolute left-4 top-3.5 text-gray-400 text-lg"></i>
-                        <input type="text" id="name-input" class="w-full pl-12 p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder-gray-500 transition-all outline-none text-base" placeholder="Seu nome completo">
+                        <input type="text" id="name-input" class="w-full pl-12 p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 text-white outline-none" placeholder="Seu nome completo">
                     </div>
                 </div>
+
                 <div id="cpf-field-container" class="hidden transition-all duration-300">
                     <label class="text-sm font-bold text-orange-500 ml-1 uppercase tracking-wider">CPF</label>
                     <div class="relative mt-1">
                         <i class="fas fa-id-card absolute left-4 top-3.5 text-gray-400 text-lg"></i>
-                        <input type="text" id="cpf-input" maxlength="11" class="w-full pl-12 p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder-gray-500 transition-all outline-none text-base" placeholder="Apenas números">
+                        <input type="text" id="cpf-input" maxlength="11" class="w-full pl-12 p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 text-white outline-none" placeholder="Apenas números">
                     </div>
                 </div>
+
                 <div id="phone-field-container" class="hidden transition-all duration-300">
                     <label class="text-sm font-bold text-orange-500 ml-1 uppercase tracking-wider">Telefone / WhatsApp</label>
                     <div class="relative mt-1">
                         <i class="fas fa-phone absolute left-4 top-3.5 text-gray-400 text-lg"></i>
-                        <input type="tel" id="phone-input" class="w-full pl-12 p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder-gray-500 transition-all outline-none text-base" placeholder="(DD) 90000-0000">
+                        <input type="tel" id="phone-input" class="w-full pl-12 p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 text-white outline-none" placeholder="(DD) 90000-0000">
                     </div>
                 </div>
+                
                 <div id="company-field-container" class="hidden transition-all duration-300">
                     <label class="text-sm font-bold text-orange-500 ml-1 uppercase tracking-wider">Nome da Turma ou Empresa</label>
                     <div class="relative mt-1">
                         <i class="fas fa-building absolute left-4 top-3.5 text-gray-400 text-lg"></i>
-                        <input type="text" id="company-input" class="w-full pl-12 p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder-gray-500 transition-all outline-none text-base" placeholder="Ex: Turma Alfa ou Coca-Cola">
+                        <input type="text" id="company-input" class="w-full pl-12 p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 text-white outline-none" placeholder="Ex: Turma Alfa ou Coca-Cola">
                     </div>
                 </div>
                 
-                <div id="course-field-container">
+                <div id="course-field-container" class="hidden">
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Curso de Interesse</label>
                     <div class="relative">
                         <i class="fas fa-graduation-cap absolute left-3 top-3.5 text-gray-400"></i>
@@ -811,18 +798,19 @@
                     </div>
                 </div>
 
-                <div>
+                <div id="email-field-container">
                     <label class="text-sm font-bold text-orange-500 ml-1 uppercase tracking-wider">Email de Acesso</label>
                     <div class="relative mt-1">
                         <i class="fas fa-envelope absolute left-4 top-3.5 text-gray-400 text-lg"></i>
-                        <input type="email" id="email-input" class="w-full pl-12 p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder-gray-500 transition-all outline-none text-base" placeholder="seu@email.com">
+                        <input type="email" id="email-input" class="w-full pl-12 p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 text-white outline-none" placeholder="seu@email.com">
                     </div>
                 </div>
+
                 <div>
                     <label class="text-sm font-bold text-orange-500 ml-1 uppercase tracking-wider">Senha</label>
                     <div class="relative mt-1">
                         <i class="fas fa-lock absolute left-4 top-3.5 text-gray-400 text-lg"></i>
-                        <input type="password" id="password-input" class="w-full pl-12 p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder-gray-500 transition-all outline-none text-base" placeholder="••••••••">
+                        <input type="password" id="password-input" class="w-full pl-12 p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 text-white outline-none" placeholder="••••••••">
                     </div>
                 </div>
             </div>
@@ -830,7 +818,7 @@
             <p id="auth-feedback" class="text-center text-sm mt-4 text-orange-400 min-h-[24px] font-semibold"></p>
             
             <div id="login-button-group" class="w-full mt-5 space-y-3">
-                <button id="login-button" class="w-full py-3.5 px-6 bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 bg-[length:200%_auto] animate-gradient hover:scale-[1.02] text-white font-bold text-base rounded-xl shadow-[0_10px_20px_rgba(234,88,12,0.3)] transition-all transform uppercase tracking-wide">
+                <button id="login-button" class="w-full py-3.5 px-6 bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 bg-[length:200%_auto] animate-gradient hover:scale-[1.02] text-white font-bold text-base rounded-xl shadow-[0_10px_20px_rgba(234,88,12,0.3)] transition-all transform uppercase tracking-wide cursor-pointer">
                     ACESSAR PLATAFORMA <i class="fas fa-arrow-right ml-2"></i>
                 </button>
                 
@@ -859,9 +847,8 @@
             </div>
         </div>
     </div>
-    <div id="name-modal-overlay" onclick="window.closeLocalLogin()" class="modal-overlay bg-black/90 backdrop-blur-sm hidden" style="z-index: 9999998; position: fixed; inset: 0; background-color: rgba(0,0,0,0.9);"></div>
 
-    <div id="expired-modal" class="modal bg-gray-900 text-white p-0 rounded-2xl shadow-2xl border border-gray-700 w-full max-w-5xl mx-auto overflow-hidden max-h-[90vh] flex flex-col hidden">
+    <div id="expired-modal" class="modal bg-gray-900 text-white p-0 rounded-2xl shadow-2xl border border-gray-700 w-full max-w-5xl mx-auto overflow-hidden max-h-[90vh] flex flex-col hidden" style="z-index: 20000;">
         <div class="bg-gradient-to-r from-gray-900 to-gray-800 p-4 md:p-6 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
             <div>
                 <h2 class="text-xl md:text-2xl font-bold text-white"><i class="fas fa-crown text-yellow-500 mr-2"></i> Escolha seu Plano</h2>
@@ -880,15 +867,15 @@
                         <img src="./assets/img/29,99.jpeg" class="w-32 h-32 object-cover rounded-lg mb-4 border-2 border-blue-500/30" alt="QR Code Mensal">
                         <ul class="text-sm text-gray-300 space-y-2 mb-6 text-left w-full pl-4"><li><i class="fas fa-check text-blue-500 mr-2"></i> Acesso por 30 dias</li><li><i class="fas fa-check text-blue-500 mr-2"></i> Conteúdo Completo</li></ul>
                         <a href="https://pay.infinitepay.io/pixmedeiros/VC1D-7jMqYZwKN-29,99" target="_blank" class="w-full block text-center bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition-colors mt-auto">ASSINAR MENSAL</a>
-                        <div class="mt-3 w-full">
-    <div class="flex items-center justify-between bg-black/20 rounded p-2 border border-gray-600">
-        <span class="text-xs font-mono text-gray-300">PIX: 61998300711</span>
-        <button onclick="window.copyPixKey('61998300711')" class="text-xs bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded transition-colors" title="Copiar">
-            <i class="fas fa-copy"></i>
-        </button>
-    </div>
-    <p class="text-[10px] text-gray-500 mt-1 text-center">Celular/Chave</p>
-</div>
+                         <div class="mt-3 w-full">
+                            <div class="flex items-center justify-between bg-black/20 rounded p-2 border border-gray-600">
+                                <span class="text-xs font-mono text-gray-300">PIX: 61998300711</span>
+                                <button onclick="window.copyPixKey('61998300711')" class="text-xs bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded transition-colors" title="Copiar">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-gray-500 mt-1 text-center">Celular/Chave</p>
+                        </div>
                     </div>
                 </div>
                 
@@ -903,15 +890,15 @@
                         <img src="./assets/img/49,99.jpeg" class="w-36 h-36 object-cover rounded-lg mb-4 border-2 border-orange-500" alt="QR Code Semestral">
                         <ul class="text-sm text-gray-300 space-y-2 mb-6 text-left w-full pl-4"><li><i class="fas fa-check text-orange-500 mr-2"></i> Acesso por 6 meses</li><li><i class="fas fa-check text-orange-500 mr-2"></i> Vídeos e Fotos Liberados</li></ul>
                         <a href="https://pay.infinitepay.io/pixmedeiros/VC1D-6jVuG1yMV1-49,99" target="_blank" class="w-full block text-center bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-bold py-4 rounded-lg transition-all shadow-lg mt-auto animate-pulse">ASSINAR AGORA</a>
-                        <div class="mt-3 w-full">
-    <div class="flex items-center justify-between bg-black/20 rounded p-2 border border-gray-600">
-        <span class="text-xs font-mono text-gray-300">PIX: 61998300711</span>
-        <button onclick="window.copyPixKey('61998300711')" class="text-xs bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded transition-colors" title="Copiar">
-            <i class="fas fa-copy"></i>
-        </button>
-    </div>
-    <p class="text-[10px] text-gray-500 mt-1 text-center">Celular/Chave</p>
-</div>
+                         <div class="mt-3 w-full">
+                            <div class="flex items-center justify-between bg-black/20 rounded p-2 border border-gray-600">
+                                <span class="text-xs font-mono text-gray-300">PIX: 61998300711</span>
+                                <button onclick="window.copyPixKey('61998300711')" class="text-xs bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded transition-colors" title="Copiar">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-gray-500 mt-1 text-center">Celular/Chave</p>
+                        </div>
                     </div>
                 </div>
                 
@@ -926,14 +913,14 @@
                         <ul class="text-sm text-gray-300 space-y-2 mb-6 text-left w-full pl-4"><li><i class="fas fa-check text-green-500 mr-2"></i> Acesso por 1 ANO</li><li><i class="fas fa-check text-green-500 mr-2"></i> Todo o Conteúdo</li><li><i class="fas fa-star text-yellow-500 mr-2"></i> Prioridade no Suporte</li></ul>
                         <a href="https://pay.infinitepay.io/pixmedeiros/VC1D-6jVuclBoT3-69,99" target="_blank" class="w-full block text-center bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg transition-colors mt-auto">ASSINAR ANUAL</a>
                         <div class="mt-3 w-full">
-    <div class="flex items-center justify-between bg-black/20 rounded p-2 border border-gray-600">
-        <span class="text-xs font-mono text-gray-300">PIX: 61998300711</span>
-        <button onclick="window.copyPixKey('61998300711')" class="text-xs bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded transition-colors" title="Copiar">
-            <i class="fas fa-copy"></i>
-        </button>
-    </div>
-    <p class="text-[10px] text-gray-500 mt-1 text-center">Celular/Chave</p>
-</div>
+                            <div class="flex items-center justify-between bg-black/20 rounded p-2 border border-gray-600">
+                                <span class="text-xs font-mono text-gray-300">PIX: 61998300711</span>
+                                <button onclick="window.copyPixKey('61998300711')" class="text-xs bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded transition-colors" title="Copiar">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-gray-500 mt-1 text-center">Celular/Chave</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -943,7 +930,8 @@
             </div>
         </div>
     </div>
-                <div id="manager-modal" class="modal w-[95%] max-w-7xl mx-auto overflow-hidden flex flex-col max-h-[90vh] hidden" style="background: #f8f9fa; border: 1px solid #e2e8f0; color: #1a202c; z-index: 20002 !important;">
+
+    <div id="manager-modal" class="modal w-[95%] max-w-7xl mx-auto overflow-hidden flex flex-col max-h-[90vh] hidden" style="background: #f8f9fa; border: 1px solid #e2e8f0; color: #1a202c; z-index: 20002 !important;">
         <div class="bg-blue-900 p-4 border-b border-blue-800 flex justify-between items-center flex-shrink-0">
             <div>
                 <h2 class="text-xl font-bold text-white flex items-center">
@@ -973,12 +961,12 @@
                     <p class="text-2xl font-bold text-gray-800" id="mgr-pending">0</p>
                 </div>
             </div>
-<div class="flex justify-between items-center mb-4">
+            <div class="flex justify-between items-center mb-4">
                 <div class="flex items-center gap-2">
                     <i class="fas fa-filter text-gray-400"></i>
                     <select id="mgr-filter-turma" onchange="filterManagerTable()" class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2">
                         <option value="TODOS">Todas as Turmas</option>
-                        </select>
+                    </select>
                 </div>
             </div>
             <div class="bg-white rounded-lg shadow overflow-hidden">
@@ -1002,6 +990,7 @@
             </div>
         </div>
     </div>
+
     <div id="admin-modal" class="modal w-[95%] max-w-6xl mx-auto overflow-hidden flex flex-col max-h-[90vh] hidden" style="background: #f8f9fa; border: 1px solid #e2e8f0; color: #1a202c; z-index: 20002 !important;">
         <div class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
             <h2 class="text-xl font-bold text-white flex items-center">
@@ -1013,10 +1002,10 @@
         <div class="p-4 bg-gray-100 overflow-y-auto flex-grow">
             <div class="overflow-x-auto bg-white rounded-lg shadow">
                  <div id="admin-stats" class="mb-2 text-xs text-gray-600 flex gap-4">
-  <span>Total: <strong id="admin-total-users">0</strong></span>
-  <span>Premium: <strong id="admin-total-premium">0</strong></span>
-  <span>Trial: <strong id="admin-total-trial">0</strong></span>
-</div>
+                  <span>Total: <strong id="admin-total-users">0</strong></span>
+                  <span>Premium: <strong id="admin-total-premium">0</strong></span>
+                  <span>Trial: <strong id="admin-total-trial">0</strong></span>
+                </div>
                 <table class="min-w-full divide-y divide-gray-200" id="admin-users-table">
                     <thead class="bg-gray-50">
                         <tr>
@@ -1087,90 +1076,78 @@
     <script src="quizzes.js" defer></script>
     <script src="data.js" defer></script>
     <script src="course.js" defer></script>
-    <script src="tools_logic.js" defer></script> <script src="firebase-init.js" defer></script>
+    <script src="tools_logic.js" defer></script> 
+    <script src="firebase-init.js" defer></script>
     <script src="app_final.js" defer></script>
     
-<script type="text/javascript">
-  (function(d, t) {
-      var v = d.createElement(t), s = d.getElementsByTagName(t)[0];
-      v.onload = function() {
-        // Início da configuração (Baseado no Código Novo)
-        window.voiceflow.chat.load({
-          verify: { projectID: '69247d068e3b774e5660d59d' },
-          url: 'https://general-runtime.voiceflow.com',
-          versionID: 'production',
-          // Mantive o 'render' pois seu CSS depende das classes do modo overlay
-          render: { mode: 'overlay' }, 
-          voice: {
-            url: "https://runtime-api.voiceflow.com"
+    <script type="text/javascript">
+      (function(d, t) {
+          var v = d.createElement(t), s = d.getElementsByTagName(t)[0];
+          v.onload = function() {
+            window.voiceflow.chat.load({
+              verify: { projectID: '69247d068e3b774e5660d59d' },
+              url: 'https://general-runtime.voiceflow.com',
+              versionID: 'production',
+              render: { mode: 'overlay' }, 
+              voice: {
+                url: "https://runtime-api.voiceflow.com"
+              }
+            }).then(() => {
+                const checkChat = setInterval(() => {
+                    const chatHost = document.getElementById('voiceflow-chat');
+                    if (chatHost && chatHost.shadowRoot) {
+                        clearInterval(checkChat);
+                        const style = document.createElement('style');
+                        style.textContent = `
+                            @media (max-width: 768px) {
+                                .vfrc-launcher {
+                                    bottom: 110px !important; 
+                                    left: 20px !important;
+                                    right: auto !important;
+                                    position: fixed !important;
+                                    opacity: 0.6 !important;
+                                    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+                                }
+                                .vfrc-widget--chat {
+                                    bottom: 110px !important; 
+                                    height: 65vh !important; 
+                                    width: 85vw !important;
+                                    left: 20px !important;
+                                    right: auto !important;
+                                    border-radius: 16px !important;
+                                }
+                                .vfrc-widget.is-mobile {
+                                    background: transparent !important;
+                                    width: auto !important;
+                                    height: auto !important;
+                                    position: static !important;
+                                }
+                            }
+                            .vfrc-launcher:active, .vfrc-launcher:hover { opacity: 1 !important; }
+                        `;
+                        chatHost.shadowRoot.appendChild(style);
+                    }
+                }, 500);
+            });
           }
-        }).then(() => {
-            // --- INÍCIO DA SUA PERSONALIZAÇÃO (CSS INJETADO) ---
-            // Esta parte garante que suas regras de responsividade sejam aplicadas
-            // assim que o Shadow DOM do chat for carregado.
-            const checkChat = setInterval(() => {
-                const chatHost = document.getElementById('voiceflow-chat');
-                if (chatHost && chatHost.shadowRoot) {
-                    clearInterval(checkChat);
-                    const style = document.createElement('style');
-                    style.textContent = `
-                        @media (max-width: 768px) {
-                            .vfrc-launcher {
-                                bottom: 110px !important; 
-                                left: 20px !important;
-                                right: auto !important;
-                                position: fixed !important;
-                                opacity: 0.6 !important;
-                                box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
-                            }
-                            .vfrc-widget--chat {
-                                bottom: 110px !important; 
-                                height: 65vh !important; 
-                                width: 85vw !important;
-                                left: 20px !important;
-                                right: auto !important;
-                                border-radius: 16px !important;
-                            }
-                            .vfrc-widget.is-mobile {
-                                background: transparent !important;
-                                width: auto !important;
-                                height: auto !important;
-                                position: static !important;
-                            }
-                        }
-                        .vfrc-launcher:active, .vfrc-launcher:hover { opacity: 1 !important; }
-                    `;
-                    chatHost.shadowRoot.appendChild(style);
-                }
-            }, 500);
-            // --- FIM DA SUA PERSONALIZAÇÃO ---
-        });
-      }
-      v.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs"; v.type = "text/javascript"; s.parentNode.insertBefore(v, s);
-  })(document, 'script');
+          v.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs"; v.type = "text/javascript"; s.parentNode.insertBefore(v, s);
+      })(document, 'script');
     </script>
-               <div id="manager-fab" class="hidden fixed top-24 right-4 z-[9999] group animate-fade-in-up">
-    <button onclick="if((window.__fbDB || window.fbDB) && typeof openManagerPanel === 'function'){ openManagerPanel(); } else { alert('Aguarde o carregamento do sistema...'); }" 
-            class="flex items-center justify-center w-12 h-12 bg-purple-600 text-white rounded-full shadow-lg hover:bg-purple-500 hover:scale-110 transition-all duration-300 border-2 border-white/20">
-        <i class="fas fa-chart-line text-xl"></i>
-    </button>
-    <span class="absolute right-14 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs font-bold px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-white/10 shadow-xl">
-        Painel Gestor
-    </span>
-</div>
 
-    <!-- 
-    ================================================================
-    SCRIPT LÓGICO DA FUSÃO (Rolagem e Carrossel)
-    ================================================================ 
-    -->
+    <div id="manager-fab" class="hidden fixed top-24 right-4 z-[9999] group animate-fade-in-up">
+        <button onclick="if((window.__fbDB || window.fbDB) && typeof openManagerPanel === 'function'){ openManagerPanel(); } else { alert('Aguarde o carregamento do sistema...'); }" 
+                class="flex items-center justify-center w-12 h-12 bg-purple-600 text-white rounded-full shadow-lg hover:bg-purple-500 hover:scale-110 transition-all duration-300 border-2 border-white/20">
+            <i class="fas fa-chart-line text-xl"></i>
+        </button>
+        <span class="absolute right-14 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs font-bold px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-white/10 shadow-xl">
+            Painel Gestor
+        </span>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            
-            // Força a rolagem para o topo ao carregar a página
             window.scrollTo(0, 0);
 
-            // --- LÓGICA DE ROLAGEM SUAVE AO CLICAR ---
             const introWrapper = document.getElementById('intro-carousel-wrapper');
             const landingHero = document.getElementById('landing-hero');
 
@@ -1183,9 +1160,7 @@
                 });
             }
 
-            // --- LÓGICA DO CARROSSEL (PRESERVADA) ---
             window.selectCourse = function(type) {
-                // Redirecionamento visual (mantido console.log original)
                 console.log(`Curso selecionado: ${type}`);
             };
 
@@ -1194,17 +1169,13 @@
             const nextBtn = document.getElementById('btn-next');
             
             if (track && prevBtn && nextBtn) {
-                // --- 1. SETUP DO LOOP ---
                 const originalItems = Array.from(track.children);
-                
-                // Duplicação para loop
                 [...originalItems, ...originalItems].forEach(item => {
                     const clone = item.cloneNode(true);
                     clone.removeAttribute('id'); 
                     track.appendChild(clone);
                 });
 
-                // --- 2. VARIÁVEIS ---
                 let currentX = 0;
                 let speed = 0.3; 
                 let isAnimating = true; 
@@ -1222,27 +1193,20 @@
                 window.addEventListener('resize', calculateDimensions);
                 setTimeout(calculateDimensions, 100);
 
-                // --- 3. ANIMAÇÃO ---
                 function animate() {
                     if (isAnimating) {
                         currentX -= speed;
-
                         if (Math.abs(currentX) >= totalOriginalWidth) {
                             currentX = 0;
                         }
-
                         track.style.transform = `translate3d(${currentX}px, 0, 0)`;
                     }
                     requestAnimationFrame(animate);
                 }
-
-                // Inicia animação
                 requestAnimationFrame(animate);
 
-                // --- 4. CONTROLE MANUAL ---
                 function moveCarousel(direction) {
-                    isAnimating = false; // Pausa momentânea
-                    
+                    isAnimating = false; 
                     const targetMove = direction === 'next' ? -itemWidth : itemWidth;
                     const startX = currentX;
                     const duration = 900; 
@@ -1268,10 +1232,9 @@
                         if (progress < 1) {
                             requestAnimationFrame(step);
                         } else {
-                            isAnimating = true; // Retoma
+                            isAnimating = true; 
                         }
                     }
-                    
                     requestAnimationFrame(step);
                 }
 
@@ -1279,45 +1242,6 @@
                 prevBtn.addEventListener('click', () => moveCarousel('prev'));
             }
         });
-
-      <div id="name-modal-overlay" onclick="window.closeLocalLogin()" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm transition-opacity duration-300" style="z-index: 2147483640; display: none;"></div>
-
-    <div id="name-prompt-modal" class="hidden fixed flex-col w-11/12 max-w-lg mx-auto overflow-hidden rounded-2xl shadow-2xl" style="z-index: 2147483647; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; background: #0f172a; border: 1px solid #334155;">
-        
-        <div class="relative bg-gradient-to-b from-orange-600 to-gray-900 p-5 text-center flex-shrink-0">
-            <button type="button" onclick="window.closeLocalLogin()" class="absolute top-4 right-4 text-white hover:text-orange-200 text-xl z-50 cursor-pointer">
-                <i class="fas fa-times"></i>
-            </button>
-            
-            <div class="relative z-10 flex flex-col items-center">
-                <div class="inline-block p-3 bg-black/40 rounded-full border-2 border-orange-500/50 mb-2 shadow-[0_0_20px_rgba(249,115,22,0.5)]">
-                    <i class="fas fa-user-shield text-3xl text-orange-500"></i>
-                </div>
-                <h2 id="auth-title" class="text-2xl font-serif font-bold text-white tracking-wide drop-shadow-lg leading-tight">
-                    Acesso ao Sistema
-                </h2>
-            </div>
-        </div>
-
-        <div class="p-6 bg-gray-900 overflow-y-auto max-h-[70vh] custom-scrollbar">
-            <div class="space-y-4 text-left">
-                <div id="name-field-container" class="transition-all duration-300">
-                    <label class="text-sm font-bold text-orange-500 ml-1 uppercase tracking-wider">Nome Completo</label>
-                    <div class="relative mt-1">
-                        <i class="fas fa-user absolute left-4 top-3.5 text-gray-400 text-lg"></i>
-                        <input type="text" id="name-input" class="w-full pl-12 p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 text-white outline-none" placeholder="Seu nome completo">
-                    </div>
-                </div>
-            </div>
-            
-            <p id="auth-feedback" class="text-center text-sm mt-4 text-orange-400 min-h-[24px] font-semibold"></p>
-            
-            <div id="login-button-group" class="w-full mt-5 space-y-3">
-                <button id="login-button" class="w-full py-3.5 px-6 bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 hover:scale-[1.02] text-white font-bold text-base rounded-xl shadow-lg transition-all uppercase tracking-wide cursor-pointer">
-                    ACESSAR PLATAFORMA <i class="fas fa-arrow-right ml-2"></i>
-                </button>
-            </div>
-        </div>
-    </div>
+    </script>
 </body>
 </html>
