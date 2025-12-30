@@ -1289,5 +1289,24 @@
         // AVISO: A função principal foi movida para o HEAD para evitar problemas de carregamento tardio.
         // Este bloco permanece para outras inicializações se necessário.
     </script>
+                <style>
+  #name-modal-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0,0,0,0.8) !important;
+    z-index: 9999998 !important;
+    display: none;
+  }
+
+  #name-prompt-modal {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 9999999 !important;
+    display: none;
+  }
+</style>
+
 </body>
 </html>
