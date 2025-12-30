@@ -298,96 +298,98 @@ setTimeout(() => {
         setupRippleEffects();
     }
 
-    // === FUNÇÃO onLoginSuccess (VERSÃO FINAL V11 - CORREÇÃO TELA PRETA) ===
+    // === FUNÇÃO onLoginSuccess (VERSÃO FINAL V12 - LIGAÇÃO DIRETA DOS BOTÕES) ===
     function onLoginSuccess(user, userData) {
-        console.log("🚀 LOGIN CONFIRMADO: Revelando o sistema...");
+        console.log("🚀 LOGIN CONFIRMADO: Ativando controles...");
 
-        // 1. ESCONDER MODAIS (Força Bruta)
-        const loginModal = document.getElementById('name-prompt-modal');
-        const loginOverlay = document.getElementById('name-modal-overlay');
-        const expiredModal = document.getElementById('expired-modal');
-
-        if (loginModal) {
-            loginModal.classList.remove('show');
-            loginModal.classList.add('hidden');
-            loginModal.style.display = 'none'; 
-        }
-        if (loginOverlay) {
-            loginOverlay.classList.remove('show');
-            loginOverlay.classList.add('hidden');
-            loginOverlay.style.display = 'none';
-        }
-        if (expiredModal) {
-            expiredModal.classList.remove('show');
-            expiredModal.style.display = 'none';
-        }
-
-        // 2. ESCONDER CAPA E CARROSSEL
-        const landing = document.getElementById('landing-hero');
-        const carousel = document.getElementById('intro-carousel-wrapper');
-
-        if (landing) {
-            landing.classList.add('hidden');
-            landing.style.display = 'none';
-        }
-        if (carousel) {
-            carousel.classList.add('hidden');
-            carousel.style.display = 'none';
-        }
-
-        // 3. REVELAR O SITE (A PEÇA QUE FALTAVA!)
-        const mainWrapper = document.getElementById('main-wrapper');
-        const contentArea = document.getElementById('content-area');
+        // 1. LIMPEZA VISUAL (Esconde Login/Capa/Carrossel)
+        const elementsToHide = [
+            'name-prompt-modal', 'name-modal-overlay', 'expired-modal',
+            'landing-hero', 'intro-carousel-wrapper'
+        ];
         
+        elementsToHide.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.remove('show');
+                el.classList.add('hidden');
+                el.style.display = 'none'; // Força bruta para sumir
+            }
+        });
+
+        // 2. REVELAR O SITE (Painel Principal)
+        const mainWrapper = document.getElementById('main-wrapper');
         if (mainWrapper) {
-            mainWrapper.classList.remove('hidden'); // <--- A MÁGICA ACONTECE AQUI
-            mainWrapper.style.display = 'block';    // Garante que apareça
-            
-            // Pequena animação de entrada (opcional, mas fica bonito)
-            mainWrapper.style.opacity = '0';
-            setTimeout(() => {
-                mainWrapper.style.transition = 'opacity 0.5s ease';
-                mainWrapper.style.opacity = '1';
-            }, 50);
+            mainWrapper.classList.remove('hidden');
+            mainWrapper.style.display = 'block'; 
+            setTimeout(() => mainWrapper.style.opacity = '1', 50); // Animação suave
         }
 
-        // 4. AJUSTES FINAIS DE TELA
+        // 3. DESTRAVAR SCROLL
         document.body.classList.remove('landing-active');
-        document.body.style.overflow = 'auto'; 
+        document.body.style.overflow = 'auto';
         document.body.style.overflowX = 'hidden';
 
-        // 5. LÓGICA DE DADOS DO USUÁRIO (MANTIDA IGUAL)
+        // 4. CARREGAR DADOS DO USUÁRIO
         if (userData && user) {
             currentUserData = { ...userData, uid: user.uid };
         } else {
             currentUserData = userData;
         }
 
-        // Evita loop se já carregou
-        if (document.body.getAttribute('data-app-ready') === 'true') return;
-
-        // Atualiza saudação
+        // Atualiza Saudação e Marca D'água
         const greetingEl = document.getElementById('welcome-greeting');
         if(greetingEl && userData.name) greetingEl.textContent = `Olá, ${userData.name.split(' ')[0]}!`;
         
-        // Marca d'água
         const printWatermark = document.getElementById('print-watermark');
-        if (printWatermark) {
-            printWatermark.textContent = `Licenciado para ${userData.name} (CPF: ${userData.cpf || '...'}) - Proibida a Cópia`;
-        }
+        if (printWatermark) printWatermark.textContent = `Licenciado para ${userData.name} (CPF: ${userData.cpf || '...'}) - Proibida a Cópia`;
 
-        // Libera botões de Admin
-        const adminBtn = document.getElementById('admin-panel-btn');
-        const mobileAdminBtn = document.getElementById('mobile-admin-btn');
-        const managerFab = document.getElementById("manager-fab");
+        // ===============================================================
+        // 5. LIGAÇÃO DIRETA DOS BOTÕES (A CORREÇÃO PRINCIPAL ESTÁ AQUI)
+        // ===============================================================
+        
+        // A) Botão ASSINAR (Cabeçalho e Mobile)
+        const openPay = () => {
+            const m = document.getElementById('expired-modal');
+            const o = document.getElementById('name-modal-overlay');
+            if(m) { m.classList.remove('hidden'); m.classList.add('show'); m.style.display = 'flex'; }
+            if(o) { o.classList.remove('hidden'); o.classList.add('show'); o.style.display = 'block'; o.style.zIndex = '20000'; }
+        };
+        document.querySelectorAll('#header-subscribe-btn, #mobile-subscribe-btn').forEach(btn => {
+            btn.onclick = openPay; // Conecta direto, sem depender de setup anterior
+            btn.style.pointerEvents = 'auto'; // Garante que seja clicável
+        });
 
-        if (userData.isAdmin === true) {
-            if(adminBtn) adminBtn.classList.remove('hidden');
-            if(mobileAdminBtn) mobileAdminBtn.classList.remove('hidden');
-        }
+        // B) Botão GESTOR (FAB Flutuante)
+        const mgrFab = document.getElementById('manager-fab');
         if (userData.isManager === true || userData.isAdmin === true) {
-            if (managerFab) managerFab.classList.remove("hidden");
+            if (mgrFab) {
+                mgrFab.classList.remove("hidden");
+                mgrFab.style.display = 'flex';
+                mgrFab.style.zIndex = '999999'; // Traz para frente de tudo
+                
+                // Força o clique no botão roxo dentro da div
+                const fabBtn = mgrFab.querySelector('button');
+                if(fabBtn) {
+                    fabBtn.onclick = function() {
+                        if(typeof window.openManagerPanel === 'function') {
+                            window.openManagerPanel();
+                        } else {
+                            alert("O painel de gestor ainda está carregando. Tente em instantes.");
+                        }
+                    };
+                }
+            }
         }
+
+        // C) Botão ADMIN (Cabeçalho)
+        const adminBtn = document.getElementById('admin-panel-btn');
+        if (userData.isAdmin === true && adminBtn) {
+            adminBtn.classList.remove('hidden');
+            adminBtn.onclick = window.openAdminPanel;
+        }
+
+        // ===============================================================
 
         checkTrialStatus(userData.acesso_ate);
 
@@ -401,16 +403,15 @@ setTimeout(() => {
             completedModules = [];
         }
 
-        // Contagem de Módulos
+        // Contagem de Módulos (Filtragem BC/SP)
         let count = 0;
         const userCourse = userData.courseType || 'BC';
         const isAdm = userData.isAdmin || userData.courseType === 'GESTOR';
 
         Object.keys(window.moduleContent || {}).forEach(modId => {
             const isSp = modId.startsWith('sp_');
-            if (isAdm) {
-                count++;
-            } else {
+            if (isAdm) count++;
+            else {
                 if (userCourse === 'BC' && !isSp) count++;
                 else if (userCourse === 'SP' && isSp) count++;
             }
@@ -423,17 +424,21 @@ setTimeout(() => {
         if(totalEl) totalEl.textContent = totalModules;
         if(courseCountEl) courseCountEl.textContent = totalModules;
         
-        populateModuleLists();
-        updateProgress();
-        addEventListeners(); 
-        handleInitialLoad();
-        startOnboardingTour(false); 
+        // Inicia o resto do sistema se ainda não tiver iniciado
+        if (document.body.getAttribute('data-app-ready') !== 'true') {
+            populateModuleLists();
+            updateProgress();
+            addEventListeners(); 
+            handleInitialLoad();
+            startOnboardingTour(false);
+        }
 
+        // Redirecionamento automático pós-login (Gestor)
         if (localStorage.getItem("open_manager_after_login") === "true") {
             localStorage.removeItem("open_manager_after_login");
             setTimeout(() => {
-                if (window.fbDB && typeof openManagerPanel === "function") openManagerPanel();
-            }, 2000);
+                if (window.fbDB && typeof window.openManagerPanel === "function") window.openManagerPanel();
+            }, 1500);
         }
 
         document.body.setAttribute('data-app-ready', 'true');
