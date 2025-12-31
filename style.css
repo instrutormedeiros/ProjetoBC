@@ -995,10 +995,9 @@ details[open] summary ~ * {
 }
 
 /* ==========================================================================
-   10. INTEGRAÇÃO CAPA CARROSSEL - V8 (CORREÇÃO DE TAMANHO E ÍCONE)
+   10. INTEGRAÇÃO CAPA CARROSSEL - V9 (CURSOR PADRÃO & SCROLL DISCRETO)
    ========================================================================== */
 
-/* Importação das fontes */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;900&display=swap');
 
 #intro-carousel-wrapper {
@@ -1019,34 +1018,29 @@ details[open] summary ~ * {
     transform: translateY(-100%);
 }
 
-/* --- TÍTULOS (Tamanho Ajustado) --- */
-
+/* --- TÍTULOS --- */
 #intro-carousel-wrapper h2 {
     font-family: 'Montserrat', sans-serif !important;
-    font-weight: 900 !important; /* Extra Black */
-    letter-spacing: -1px !important; /* Menos apertado que antes */
+    font-weight: 900 !important;
+    letter-spacing: -1px !important;
     text-transform: uppercase;
     line-height: 1 !important;
-    
-    /* CORREÇÃO DE TAMANHO: Reduzi significativamente os valores */
     font-size: clamp(2rem, 3.5vw, 3rem) !important; 
-    
     text-shadow: 0 4px 20px rgba(0,0,0,0.5);
     margin-bottom: 0.75rem;
-    max-width: 90%; /* Garante que não encoste nas bordas */
+    max-width: 90%;
 }
 
-/* Parte colorida do título */
 #intro-carousel-wrapper h2 span {
     font-weight: 900 !important;
 }
 
-/* --- SUBTÍTULOS (Pílulas/Tags) --- */
+/* --- SUBTÍTULOS --- */
 .intro-panel-content span.font-mono {
     font-family: 'Montserrat', sans-serif !important;
     font-weight: 700 !important;
     letter-spacing: 1px !important;
-    font-size: 0.7rem !important; /* Levemente menor */
+    font-size: 0.7rem !important;
     text-transform: uppercase;
     background: rgba(0,0,0,0.4);
     padding: 4px 10px;
@@ -1062,14 +1056,13 @@ details[open] summary ~ * {
     color: rgba(235, 235, 235, 0.95) !important;
     line-height: 1.5;
     text-shadow: 0 1px 2px rgba(0,0,0,0.9);
-    max-width: 380px; /* Limita a largura para leitura confortável */
+    max-width: 380px;
 }
 
-/* --- INDICADOR "ROLE PARA BAIXO" (Corrigido e Minimalista) --- */
-
+/* --- INDICADOR "ROLE PARA BAIXO" (Ajustado: Menor e Mais Baixo) --- */
 .intro-scroll-indicator {
     position: absolute;
-    bottom: 30px;
+    bottom: 15px; /* Bem mais para baixo (estava 30px) */
     left: 50%;
     transform: translateX(-50%);
     z-index: 60;
@@ -1077,37 +1070,34 @@ details[open] summary ~ * {
     flex-direction: column;
     align-items: center;
     
-    /* Estilo Minimalista */
-    color: rgba(255, 255, 255, 0.8);
+    /* Estilo Ultra Minimalista */
+    color: rgba(255, 255, 255, 0.6); /* Mais transparente/profissional */
     font-family: 'Montserrat', sans-serif;
-    font-size: 0.65rem; /* Bem pequeno e elegante */
-    font-weight: 400; /* Letra mais fina */
+    font-size: 0.55rem; /* Fonte bem pequena */
+    font-weight: 400;
     text-transform: uppercase;
-    letter-spacing: 3px; /* Espaçamento chique */
+    letter-spacing: 2px;
     
-    animation: introFloat 2s infinite ease-in-out;
+    animation: introFadeMove 2.5s infinite ease-in-out;
     pointer-events: none;
 }
 
-/* CORREÇÃO DO ÍCONE QUEBRADO */
 .intro-scroll-indicator i {
-    margin-top: 8px;
-    font-size: 1rem; /* Seta pequena */
-    
-    /* Força a fonte do ícone a ser FontAwesome, ignorando a Montserrat */
+    margin-top: 5px;
+    font-size: 0.8rem; /* Ícone menor */
     font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", sans-serif !important;
-    font-weight: 900 !important; /* Ícones sólidos precisam de peso 900 */
+    font-weight: 900 !important;
     font-style: normal !important;
-    -webkit-font-smoothing: antialiased;
 }
 
-@keyframes introFloat {
-    0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.7; }
-    50% { transform: translateX(-50%) translateY(-8px); opacity: 1; }
+/* Animação mais suave e lenta */
+@keyframes introFadeMove {
+    0% { transform: translateX(-50%) translateY(0); opacity: 0.4; }
+    50% { transform: translateX(-50%) translateY(5px); opacity: 1; }
+    100% { transform: translateX(-50%) translateY(0); opacity: 0.4; }
 }
 
 /* --- RESTANTE DO LAYOUT --- */
-
 .intro-vignette {
     position: absolute;
     inset: 0;
@@ -1122,9 +1112,10 @@ details[open] summary ~ * {
     flex-shrink: 0;
     border-right: 1px solid rgba(255,255,255,0.05);
     overflow: hidden;
-    cursor: grab;
+    /* CORREÇÃO DO CURSOR: Removemos 'grab' e deixamos padrão */
+    cursor: default; 
 }
-.intro-epic-panel:active { cursor: grabbing; }
+/* Removemos o active grabbing também */
 
 .intro-bg-image-zoom {
     transition: transform 1.5s cubic-bezier(0.19, 1, 0.22, 1);
@@ -1176,3 +1167,4 @@ details[open] summary ~ * {
 
 #intro-carousel-track { display: flex; height: 100%; width: max-content; will-change: transform; }
 #intro-carousel-wrapper .absolute.bottom-0.h-1 { display: none; }
+
