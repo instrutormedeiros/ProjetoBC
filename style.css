@@ -995,11 +995,11 @@ details[open] summary ~ * {
 }
 
 /* ==========================================================================
-   10. INTEGRAÇÃO CAPA CARROSSEL - V7 (ESTILO TÁTICO FINAL)
+   10. INTEGRAÇÃO CAPA CARROSSEL - V8 (CORREÇÃO DE TAMANHO E ÍCONE)
    ========================================================================== */
 
-/* Importamos Montserrat com pesos específicos: 400 (Regular), 700 (Bold), 900 (Black) */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap');
+/* Importação das fontes */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;900&display=swap');
 
 #intro-carousel-wrapper {
     position: fixed;
@@ -1010,7 +1010,7 @@ details[open] summary ~ * {
     z-index: 99999;
     background-color: #050505;
     overflow: hidden;
-    font-family: 'Montserrat', sans-serif; /* Fonte global da capa */
+    font-family: 'Montserrat', sans-serif;
     transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1);
     transform: translateY(0);
 }
@@ -1019,54 +1019,57 @@ details[open] summary ~ * {
     transform: translateY(-100%);
 }
 
-/* --- TÍTULOS (Estilo "Instrutor de Cursos" da foto) --- */
+/* --- TÍTULOS (Tamanho Ajustado) --- */
 
 #intro-carousel-wrapper h2 {
     font-family: 'Montserrat', sans-serif !important;
-    font-weight: 900 !important; /* Extra Black (Bem grosso) */
-    letter-spacing: -1.5px !important; /* Letras juntas e compactas */
+    font-weight: 900 !important; /* Extra Black */
+    letter-spacing: -1px !important; /* Menos apertado que antes */
     text-transform: uppercase;
-    line-height: 0.95 !important; /* Altura da linha compacta */
-    font-size: clamp(2.5rem, 5vw, 4.5rem); /* Responsivo */
-    text-shadow: 0 4px 20px rgba(0,0,0,0.5); /* Sombra suave para destacar do fundo */
-    margin-bottom: 1rem;
+    line-height: 1 !important;
+    
+    /* CORREÇÃO DE TAMANHO: Reduzi significativamente os valores */
+    font-size: clamp(2rem, 3.5vw, 3rem) !important; 
+    
+    text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    margin-bottom: 0.75rem;
+    max-width: 90%; /* Garante que não encoste nas bordas */
 }
 
-/* A parte colorida do título (ex: "DE CURSOS") mantém o peso */
+/* Parte colorida do título */
 #intro-carousel-wrapper h2 span {
     font-weight: 900 !important;
 }
 
-/* --- SUBTÍTULOS (Tags: "Docência", "Tático") --- */
+/* --- SUBTÍTULOS (Pílulas/Tags) --- */
 .intro-panel-content span.font-mono {
     font-family: 'Montserrat', sans-serif !important;
     font-weight: 700 !important;
     letter-spacing: 1px !important;
-    font-size: 0.75rem !important;
+    font-size: 0.7rem !important; /* Levemente menor */
     text-transform: uppercase;
-    border: none !important; /* Removemos bordas antigas para ficar limpo */
-    background: rgba(0,0,0,0.3); /* Fundo escuro sutil atrás da tag */
-    padding: 4px 8px;
+    background: rgba(0,0,0,0.4);
+    padding: 4px 10px;
     border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 0.5rem;
 }
 
 /* --- TEXTOS DESCRITIVOS --- */
 .intro-panel-content p {
-    font-weight: 500 !important; /* Peso médio para leitura */
-    font-size: 0.95rem;
-    color: #e5e7eb !important; /* Branco gelo */
+    font-weight: 500 !important;
+    font-size: 0.9rem;
+    color: rgba(235, 235, 235, 0.95) !important;
     line-height: 1.5;
     text-shadow: 0 1px 2px rgba(0,0,0,0.9);
-    border-left: none !important; /* Removi a barra lateral para ficar igual ao print minimalista */
-    padding-left: 0 !important;
-    max-width: 400px;
+    max-width: 380px; /* Limita a largura para leitura confortável */
 }
 
-/* --- INDICADOR "ROLE PARA BAIXO" (Igual ao Print: Fino e Pulando) --- */
+/* --- INDICADOR "ROLE PARA BAIXO" (Corrigido e Minimalista) --- */
 
 .intro-scroll-indicator {
     position: absolute;
-    bottom: 40px;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 60;
@@ -1074,37 +1077,41 @@ details[open] summary ~ * {
     flex-direction: column;
     align-items: center;
     
-    /* Estilo do Texto */
-    color: rgba(255, 255, 255, 0.9);
+    /* Estilo Minimalista */
+    color: rgba(255, 255, 255, 0.8);
     font-family: 'Montserrat', sans-serif;
-    font-size: 0.7rem; /* Pequeno */
-    font-weight: 500; /* Fino/Médio */
+    font-size: 0.65rem; /* Bem pequeno e elegante */
+    font-weight: 400; /* Letra mais fina */
     text-transform: uppercase;
-    letter-spacing: 3px; /* Bem espaçado */
+    letter-spacing: 3px; /* Espaçamento chique */
     
-    /* Animação de Pulo */
-    animation: introJump 1.5s infinite ease-in-out;
+    animation: introFloat 2s infinite ease-in-out;
     pointer-events: none;
 }
 
+/* CORREÇÃO DO ÍCONE QUEBRADO */
 .intro-scroll-indicator i {
-    margin-top: 10px;
-    font-size: 1.2rem; /* Seta um pouco maior que o texto */
-    font-weight: 400;
+    margin-top: 8px;
+    font-size: 1rem; /* Seta pequena */
+    
+    /* Força a fonte do ícone a ser FontAwesome, ignorando a Montserrat */
+    font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", sans-serif !important;
+    font-weight: 900 !important; /* Ícones sólidos precisam de peso 900 */
+    font-style: normal !important;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* Animação de Pulo (Jump) */
-@keyframes introJump {
-    0%, 100% { transform: translateX(-50%) translateY(0); }
-    50% { transform: translateX(-50%) translateY(-10px); }
+@keyframes introFloat {
+    0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.7; }
+    50% { transform: translateX(-50%) translateY(-8px); opacity: 1; }
 }
 
-/* --- ESTRUTURA GERAL (Painéis, Imagens, Setas) --- */
+/* --- RESTANTE DO LAYOUT --- */
 
 .intro-vignette {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.4) 100%);
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.5) 100%);
     pointer-events: none;
     z-index: 20;
 }
@@ -1126,12 +1133,10 @@ details[open] summary ~ * {
     height: 100%;
     background-size: cover;
     background-position: center;
-    /* Filtro para ficar parecido com o print (levemente escuro e contrastado) */
-    filter: brightness(0.7) contrast(1.1) saturate(0.9);
+    filter: brightness(0.65) contrast(1.1) saturate(0.9);
 }
 .intro-epic-panel:hover .intro-bg-image-zoom { transform: scale(1.05); filter: brightness(1) contrast(1.1) saturate(1); }
 
-/* Animação de entrada do conteúdo ao passar o mouse */
 .intro-panel-content {
     transform: translateY(30px);
     opacity: 0; 
@@ -1139,7 +1144,6 @@ details[open] summary ~ * {
 }
 .intro-epic-panel:hover .intro-panel-content { transform: translateY(0); opacity: 1; }
 
-/* Setas de Navegação (Discretas) */
 .intro-nav-arrow {
     position: absolute;
     top: 50%;
