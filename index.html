@@ -76,8 +76,8 @@
                     <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-4 drop-shadow-lg">
                         Bombeiro<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">Civil</span>
                     </h2>
-                    <p class="text-gray-300 text-sm font-medium max-w-xs leading-relaxed border-l-2 border-gray-700 pl-4">
-                        Clique ou role para acessar.
+                    <p class="text-gray-100 text-sm font-bold max-w-md leading-relaxed border-l-4 border-red-600 pl-4 drop-shadow-md">
+                        Prevenção e combate a incêndio, resgate técnico e primeiros socorros. A elite da segurança.
                     </p>
                 </div>
             </div>
@@ -95,8 +95,8 @@
                     <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-4 drop-shadow-lg">
                         Segurança<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-500">Privada</span>
                     </h2>
-                    <p class="text-gray-300 text-sm font-medium max-w-xs leading-relaxed border-l-2 border-gray-700 pl-4">
-                        Clique ou role para acessar.
+                    <p class="text-gray-100 text-sm font-bold max-w-md leading-relaxed border-l-4 border-blue-600 pl-4 drop-shadow-md">
+                        Estratégias de vigilância, controle de acesso e proteção de ativos de alto valor.
                     </p>
                 </div>
             </div>
@@ -114,8 +114,8 @@
                     <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-4 drop-shadow-lg">
                         Gestão<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-fuchsia-500">& Liderança</span>
                     </h2>
-                    <p class="text-gray-300 text-sm font-medium max-w-xs leading-relaxed border-l-2 border-gray-700 pl-4">
-                         Clique ou role para acessar.
+                    <p class="text-gray-100 text-sm font-bold max-w-md leading-relaxed border-l-4 border-purple-600 pl-4 drop-shadow-md">
+                        Painel de controle para líderes de equipe. Monitore métricas e desempenho em tempo real.
                     </p>
                 </div>
             </div>
@@ -133,8 +133,8 @@
                     <h2 class="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-4 drop-shadow-lg">
                         Instrutor<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-600">de Cursos</span>
                     </h2>
-                    <p class="text-gray-300 text-sm font-medium max-w-xs leading-relaxed border-l-2 border-gray-700 pl-4">
-                         Clique ou role para acessar.
+                    <p class="text-gray-100 text-sm font-bold max-w-md leading-relaxed border-l-4 border-emerald-600 pl-4 drop-shadow-md">
+                        Metodologia de ensino, oratória e técnicas avançadas para formar profissionais de elite.
                     </p>
                 </div>
             </div>
@@ -143,13 +143,15 @@
     </div>
 
     <script>
-        // Função Principal: Faz a capa subir e liberar o site
+        function showIntro() {
+            const wrapper = document.getElementById('intro-carousel-wrapper');
+            if (wrapper) wrapper.classList.remove('slide-out');
+        }
+
         function dismissIntro() {
             const wrapper = document.getElementById('intro-carousel-wrapper');
             if (wrapper && !wrapper.classList.contains('slide-out')) {
                 wrapper.classList.add('slide-out');
-                // Remove do DOM após a animação
-                setTimeout(() => { wrapper.style.display = 'none'; }, 1000);
             }
         }
 
@@ -161,31 +163,50 @@
             
             if (!track || !wrapper) return;
 
-            // --- NOVO: Detecção de Scroll (Mouse e Touch) ---
+            // --- 1. Lógica de Scroll com TRAVA RIGOROSA ---
             
-            // 1. Mouse Wheel (Desktop)
-            wrapper.addEventListener('wheel', (e) => {
-                // Se rolar para baixo (deltaY positivo), libera o site
-                if (e.deltaY > 0) {
+            // DESKTOP (Roda do Mouse)
+            window.addEventListener('wheel', (e) => {
+                const isHidden = wrapper.classList.contains('slide-out');
+                // Trava: Verifica se o scrollY é EXATAMENTE 0
+                const atTop = window.scrollY === 0; 
+
+                // SAIR: Se capa visível e rolar para baixo
+                if (!isHidden && e.deltaY > 0) {
                     dismissIntro();
+                }
+                // VOLTAR: Só se estiver escondido + Topo Absoluto + Rolar com Força pra Cima
+                // Adicionei e.deltaY < -20 para evitar disparos acidentais sensíveis
+                else if (isHidden && atTop && e.deltaY < -20) {
+                    showIntro();
                 }
             }, { passive: true });
 
-            // 2. Touch Swipe (Mobile)
+            // MOBILE (Toque)
             let touchStartY = 0;
-            wrapper.addEventListener('touchstart', (e) => {
+            
+            window.addEventListener('touchstart', (e) => {
                 touchStartY = e.touches[0].clientY;
             }, { passive: true });
 
-            wrapper.addEventListener('touchmove', (e) => {
+            window.addEventListener('touchmove', (e) => {
                 const touchEndY = e.touches[0].clientY;
-                // Se arrastar o dedo para cima (conteúdo desce) mais que 50px
-                if (touchStartY - touchEndY > 50) { 
+                const diff = touchEndY - touchStartY; // Positivo = Arrastar para baixo (Voltar capa)
+                const isHidden = wrapper.classList.contains('slide-out');
+                // Trava rigorosa para mobile também
+                const atTop = window.scrollY === 0;
+
+                // Sair da capa (Arrastar dedo pra cima)
+                if (!isHidden && touchStartY - touchEndY > 50) { 
                     dismissIntro();
+                }
+                // Voltar capa (Arrastar dedo pra baixo) + Topo Absoluto
+                else if (isHidden && atTop && diff > 80) { // Aumentei para 80px pra evitar acidentes
+                    showIntro();
                 }
             }, { passive: true });
 
-            // --- Lógica do Carrossel (Mantida) ---
+            // --- 2. Setup Carrossel (Infinito) ---
             const originalItems = Array.from(track.children);
             [...originalItems, ...originalItems].forEach(item => {
                 const clone = item.cloneNode(true);
@@ -211,7 +232,8 @@
             setTimeout(calculateDimensions, 100);
 
             function animate() {
-                if (isAnimating && totalOriginalWidth > 0) {
+                // Otimização: Só anima se a capa estiver visível
+                if (isAnimating && totalOriginalWidth > 0 && !wrapper.classList.contains('slide-out')) {
                     currentX -= speed;
                     if (Math.abs(currentX) >= totalOriginalWidth) {
                         currentX = 0;
@@ -222,6 +244,7 @@
             }
             requestAnimationFrame(animate);
 
+            // --- 3. Controle Manual ---
             function moveCarousel(direction) {
                 isAnimating = false;
                 const targetMove = direction === 'next' ? -itemWidth : itemWidth;
