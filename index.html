@@ -66,7 +66,6 @@
             <div class="intro-epic-panel w-[100vw] md:w-[33.333vw] group" onclick="dismissIntro()">
                 <div class="intro-bg-image-zoom" style="background-image: url('https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/BC.jpg');"></div>
                 <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-500"></div>
-                
                 <div class="absolute bottom-0 left-0 p-8 md:p-12 w-full z-30 intro-panel-content">
                     <div class="w-12 h-1 bg-red-600 mb-6 shadow-[0_0_15px_rgba(220,38,38,0.6)]"></div>
                     <div class="flex items-center gap-3 mb-3">
@@ -85,7 +84,6 @@
             <div class="intro-epic-panel w-[100vw] md:w-[33.333vw] group" onclick="dismissIntro()">
                 <div class="intro-bg-image-zoom" style="background-image: url('https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/SP.jpg');"></div>
                 <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-500"></div>
-                
                 <div class="absolute bottom-0 left-0 p-8 md:p-12 w-full z-30 intro-panel-content">
                     <div class="w-12 h-1 bg-blue-600 mb-6 shadow-[0_0_15px_rgba(37,99,235,0.6)]"></div>
                     <div class="flex items-center gap-3 mb-3">
@@ -104,7 +102,6 @@
             <div class="intro-epic-panel w-[100vw] md:w-[33.333vw] group" onclick="dismissIntro()">
                 <div class="intro-bg-image-zoom" style="background-image: url('https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/GE.jpg');"></div>
                 <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-500"></div>
-                
                 <div class="absolute bottom-0 left-0 p-8 md:p-12 w-full z-30 intro-panel-content">
                     <div class="w-12 h-1 bg-purple-600 mb-6 shadow-[0_0_15px_rgba(147,51,234,0.6)]"></div>
                     <div class="flex items-center gap-3 mb-3">
@@ -123,7 +120,6 @@
             <div class="intro-epic-panel w-[100vw] md:w-[33.333vw] group" onclick="dismissIntro()">
                 <div class="intro-bg-image-zoom" style="background-image: url('https://raw.githubusercontent.com/instrutormedeiros/ProjetoBC/refs/heads/main/assets/img/INS8.png');"></div>
                 <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90 group-hover:opacity-80 transition-opacity duration-500"></div>
-                
                 <div class="absolute bottom-0 left-0 p-8 md:p-12 w-full z-30 intro-panel-content">
                     <div class="w-12 h-1 bg-emerald-500 mb-6 shadow-[0_0_15px_rgba(16,185,129,0.6)]"></div>
                     <div class="flex items-center gap-3 mb-3">
@@ -163,26 +159,31 @@
             
             if (!track || !wrapper) return;
 
-            // --- 1. Lógica de Scroll com TRAVA RIGOROSA ---
+            // --- 1. Lógica de Scroll SEGURA (Baseada em Posição do Mouse) ---
             
-            // DESKTOP (Roda do Mouse)
+            let mouseY = 500; // Valor inicial seguro (meio da tela)
+
+            // Rastreia a posição vertical do mouse
+            window.addEventListener('mousemove', (e) => {
+                mouseY = e.clientY;
+            }, { passive: true });
+
+            // DESKTOP: Roda do Mouse
             window.addEventListener('wheel', (e) => {
                 const isHidden = wrapper.classList.contains('slide-out');
-                // Trava: Verifica se o scrollY é EXATAMENTE 0
-                const atTop = window.scrollY === 0; 
-
+                
                 // SAIR: Se capa visível e rolar para baixo
                 if (!isHidden && e.deltaY > 0) {
                     dismissIntro();
                 }
-                // VOLTAR: Só se estiver escondido + Topo Absoluto + Rolar com Força pra Cima
-                // Adicionei e.deltaY < -20 para evitar disparos acidentais sensíveis
-                else if (isHidden && atTop && e.deltaY < -20) {
+                // VOLTAR: Só se estiver escondido + Rolar pra Cima + MOUSE NO TOPO (0 a 50px)
+                // Isso impede que role no meio da página
+                else if (isHidden && e.deltaY < -10 && mouseY <= 50) {
                     showIntro();
                 }
             }, { passive: true });
 
-            // MOBILE (Toque)
+            // MOBILE: Toque (Zona de Gatilho no Topo)
             let touchStartY = 0;
             
             window.addEventListener('touchstart', (e) => {
@@ -190,18 +191,17 @@
             }, { passive: true });
 
             window.addEventListener('touchmove', (e) => {
-                const touchEndY = e.touches[0].clientY;
-                const diff = touchEndY - touchStartY; // Positivo = Arrastar para baixo (Voltar capa)
+                const touchY = e.touches[0].clientY;
+                const diff = touchY - touchStartY; // Positivo = Puxar para baixo
                 const isHidden = wrapper.classList.contains('slide-out');
-                // Trava rigorosa para mobile também
-                const atTop = window.scrollY === 0;
 
                 // Sair da capa (Arrastar dedo pra cima)
-                if (!isHidden && touchStartY - touchEndY > 50) { 
+                if (!isHidden && touchStartY - touchY > 50) { 
                     dismissIntro();
                 }
-                // Voltar capa (Arrastar dedo pra baixo) + Topo Absoluto
-                else if (isHidden && atTop && diff > 80) { // Aumentei para 80px pra evitar acidentes
+                // Voltar capa: Só se o toque começar no topo (0 a 80px) e puxar pra baixo
+                // Assim funciona como um "Refresh" de app nativo
+                else if (isHidden && diff > 80 && touchStartY <= 80) {
                     showIntro();
                 }
             }, { passive: true });
@@ -232,7 +232,6 @@
             setTimeout(calculateDimensions, 100);
 
             function animate() {
-                // Otimização: Só anima se a capa estiver visível
                 if (isAnimating && totalOriginalWidth > 0 && !wrapper.classList.contains('slide-out')) {
                     currentX -= speed;
                     if (Math.abs(currentX) >= totalOriginalWidth) {
@@ -256,16 +255,12 @@
                     const elapsed = currentTime - startTime;
                     const progress = Math.min(elapsed / duration, 1);
                     const ease = 1 - Math.pow(1 - progress, 4);
-                    
                     let newX = startX + (targetMove * ease);
                     
                     if (Math.abs(newX) >= totalOriginalWidth) {
                          if (direction === 'next') newX += totalOriginalWidth; 
                          else newX -= totalOriginalWidth;
-                    } 
-                    else if (newX > 0) {
-                         newX -= totalOriginalWidth;
-                    }
+                    } else if (newX > 0) newX -= totalOriginalWidth;
 
                     currentX = newX;
                     track.style.transform = `translate3d(${currentX}px, 0, 0)`;
@@ -276,14 +271,8 @@
                 requestAnimationFrame(step);
             }
 
-            if(nextBtn) nextBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); 
-                moveCarousel('next');
-            });
-            if(prevBtn) prevBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); 
-                moveCarousel('prev');
-            });
+            if(nextBtn) nextBtn.addEventListener('click', (e) => { e.stopPropagation(); moveCarousel('next'); });
+            if(prevBtn) prevBtn.addEventListener('click', (e) => { e.stopPropagation(); moveCarousel('prev'); });
         });
     </script>
 </div>
