@@ -995,7 +995,7 @@ details[open] summary ~ * {
 }
 
 /* ==========================================================================
-   10. INTEGRAÇÃO CAPA CARROSSEL - V15 (SCROLL FIX & SITE WRAPPER)
+   10. INTEGRAÇÃO CAPA CARROSSEL - V16 (ULTRA FAST MOBILE)
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;900&display=swap');
@@ -1005,23 +1005,23 @@ details[open] summary ~ * {
     top: 0;
     left: 0;
     width: 100vw;
-    /* Altura dinâmica para corrigir barras do mobile */
     height: 100vh; 
     height: 100dvh; 
     z-index: 99999;
     background-color: #050505;
     overflow: hidden;
     font-family: 'Montserrat', sans-serif;
-    /* Velocidade rápida e fluida */
-    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    
+    /* VELOCIDADE AUMENTADA: 0.3s (Resposta imediata) */
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    
     transform: translateY(0);
-    /* Permite gestos verticais nativos */
     touch-action: pan-y; 
 }
 
 #intro-carousel-wrapper.slide-out {
     transform: translateY(-100%);
-    pointer-events: none; /* Garante que não atrapalhe o site quando subir */
+    pointer-events: none;
 }
 
 /* --- TÍTULOS --- */
