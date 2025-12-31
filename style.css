@@ -995,45 +995,57 @@ details[open] summary ~ * {
 }
 
 /* ==========================================================================
-   10. INTEGRAÇÃO CAPA CARROSSEL (INTRO OVERLAY)
-   ========================================================================== */
-
-/* ==========================================================================
-   10. INTEGRAÇÃO CAPA CARROSSEL (INTRO OVERLAY) - V2 (Ajustes Visuais)
+   10. INTEGRAÇÃO CAPA CARROSSEL (INTRO OVERLAY) - V3 (Final)
    ========================================================================== */
 
 /* Container Principal */
 #intro-carousel-wrapper {
     position: fixed;
-    inset: 0;
-    z-index: 99999;
-    background-color: #050505;
+    top: 0;
+    left: 0;
     width: 100vw;
     height: 100vh;
+    z-index: 99999;
+    background-color: #050505;
     overflow: hidden;
-    /* Força a fonte do site na capa e garante peso */
+    /* Fonte Montserrat para garantir o peso */
     font-family: 'Montserrat', sans-serif; 
-    transition: transform 0.8s cubic-bezier(0.77, 0, 0.175, 1);
+    
+    /* Animação suave de entrada e saída */
+    transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1);
+    transform: translateY(0); /* Estado inicial: Visível */
 }
 
+/* Classe aplicada quando o usuário desce para o site */
 #intro-carousel-wrapper.slide-out {
-    transform: translateY(-100%);
+    transform: translateY(-100%); /* Sobe e fica escondido no teto */
 }
 
-/* --- Estilos do Carrossel --- */
+/* --- Tipografia "Cheia" (Bold/Black) --- */
 
-/* Ajuste de Fontes mais "cheinhas" (Bold/Black) */
 #intro-carousel-wrapper h2 {
-    font-weight: 900 !important; /* Força negrito extra */
-    letter-spacing: -0.05em !important;
+    font-weight: 900 !important; /* Extra Black */
+    letter-spacing: -2px !important; /* Letras mais juntinhas para impacto */
+    text-transform: uppercase;
 }
 
+/* Badges (Títulos pequenos acima do H2) */
 .intro-panel-content span.font-mono {
-    font-weight: 700 !important; /* Subtítulo mais grosso */
-    letter-spacing: 0.1em !important;
+    font-family: 'Montserrat', sans-serif !important; /* Mudamos para Montserrat para ficar mais cheio */
+    font-weight: 800 !important;
+    letter-spacing: 1px !important;
 }
 
-/* Indicador de Rolagem (Novo) */
+/* Texto descritivo (Parágrafos) */
+.intro-panel-content p {
+    font-weight: 600 !important; /* Texto mais grosso */
+    color: #e5e7eb !important; /* Branco gelo para contraste */
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+/* --- Elementos Visuais --- */
+
+/* Indicador de Rolagem */
 .intro-scroll-indicator {
     position: absolute;
     bottom: 30px;
@@ -1043,18 +1055,20 @@ details[open] summary ~ * {
     display: flex;
     flex-direction: column;
     align-items: center;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.75rem;
-    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.85rem;
+    font-weight: 800; /* Texto do indicador bem grosso */
     text-transform: uppercase;
     letter-spacing: 2px;
     animation: introBounce 2s infinite;
-    pointer-events: none; /* Não atrapalha o clique */
+    pointer-events: none;
+    text-shadow: 0 2px 10px rgba(0,0,0,1);
 }
 
 .intro-scroll-indicator i {
     margin-top: 8px;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
+    filter: drop-shadow(0 2px 5px rgba(0,0,0,1));
 }
 
 @keyframes introBounce {
@@ -1067,7 +1081,7 @@ details[open] summary ~ * {
 .intro-vignette {
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.9) 100%);
+    background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.95) 100%);
     pointer-events: none;
     z-index: 20;
 }
@@ -1079,8 +1093,9 @@ details[open] summary ~ * {
     flex-shrink: 0;
     border-right: 1px solid rgba(255,255,255,0.05);
     overflow: hidden;
-    cursor: pointer; /* Mantém cursor de clique como opção */
+    cursor: grab;
 }
+.intro-epic-panel:active { cursor: grabbing; }
 
 .intro-bg-image-zoom {
     transition: transform 1.5s cubic-bezier(0.19, 1, 0.22, 1);
@@ -1089,7 +1104,7 @@ details[open] summary ~ * {
     height: 100%;
     background-size: cover;
     background-position: center;
-    filter: saturate(0.9) contrast(1.1);
+    filter: saturate(0.95) contrast(1.15);
 }
 
 .intro-epic-panel:hover .intro-bg-image-zoom {
@@ -1097,10 +1112,10 @@ details[open] summary ~ * {
     filter: saturate(1.1) contrast(1.1);
 }
 
-/* Conteúdo do Painel */
+/* Conteúdo */
 .intro-panel-content {
     transform: translateY(20px);
-    opacity: 0.8;
+    opacity: 0.9; /* Mais visível por padrão */
     transition: all 0.5s ease;
 }
 
@@ -1114,10 +1129,10 @@ details[open] summary ~ * {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2); /* Borda mais grossa */
     color: white;
     width: 60px;
     height: 60px;
@@ -1128,13 +1143,13 @@ details[open] summary ~ * {
     cursor: pointer;
     z-index: 50;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
 }
 
 .intro-nav-arrow:hover {
-    background: rgba(234, 88, 12, 0.9);
+    background: rgba(234, 88, 12, 1);
     border-color: rgba(234, 88, 12, 1);
-    box-shadow: 0 0 20px rgba(234, 88, 12, 0.4);
+    box-shadow: 0 0 25px rgba(234, 88, 12, 0.6);
     transform: translateY(-50%) scale(1.1);
 }
 
@@ -1146,14 +1161,13 @@ details[open] summary ~ * {
 .intro-arrow-right-anim { animation: introDriftRight 3s infinite ease-in-out; }
 .intro-nav-arrow:hover { animation: none; }
 
-/* Track do Carrossel */
 #intro-carousel-track {
     display: flex;
     height: 100%;
     width: max-content;
     will-change: transform;
 }
-/* Esconde a barra laranja antiga que ficava embaixo */
-#intro-carousel-wrapper .absolute.bottom-0.h-1 {
-    display: none;
-}
+
+/* Esconde a barra laranja antiga */
+#intro-carousel-wrapper .absolute.bottom-0.h-1 { display: none; }
+
