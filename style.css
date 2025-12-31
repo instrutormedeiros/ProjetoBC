@@ -995,13 +995,12 @@ details[open] summary ~ * {
 }
 
 /* ==========================================================================
-   10. INTEGRAÇÃO CAPA CARROSSEL - VERSÃO CORRIGIDA (V4)
+   10. INTEGRAÇÃO CAPA CARROSSEL - V5 (Correção de Fonte e Scroll)
    ========================================================================== */
 
-/* 1. IMPORTANTE: Trazendo a fonte "Parruda" (Montserrat Extra Bold) */
+/* Importa a fonte grossa APENAS para os títulos */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&display=swap');
 
-/* Container Principal */
 #intro-carousel-wrapper {
     position: fixed;
     top: 0;
@@ -1011,31 +1010,28 @@ details[open] summary ~ * {
     z-index: 99999;
     background-color: #050505;
     overflow: hidden;
+    /* REMOVIDO: font-family global. Agora usa a fonte do seu site por padrão. */
     
-    /* Aplica a fonte grossa em tudo dentro do carrossel */
-    font-family: 'Montserrat', sans-serif; 
-    
-    /* Animação */
     transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1);
-    transform: translateY(0); /* Começa Visível */
+    transform: translateY(0);
 }
 
-/* Estado Escondido (Acima da tela) */
 #intro-carousel-wrapper.slide-out {
     transform: translateY(-100%);
 }
 
-/* --- TIPOGRAFIA IDENTICA AO PRINT --- */
+/* --- TÍTULOS E SUBTÍTULOS (Fonte Grossa/Montserrat) --- */
 
-/* Títulos H2 (Bombeiro Civil, etc) */
+/* Título Principal (BOMBEIRO CIVIL, etc) */
 #intro-carousel-wrapper h2 {
-    font-weight: 900 !important; /* Extra Black - Bem grosso */
-    letter-spacing: -2px !important; /* Letras juntas para impacto */
+    font-family: 'Montserrat', sans-serif !important;
+    font-weight: 900 !important; /* Extra Black */
+    letter-spacing: -2px !important;
     text-transform: uppercase;
     line-height: 0.9 !important;
 }
 
-/* Subtítulos (Pílulas acima do H2) */
+/* Subtítulos (As pílulas acima do título) */
 .intro-panel-content span.font-mono {
     font-family: 'Montserrat', sans-serif !important;
     font-weight: 800 !important;
@@ -1043,19 +1039,18 @@ details[open] summary ~ * {
     text-transform: uppercase;
 }
 
-/* Textos Descritivos */
+/* --- TEXTOS COMUNS (Fonte Original do Site) --- */
 .intro-panel-content p {
-    font-family: 'Montserrat', sans-serif !important;
-    font-weight: 600 !important; /* Semi-bold */
+    /* Não definimos font-family aqui, ele vai herdar do seu body (Lato) */
+    font-weight: 600 !important;
     font-size: 0.95rem;
     color: #f3f4f6 !important;
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-    border-left-width: 4px !important; /* Barra lateral grossa */
+    border-left-width: 4px !important;
 }
 
-/* --- ELEMENTOS VISUAIS --- */
+/* --- RESTO DO VISUAL (Indicadores, Setas, Painéis) --- */
 
-/* Indicador "Role para baixo" */
 .intro-scroll-indicator {
     position: absolute;
     bottom: 30px;
@@ -1066,6 +1061,7 @@ details[open] summary ~ * {
     flex-direction: column;
     align-items: center;
     color: rgba(255, 255, 255, 0.8);
+    font-family: 'Montserrat', sans-serif; /* Indicador pode ser Montserrat */
     font-size: 0.8rem;
     font-weight: 800;
     text-transform: uppercase;
@@ -1074,10 +1070,7 @@ details[open] summary ~ * {
     pointer-events: none;
 }
 
-.intro-scroll-indicator i {
-    margin-top: 8px;
-    font-size: 1.5rem;
-}
+.intro-scroll-indicator i { margin-top: 8px; font-size: 1.5rem; }
 
 @keyframes introBounce {
     0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
@@ -1085,7 +1078,6 @@ details[open] summary ~ * {
     60% { transform: translateX(-50%) translateY(-5px); }
 }
 
-/* Vinheta e Painéis */
 .intro-vignette {
     position: absolute;
     inset: 0;
@@ -1113,24 +1105,15 @@ details[open] summary ~ * {
     background-position: center;
     filter: saturate(0.95) contrast(1.15);
 }
-
-.intro-epic-panel:hover .intro-bg-image-zoom {
-    transform: scale(1.08); 
-    filter: saturate(1.1) contrast(1.1);
-}
+.intro-epic-panel:hover .intro-bg-image-zoom { transform: scale(1.08); filter: saturate(1.1) contrast(1.1); }
 
 .intro-panel-content {
     transform: translateY(20px);
     opacity: 0.9;
     transition: all 0.5s ease;
 }
+.intro-epic-panel:hover .intro-panel-content { transform: translateY(0); opacity: 1; }
 
-.intro-epic-panel:hover .intro-panel-content {
-    transform: translateY(0);
-    opacity: 1;
-}
-
-/* Botões */
 .intro-nav-arrow {
     position: absolute;
     top: 50%;
@@ -1149,19 +1132,17 @@ details[open] summary ~ * {
     z-index: 50;
     transition: all 0.3s ease;
 }
-
 .intro-nav-arrow:hover {
     background: rgba(234, 88, 12, 1);
     border-color: rgba(234, 88, 12, 1);
     transform: translateY(-50%) scale(1.1);
 }
 
-#intro-carousel-track {
-    display: flex;
-    height: 100%;
-    width: max-content;
-    will-change: transform;
-}
+@keyframes introDriftLeft { 0%, 100% { transform: translate(0, -50%); } 50% { transform: translate(-8px, -50%); } }
+@keyframes introDriftRight { 0%, 100% { transform: translate(0, -50%); } 50% { transform: translate(8px, -50%); } }
+.intro-arrow-left-anim { animation: introDriftLeft 3s infinite ease-in-out; }
+.intro-arrow-right-anim { animation: introDriftRight 3s infinite ease-in-out; }
+.intro-nav-arrow:hover { animation: none; }
 
-/* Esconde elementos indesejados da versão antiga */
+#intro-carousel-track { display: flex; height: 100%; width: max-content; will-change: transform; }
 #intro-carousel-wrapper .absolute.bottom-0.h-1 { display: none; }
