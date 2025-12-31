@@ -995,11 +995,11 @@ details[open] summary ~ * {
 }
 
 /* ==========================================================================
-   10. INTEGRAÇÃO CAPA CARROSSEL - V6 (ESTILO MINIMALISTA & ELEGANTE)
+   10. INTEGRAÇÃO CAPA CARROSSEL - V7 (ESTILO TÁTICO FINAL)
    ========================================================================== */
 
-/* Importamos pesos mais leves também (300, 400, 500) */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+/* Importamos Montserrat com pesos específicos: 400 (Regular), 700 (Bold), 900 (Black) */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap');
 
 #intro-carousel-wrapper {
     position: fixed;
@@ -1010,7 +1010,8 @@ details[open] summary ~ * {
     z-index: 99999;
     background-color: #050505;
     overflow: hidden;
-    transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1); /* Transição mais lenta e suave */
+    font-family: 'Montserrat', sans-serif; /* Fonte global da capa */
+    transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1);
     transform: translateY(0);
 }
 
@@ -1018,45 +1019,50 @@ details[open] summary ~ * {
     transform: translateY(-100%);
 }
 
-/* --- TÍTULOS E SUBTÍTULOS (Minimalistas) --- */
+/* --- TÍTULOS (Estilo "Instrutor de Cursos" da foto) --- */
 
-/* Título Principal (BOMBEIRO CIVIL, etc) */
 #intro-carousel-wrapper h2 {
     font-family: 'Montserrat', sans-serif !important;
-    font-weight: 600 !important; /* SemiBold em vez de Black */
-    letter-spacing: 2px !important; /* Espaçamento positivo para elegância */
+    font-weight: 900 !important; /* Extra Black (Bem grosso) */
+    letter-spacing: -1.5px !important; /* Letras juntas e compactas */
     text-transform: uppercase;
-    line-height: 1.1 !important; /* Um pouco mais de respiro na altura */
-    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    line-height: 0.95 !important; /* Altura da linha compacta */
+    font-size: clamp(2.5rem, 5vw, 4.5rem); /* Responsivo */
+    text-shadow: 0 4px 20px rgba(0,0,0,0.5); /* Sombra suave para destacar do fundo */
+    margin-bottom: 1rem;
 }
 
-/* Destaque colorido no título */
-#intro-carousel-wrapper h2 span.bg-clip-text {
-    font-weight: 700 !important; /* Um pouco mais de destaque só na palavra chave */
+/* A parte colorida do título (ex: "DE CURSOS") mantém o peso */
+#intro-carousel-wrapper h2 span {
+    font-weight: 900 !important;
 }
 
-/* Subtítulos (Pílulas acima do título) */
+/* --- SUBTÍTULOS (Tags: "Docência", "Tático") --- */
 .intro-panel-content span.font-mono {
     font-family: 'Montserrat', sans-serif !important;
-    font-weight: 500 !important; /* Medium */
-    letter-spacing: 3px !important; /* Bem espaçado */
+    font-weight: 700 !important;
+    letter-spacing: 1px !important;
+    font-size: 0.75rem !important;
     text-transform: uppercase;
-    font-size: 0.7rem !important; /* Menor e mais delicado */
-    background: rgba(255,255,255,0.05) !important; /* Fundo mais sutil */
-    border: none !important; /* Remove a borda para limpar */
+    border: none !important; /* Removemos bordas antigas para ficar limpo */
+    background: rgba(0,0,0,0.3); /* Fundo escuro sutil atrás da tag */
+    padding: 4px 8px;
+    border-radius: 4px;
 }
 
-/* --- TEXTOS DESCRITIVOS (Mais leves) --- */
+/* --- TEXTOS DESCRITIVOS --- */
 .intro-panel-content p {
-    font-weight: 400 !important; /* Regular (fino) */
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.9) !important; /* Branco ligeiramente translúcido */
-    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-    border-left-width: 2px !important; /* Barra lateral mais fina */
-    margin-top: 1.5rem;
+    font-weight: 500 !important; /* Peso médio para leitura */
+    font-size: 0.95rem;
+    color: #e5e7eb !important; /* Branco gelo */
+    line-height: 1.5;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+    border-left: none !important; /* Removi a barra lateral para ficar igual ao print minimalista */
+    padding-left: 0 !important;
+    max-width: 400px;
 }
 
-/* --- INDICADOR "ROLE PARA BAIXO" (Minimalista e Flutuante) --- */
+/* --- INDICADOR "ROLE PARA BAIXO" (Igual ao Print: Fino e Pulando) --- */
 
 .intro-scroll-indicator {
     position: absolute;
@@ -1067,61 +1073,38 @@ details[open] summary ~ * {
     display: flex;
     flex-direction: column;
     align-items: center;
-    color: rgba(255, 255, 255, 0.6); /* Mais discreto */
+    
+    /* Estilo do Texto */
+    color: rgba(255, 255, 255, 0.9);
     font-family: 'Montserrat', sans-serif;
-    font-size: 0.65rem; /* Bem pequeno */
-    font-weight: 400; /* Letra fina */
+    font-size: 0.7rem; /* Pequeno */
+    font-weight: 500; /* Fino/Médio */
     text-transform: uppercase;
-    letter-spacing: 4px; /* Muito espaçado */
-    animation: introFloat 3s infinite ease-in-out; /* Animação suave de flutuação */
+    letter-spacing: 3px; /* Bem espaçado */
+    
+    /* Animação de Pulo */
+    animation: introJump 1.5s infinite ease-in-out;
     pointer-events: none;
 }
 
 .intro-scroll-indicator i {
-    margin-top: 12px;
-    font-size: 1rem;
-    opacity: 0.8;
+    margin-top: 10px;
+    font-size: 1.2rem; /* Seta um pouco maior que o texto */
+    font-weight: 400;
 }
 
-/* Nova animação suave de "flutuar" */
-@keyframes introFloat {
-    0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.6; }
-    50% { transform: translateX(-50%) translateY(-10px); opacity: 1; }
+/* Animação de Pulo (Jump) */
+@keyframes introJump {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-10px); }
 }
 
-/* --- RESTO DO VISUAL (Setas, Painéis, Vinheta) --- */
+/* --- ESTRUTURA GERAL (Painéis, Imagens, Setas) --- */
 
-/* As setas também ficaram mais limpas */
-.intro-nav-arrow {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.05); /* Mais sutil */
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.1); /* Borda fina */
-    color: rgba(255, 255, 255, 0.8);
-    width: 50px; /* Menores */
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    cursor: pointer;
-    z-index: 50;
-    transition: all 0.3s ease;
-}
-
-.intro-nav-arrow:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.4);
-    color: white;
-}
-
-/* Vinheta mais suave */
 .intro-vignette {
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.8) 100%);
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.4) 100%);
     pointer-events: none;
     z-index: 20;
 }
@@ -1137,28 +1120,54 @@ details[open] summary ~ * {
 .intro-epic-panel:active { cursor: grabbing; }
 
 .intro-bg-image-zoom {
-    transition: transform 2s cubic-bezier(0.19, 1, 0.22, 1); /* Zoom mais lento */
+    transition: transform 1.5s cubic-bezier(0.19, 1, 0.22, 1);
     will-change: transform;
     width: 100%;
     height: 100%;
     background-size: cover;
     background-position: center;
-    /* Menos contraste e saturação para um look mais "premium" */
-    filter: saturate(0.9) contrast(1.05) brightness(0.9);
+    /* Filtro para ficar parecido com o print (levemente escuro e contrastado) */
+    filter: brightness(0.7) contrast(1.1) saturate(0.9);
 }
-.intro-epic-panel:hover .intro-bg-image-zoom { transform: scale(1.05); filter: saturate(1) contrast(1.1) brightness(1); }
+.intro-epic-panel:hover .intro-bg-image-zoom { transform: scale(1.05); filter: brightness(1) contrast(1.1) saturate(1); }
 
+/* Animação de entrada do conteúdo ao passar o mouse */
 .intro-panel-content {
     transform: translateY(30px);
-    opacity: 0; /* Começa invisível para entrada suave */
-    transition: all 0.8s ease;
+    opacity: 0; 
+    transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 .intro-epic-panel:hover .intro-panel-content { transform: translateY(0); opacity: 1; }
 
+/* Setas de Navegação (Discretas) */
+.intro-nav-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 50;
+    transition: all 0.3s ease;
+}
+.intro-nav-arrow:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    transform: translateY(-50%) scale(1.1);
+}
+
 @keyframes introDriftLeft { 0%, 100% { transform: translate(0, -50%); } 50% { transform: translate(-5px, -50%); } }
 @keyframes introDriftRight { 0%, 100% { transform: translate(0, -50%); } 50% { transform: translate(5px, -50%); } }
-.intro-arrow-left-anim { animation: introDriftLeft 4s infinite ease-in-out; }
-.intro-arrow-right-anim { animation: introDriftRight 4s infinite ease-in-out; }
+.intro-arrow-left-anim { animation: introDriftLeft 3s infinite ease-in-out; }
+.intro-arrow-right-anim { animation: introDriftRight 3s infinite ease-in-out; }
 .intro-nav-arrow:hover { animation: none; }
 
 #intro-carousel-track { display: flex; height: 100%; width: max-content; will-change: transform; }
