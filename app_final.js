@@ -2993,6 +2993,48 @@ window.clearLocalUserData = function() {
 
     console.log("🧹 Dados locais limpos com sucesso.");
 };
+
+    // --- LÓGICA DO MODAL DE CONTATO (CURSOS EXTRAS) ---
+    window.openContactModal = function(courseName) {
+        const modal = document.getElementById('course-contact-modal');
+        const overlay = document.getElementById('course-contact-overlay');
+        const titleEl = document.getElementById('contact-course-name');
+        const whatsBtn = document.getElementById('btn-whatsapp-contact');
+        const emailBtn = document.getElementById('btn-email-contact');
+
+        if (!modal || !overlay) return;
+
+        // 1. Atualiza o Nome do Curso
+        if (titleEl) titleEl.textContent = courseName;
+
+        // 2. Configura o Link do WhatsApp (SEU NÚMERO AQUI)
+        const phone = "5561998300711"; 
+        const msg = encodeURIComponent(`Olá! Tenho interesse no curso de *${courseName}*. Poderia me passar mais informações sobre turmas e valores?`);
+        if (whatsBtn) whatsBtn.href = `https://wa.me/${phone}?text=${msg}`;
+
+        // 3. Configura o Link de Email
+        if (emailBtn) emailBtn.href = `mailto:contato@bravos.com.br?subject=Interesse em ${courseName}`;
+
+        // 4. Abre o Modal
+        overlay.classList.add('show');
+        modal.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
+        modal.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
+    };
+
+    // Fechar Modal
+    function closeContactModal() {
+        const modal = document.getElementById('course-contact-modal');
+        const overlay = document.getElementById('course-contact-overlay');
+        
+        if (modal) {
+            modal.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+            modal.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+        }
+        if (overlay) overlay.classList.remove('show');
+    }
+
+    document.getElementById('close-contact-modal')?.addEventListener('click', closeContactModal);
+    document.getElementById('course-contact-overlay')?.addEventListener('click', closeContactModal);
     
     init(); // <--- Inicia o app
 }); // <--- Fecha o DOMContentLoaded
