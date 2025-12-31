@@ -159,54 +159,80 @@
             
             if (!track || !wrapper) return;
 
-            // --- 1. Lógica de Scroll SEGURA (Baseada em Posição do Mouse) ---
+            // --- 1. CONFIGURAÇÕES DE SCROLL E SWIPE ---
             
-            let mouseY = 500; // Valor inicial seguro (meio da tela)
+            let startX = 0;
+            let startY = 0;
+            let mouseY = 500;
 
-            // Rastreia a posição vertical do mouse
-            window.addEventListener('mousemove', (e) => {
-                mouseY = e.clientY;
-            }, { passive: true });
+            window.addEventListener('mousemove', (e) => { mouseY = e.clientY; }, { passive: true });
 
-            // DESKTOP: Roda do Mouse
+            // DESKTOP: Roda do Mouse (Mais sensível)
             window.addEventListener('wheel', (e) => {
                 const isHidden = wrapper.classList.contains('slide-out');
                 
-                // SAIR: Se capa visível e rolar para baixo
                 if (!isHidden && e.deltaY > 0) {
                     dismissIntro();
                 }
-                // VOLTAR: Só se estiver escondido + Rolar pra Cima + MOUSE NO TOPO (0 a 50px)
-                // Isso impede que role no meio da página
-                else if (isHidden && e.deltaY < -10 && mouseY <= 50) {
+                else if (isHidden && window.scrollY === 0 && e.deltaY < -10 && mouseY <= 50) {
                     showIntro();
                 }
             }, { passive: true });
 
-            // MOBILE: Toque (Zona de Gatilho no Topo)
-            let touchStartY = 0;
+            // MOBILE: TOUCH (Swipe Lateral + Scroll Vertical)
             
-            window.addEventListener('touchstart', (e) => {
-                touchStartY = e.touches[0].clientY;
+            wrapper.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
             }, { passive: true });
 
-            window.addEventListener('touchmove', (e) => {
-                const touchY = e.touches[0].clientY;
-                const diff = touchY - touchStartY; // Positivo = Puxar para baixo
-                const isHidden = wrapper.classList.contains('slide-out');
-
-                // Sair da capa (Arrastar dedo pra cima)
-                if (!isHidden && touchStartY - touchY > 50) { 
+            wrapper.addEventListener('touchmove', (e) => {
+                if(wrapper.classList.contains('slide-out')) return; // Se já saiu, não faz swipe
+                
+                const currentX = e.touches[0].clientX;
+                const currentY = e.touches[0].clientY;
+                
+                const diffX = startX - currentX;
+                const diffY = startY - currentY;
+                
+                // Lógica Vertical (Sair da capa) - Sensibilidade: 40px
+                if (diffY > 40 && Math.abs(diffX) < Math.abs(diffY)) {
                     dismissIntro();
                 }
-                // Voltar capa: Só se o toque começar no topo (0 a 80px) e puxar pra baixo
-                // Assim funciona como um "Refresh" de app nativo
-                else if (isHidden && diff > 80 && touchStartY <= 80) {
-                    showIntro();
-                }
             }, { passive: true });
 
-            // --- 2. Setup Carrossel (Infinito) ---
+            // Detectar fim do toque para Swipe Lateral
+            wrapper.addEventListener('touchend', (e) => {
+                if(wrapper.classList.contains('slide-out')) return;
+
+                const endX = e.changedTouches[0].clientX;
+                const endY = e.changedTouches[0].clientY;
+                
+                const diffX = startX - endX;
+                const diffY = startY - endY;
+
+                // Se o movimento for mais horizontal que vertical e maior que 40px
+                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 40) {
+                    if (diffX > 0) {
+                        moveCarousel('next'); // Arrastou para esquerda -> Próximo
+                    } else {
+                        moveCarousel('prev'); // Arrastou para direita -> Anterior
+                    }
+                }
+            }, { passive: true });
+            
+            // --- 2. Lógica para Voltar a Capa (Puxar pra baixo no mobile) ---
+            document.addEventListener('touchmove', (e) => {
+                 if (!wrapper.classList.contains('slide-out')) return;
+                 const currentY = e.touches[0].clientY;
+                 // Se estiver no topo e puxar muito pra baixo
+                 if (window.scrollY === 0 && currentY > 150) { // Aumentei um pouco para evitar acidente
+                     showIntro();
+                 }
+            }, { passive: true });
+
+
+            // --- 3. Setup Carrossel (Infinito) ---
             const originalItems = Array.from(track.children);
             [...originalItems, ...originalItems].forEach(item => {
                 const clone = item.cloneNode(true);
@@ -243,12 +269,11 @@
             }
             requestAnimationFrame(animate);
 
-            // --- 3. Controle Manual ---
             function moveCarousel(direction) {
                 isAnimating = false;
                 const targetMove = direction === 'next' ? -itemWidth : itemWidth;
                 const startX = currentX;
-                const duration = 600; 
+                const duration = 500; // Swipe rápido
                 const startTime = performance.now();
 
                 function step(currentTime) {
