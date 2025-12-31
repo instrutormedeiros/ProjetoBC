@@ -2994,7 +2994,9 @@ window.clearLocalUserData = function() {
     console.log("🧹 Dados locais limpos com sucesso.");
 };
 
-    // --- LÓGICA DO MODAL DE CONTATO (CURSOS EXTRAS) ---
+    // ============================================================
+    // LÓGICA DO MODAL DE CONTATO (CURSOS EXTRAS)
+    // ============================================================
     window.openContactModal = function(courseName) {
         const modal = document.getElementById('course-contact-modal');
         const overlay = document.getElementById('course-contact-overlay');
@@ -3035,6 +3037,63 @@ window.clearLocalUserData = function() {
 
     document.getElementById('close-contact-modal')?.addEventListener('click', closeContactModal);
     document.getElementById('course-contact-overlay')?.addEventListener('click', closeContactModal);
+
+
+    // ============================================================
+    // LÓGICA DO CARROSSEL DE CURSOS EXTRAS (ARRASTAR E SETAS)
+    // ============================================================
+    (function initExtraCoursesCarousel() {
+        const slider = document.getElementById('extra-courses-scroll');
+        const leftBtn = document.getElementById('scroll-left-btn');
+        const rightBtn = document.getElementById('scroll-right-btn');
+
+        if (!slider) return;
+
+        // --- 1. Lógica das Setas ---
+        if (rightBtn) {
+            rightBtn.addEventListener('click', () => {
+                slider.scrollBy({ left: 340, behavior: 'smooth' }); 
+            });
+        }
+        if (leftBtn) {
+            leftBtn.addEventListener('click', () => {
+                slider.scrollBy({ left: -340, behavior: 'smooth' }); 
+            });
+        }
+
+        // --- 2. Lógica de "Agarrar e Arrastar" (Mouse Drag) ---
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        slider.addEventListener('mousedown', (e) => {
+            isDown = true;
+            slider.classList.add('active'); 
+            slider.classList.remove('snap-x'); 
+            startX = e.pageX - slider.offsetLeft;
+            scrollLeft = slider.scrollLeft;
+        });
+
+        slider.addEventListener('mouseleave', () => {
+            isDown = false;
+            slider.classList.remove('active');
+            slider.classList.add('snap-x'); 
+        });
+
+        slider.addEventListener('mouseup', () => {
+            isDown = false;
+            slider.classList.remove('active');
+            slider.classList.add('snap-x'); 
+        });
+
+        slider.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault(); 
+            const x = e.pageX - slider.offsetLeft;
+            const walk = (x - startX) * 2; 
+            slider.scrollLeft = scrollLeft - walk;
+        });
+    })();
     
     init(); // <--- Inicia o app
 }); // <--- Fecha o DOMContentLoaded
