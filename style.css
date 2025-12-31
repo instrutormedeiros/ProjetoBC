@@ -995,7 +995,7 @@ details[open] summary ~ * {
 }
 
 /* ==========================================================================
-   10. INTEGRAÇÃO CAPA CARROSSEL - V14 (MOBILE PREMIUM & SAFARI FIX)
+   10. INTEGRAÇÃO CAPA CARROSSEL - V15 (SCROLL FIX & SITE WRAPPER)
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;900&display=swap');
@@ -1005,25 +1005,26 @@ details[open] summary ~ * {
     top: 0;
     left: 0;
     width: 100vw;
-    /* MUDANÇA CRÍTICA: 100dvh ignora as barras do navegador */
+    /* Altura dinâmica para corrigir barras do mobile */
     height: 100vh; 
     height: 100dvh; 
     z-index: 99999;
     background-color: #050505;
     overflow: hidden;
     font-family: 'Montserrat', sans-serif;
-    /* VELOCIDADE TURBO: 0.35s (Muito rápido) */
-    transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    /* Velocidade rápida e fluida */
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     transform: translateY(0);
-    /* Impede o navegador de "quicar" no mobile */
-    touch-action: none; 
+    /* Permite gestos verticais nativos */
+    touch-action: pan-y; 
 }
 
 #intro-carousel-wrapper.slide-out {
     transform: translateY(-100%);
+    pointer-events: none; /* Garante que não atrapalhe o site quando subir */
 }
 
-/* --- TÍTULOS (Desktop) --- */
+/* --- TÍTULOS --- */
 #intro-carousel-wrapper h2 {
     font-family: 'Montserrat', sans-serif !important;
     font-weight: 900 !important;
@@ -1035,10 +1036,9 @@ details[open] summary ~ * {
     margin-bottom: 1rem;
     max-width: 800px;
 }
-
 #intro-carousel-wrapper h2 span { font-weight: 900 !important; }
 
-/* --- SUBTÍTULOS (Tags) --- */
+/* --- TAGS --- */
 .intro-panel-content span.font-mono {
     font-family: 'Montserrat', sans-serif !important;
     font-weight: 700 !important;
@@ -1054,7 +1054,7 @@ details[open] summary ~ * {
     border: 1px solid rgba(255,255,255,0.1);
 }
 
-/* --- TEXTOS DESCRITIVOS --- */
+/* --- TEXTOS --- */
 .intro-panel-content p {
     font-weight: 500 !important;
     font-size: 1rem;
@@ -1064,7 +1064,7 @@ details[open] summary ~ * {
     max-width: 450px;
 }
 
-/* --- INDICADOR "ROLE PARA BAIXO" --- */
+/* --- INDICADOR ROLE PARA BAIXO --- */
 .intro-scroll-indicator {
     position: absolute;
     bottom: 25px;
@@ -1083,7 +1083,6 @@ details[open] summary ~ * {
     animation: introFadeMove 2s infinite ease-in-out;
     pointer-events: none;
 }
-
 .intro-scroll-indicator i {
     margin-top: 6px;
     font-size: 1rem;
@@ -1091,33 +1090,28 @@ details[open] summary ~ * {
     font-weight: 900 !important;
     font-style: normal !important;
 }
-
 @keyframes introFadeMove {
     0% { transform: translateX(-50%) translateY(0); opacity: 0.5; }
     50% { transform: translateX(-50%) translateY(8px); opacity: 1; }
     100% { transform: translateX(-50%) translateY(0); opacity: 0.5; }
 }
 
-/* --- IMAGENS --- */
+/* --- VISUAL --- */
 .intro-vignette {
     position: absolute;
     inset: 0;
-    /* Degradê reforçado para leitura */
     background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.4) 100%);
     pointer-events: none;
     z-index: 20;
 }
-
 .intro-epic-panel {
     position: relative;
-    height: 100vh; /* Fallback */
-    height: 100dvh; /* Altura real mobile */
+    height: 100vh; height: 100dvh;
     flex-shrink: 0;
     border-right: 1px solid rgba(255,255,255,0.1);
     overflow: hidden;
     cursor: default;
 }
-
 .intro-bg-image-zoom {
     transition: transform 1.5s cubic-bezier(0.19, 1, 0.22, 1);
     will-change: transform;
@@ -1128,8 +1122,6 @@ details[open] summary ~ * {
     filter: brightness(0.95) contrast(1.05) saturate(1);
 }
 .intro-epic-panel:hover .intro-bg-image-zoom { transform: scale(1.03); filter: brightness(1.05) contrast(1.1); }
-
-/* Desktop Content */
 .intro-panel-content {
     transform: translateY(30px);
     opacity: 0; 
@@ -1138,6 +1130,7 @@ details[open] summary ~ * {
 }
 .intro-epic-panel:hover .intro-panel-content { transform: translateY(0); opacity: 1; }
 
+/* Setas */
 .intro-nav-arrow {
     position: absolute;
     top: 50%;
@@ -1156,84 +1149,50 @@ details[open] summary ~ * {
     z-index: 50;
     transition: all 0.3s ease;
 }
-.intro-nav-arrow:hover {
-    background: rgba(255, 255, 255, 0.3);
-    color: white;
-    transform: scale(1.1);
-}
-
+.intro-nav-arrow:hover { background: rgba(255, 255, 255, 0.3); color: white; transform: scale(1.1); }
 #intro-carousel-track { display: flex; height: 100%; width: max-content; will-change: transform; }
 #intro-carousel-wrapper .absolute.bottom-0.h-1 { display: none; }
 
-/* ==========================================================================
-   MOBILE OPTIMIZATION (< 768px) - CORREÇÃO DE LEITURA
-   ========================================================================== */
+/* --- MOBILE OPTIMIZATION --- */
 @media (max-width: 768px) {
-    
-    /* 1. POSICIONAMENTO SEGURO (SUBIR TUDO) */
     .intro-panel-content {
-        /* Fixamos o conteúdo bem acima da barra de navegação */
         position: absolute;
         bottom: 12% !important; 
         left: 0;
         width: 100%;
         padding-left: 20px !important;
         padding-right: 20px !important;
-        padding-bottom: 0 !important; /* Resetamos padding antigo */
-        
+        padding-bottom: 0 !important;
         opacity: 1 !important;
         transform: translateY(0) !important;
-        
-        /* Fundo escuro atrás do texto para garantir leitura */
         background: linear-gradient(to top, rgba(0,0,0,0.95) 10%, rgba(0,0,0,0) 100%);
         padding-top: 40px;
     }
-
     #intro-carousel-wrapper h2 {
         font-size: 2.2rem !important; 
         line-height: 1.1 !important;
         margin-bottom: 0.5rem;
-        max-width: 100%;
         text-shadow: 0 2px 10px rgba(0,0,0,1); 
     }
-
     .intro-panel-content p {
         font-size: 1rem !important; 
         line-height: 1.4;
-        max-width: 100%;
         color: #f0f0f0 !important;
         text-shadow: 0 1px 4px rgba(0,0,0,1);
     }
-
-    /* 2. ROLE PARA BAIXO (SUBIR TAMBÉM) */
     .intro-scroll-indicator {
-        bottom: 40px; /* Sobe para fugir da barra do Safari */
+        bottom: 40px; 
         font-size: 0.65rem;
-        z-index: 70; /* Acima de tudo */
+        z-index: 70;
         text-shadow: 0 2px 4px rgba(0,0,0,1);
     }
-
-    /* 3. SETAS LATERAIS (ÁREA DE TOQUE MAIOR) */
     .intro-nav-arrow {
-        width: 50px;
-        height: 60px;
-        background: transparent; 
-        border: none;
+        width: 50px; height: 60px;
+        background: transparent; border: none;
         color: rgba(255,255,255,0.4);
     }
     .intro-nav-arrow.left-6 { left: 0px !important; }
     .intro-nav-arrow.right-6 { right: 0px !important; }
-    
-    /* Aumenta zona de clique */
-    .intro-nav-arrow::after {
-        content: '';
-        position: absolute;
-        inset: -10px;
-    }
-
-    /* 4. IMAGEM */
-    .intro-bg-image-zoom {
-        background-position: center center; 
-        transform: none !important; 
-    }
+    .intro-nav-arrow::after { content: ''; position: absolute; inset: -10px; }
+    .intro-bg-image-zoom { background-position: center center; transform: none !important; }
 }
