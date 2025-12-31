@@ -530,69 +530,89 @@ function updateAdminStats(stats) {
 }
 
 
-    window.manageUserAccess = async function(uid) {
-        const op = prompt(
-            "Selecione o Plano:\n" +
-            "1 - MENSAL (30 dias)\n" +
-            "2 - SEMESTRAL (180 dias)\n" +
-            "3 - ANUAL (365 dias)\n" +
-            "4 - VITALÍCIO (10 anos)\n" +
-            "5 - REMOVER PREMIUM (Voltar para Trial)\n" +
-            "6 - PERSONALIZADO (Dias)"
-        );
+  /* === SUBSTITUIR NO ARQUIVO app_final.js === */
 
-        if (!op) return;
+window.manageUserAccess = async function(uid) {
+    const op = prompt(
+        "Selecione a Ação:\n" +
+        "1 - MENSAL (30 dias - Vira Premium)\n" +
+        "2 - SEMESTRAL (180 dias - Vira Premium)\n" +
+        "3 - ANUAL (365 dias - Vira Premium)\n" +
+        "4 - VITALÍCIO (10 anos - Vira Premium)\n" +
+        "5 - REMOVER PREMIUM (Voltar para Trial Vencido)\n" +
+        "6 - PERSONALIZADO (Dias - Vira Premium)\n" +
+        "7 - ESTENDER TRIAL (Dias - Mantém TRIAL)" // <--- NOVA OPÇÃO AQUI
+    );
 
-        let diasParaAdicionar = 0;
-        let nomePlano = '';
-        let novoStatus = 'premium';
+    if (!op) return;
 
-        if (op === '1') { diasParaAdicionar = 30; nomePlano = 'Mensal'; }
-        else if (op === '2') { diasParaAdicionar = 180; nomePlano = 'Semestral'; }
-        else if (op === '3') { diasParaAdicionar = 365; nomePlano = 'Anual'; }
-        else if (op === '4') { diasParaAdicionar = 3650; nomePlano = 'Vitalício'; }
-        else if (op === '5') {
-            // Remover Premium
-            try {
-                // Define data no passado para expirar
-                const ontem = new Date();
-                ontem.setDate(ontem.getDate() - 1);
-                await window.__fbDB.collection('users').doc(uid).update({
-                    status: 'trial',
-                    acesso_ate: ontem.toISOString(),
-                    planType: 'Cancelado'
-                });
-                alert("Acesso Premium removido.");
-                openAdminPanel();
-                return;
-            } catch (e) { alert(e.message); return; }
-        }
-        else if (op === '6') {
-            const i = prompt("Digite a quantidade de dias:");
-            if (!i) return;
-            diasParaAdicionar = parseInt(i);
-            nomePlano = 'Personalizado';
-        } else {
-            return;
-        }
+    let diasParaAdicionar = 0;
+    let nomePlano = '';
+    let novoStatus = 'premium'; // O padrão continua sendo premium para as opções 1 a 4
 
-        // Calcula nova data a partir de AGORA
-        const agora = new Date();
-        const novaData = new Date(agora);
-        novaData.setDate(novaData.getDate() + diasParaAdicionar);
-
+    if (op === '1') { diasParaAdicionar = 30; nomePlano = 'Mensal'; }
+    else if (op === '2') { diasParaAdicionar = 180; nomePlano = 'Semestral'; }
+    else if (op === '3') { diasParaAdicionar = 365; nomePlano = 'Anual'; }
+    else if (op === '4') { diasParaAdicionar = 3650; nomePlano = 'Vitalício'; }
+    
+    else if (op === '5') {
+        // Remover Premium (Lógica Existente)
         try {
+            const ontem = new Date();
+            ontem.setDate(ontem.getDate() - 1);
             await window.__fbDB.collection('users').doc(uid).update({
-                status: novoStatus,
-                acesso_ate: novaData.toISOString(),
-                planType: nomePlano
+                status: 'trial',
+                acesso_ate: ontem.toISOString(),
+                planType: 'Cancelado'
             });
-            alert(`Sucesso! Plano ${nomePlano} ativado até ${novaData.toLocaleDateString()}`);
+            alert("Acesso Premium removido. O aluno voltou para Trial expirado.");
             openAdminPanel();
-        } catch (e) {
-            alert("Erro ao atualizar: " + e.message);
-        }
-    };
+            return;
+        } catch (e) { alert(e.message); return; }
+    }
+    
+    else if (op === '6') {
+        const i = prompt("Digite a quantidade de dias para o PREMIUM:");
+        if (!i) return;
+        diasParaAdicionar = parseInt(i);
+        nomePlano = 'Personalizado (Premium)';
+        novoStatus = 'premium'; // Força Premium
+    }
+    
+    // --- NOVA LÓGICA DO TRIAL ---
+    else if (op === '7') {
+        const i = prompt("Quantos dias de TRIAL você quer dar a mais?");
+        if (!i) return;
+        diasParaAdicionar = parseInt(i);
+        nomePlano = 'Trial Estendido';
+        novoStatus = 'trial'; // <--- AQUI ESTÁ O SEGREDO: Força Trial
+    } 
+    
+    else {
+        return;
+    }
+
+    // Calcula nova data a partir de AGORA
+    const agora = new Date();
+    const novaData = new Date(agora);
+    novaData.setDate(novaData.getDate() + diasParaAdicionar);
+
+    try {
+        await window.__fbDB.collection('users').doc(uid).update({
+            status: novoStatus, // Usa a variável que definimos corretamente acima
+            acesso_ate: novaData.toISOString(),
+            planType: nomePlano
+        });
+        
+        // Feedback visual mais claro
+        const tipoStatus = novoStatus === 'premium' ? 'PREMIUM ⭐' : 'TRIAL ⏳';
+        alert(`Sucesso! Status definido como ${tipoStatus}.\nVálido até ${novaData.toLocaleDateString()}`);
+        
+        openAdminPanel();
+    } catch (e) {
+        alert("Erro ao atualizar: " + e.message);
+    }
+};
    
     // 4. Excluir Usuário (Do Banco de Dados)
     window.deleteUser = async function(uid, name, cpf) {
