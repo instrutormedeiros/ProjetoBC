@@ -156,33 +156,27 @@
             const track = document.getElementById('intro-carousel-track');
             const prevBtn = document.getElementById('intro-btn-prev');
             const nextBtn = document.getElementById('intro-btn-next');
-            
-            // CORREÇÃO CRÍTICA: Identifica quem realmente rola o site
             const mainScroller = document.getElementById('landing-hero') || window;
             
             if (!track || !wrapper) return;
 
             let startX = 0;
             let startY = 0;
-            
-            // DESKTOP: Wheel (Rolagem Rápida)
-            wrapper.addEventListener('wheel', (e) => {
+            let mouseY = 500;
+
+            window.addEventListener('mousemove', (e) => { mouseY = e.clientY; }, { passive: true });
+
+            // DESKTOP: Wheel
+            window.addEventListener('wheel', (e) => {
                 const isHidden = wrapper.classList.contains('slide-out');
-                
-                // Se a capa está visível e rolar pra baixo -> SAI
-                if (!isHidden && e.deltaY > 0) {
-                    dismissIntro();
-                }
-                // Se a capa saiu e rolar pra cima (estando no topo real do site) -> VOLTA
+                if (!isHidden && e.deltaY > 0) dismissIntro();
                 else if (isHidden) {
                     const currentScroll = mainScroller === window ? window.scrollY : mainScroller.scrollTop;
-                    if (currentScroll <= 0 && e.deltaY < -20) {
-                        showIntro();
-                    }
+                    if (currentScroll <= 0 && e.deltaY < -20 && mouseY <= 50) showIntro();
                 }
             }, { passive: true });
 
-            // MOBILE: Touch Logic
+            // MOBILE: Touch
             wrapper.addEventListener('touchstart', (e) => {
                 startX = e.touches[0].clientX;
                 startY = e.touches[0].clientY;
@@ -196,7 +190,7 @@
                 const diffX = startX - currentX;
                 const diffY = startY - currentY;
                 
-                // ROLAR PRA BAIXO (Sair da capa) - Sensibilidade 30px
+                // Rolar pra baixo (Sair)
                 if (diffY > 30 && Math.abs(diffX) < Math.abs(diffY)) {
                     dismissIntro();
                 }
@@ -208,45 +202,26 @@
                 const endY = e.changedTouches[0].clientY;
                 const diffX = startX - endX;
                 const diffY = startY - endY;
-                // SWIPE LATERAL
+                
+                // Swipe Lateral
                 if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 30) {
                     if (diffX > 0) moveCarousel('next'); 
                     else moveCarousel('prev'); 
                 }
             }, { passive: true });
             
-            // MONITORAR ROLAGEM DO SITE (Para voltar a capa)
-            // Agora monitoramos o elemento correto (#landing-hero)
-            const scrollListener = (e) => {
-                 if (!wrapper.classList.contains('slide-out')) return;
-                 // Pega a posição real do scroll
-                 const currentScroll = mainScroller === window ? window.scrollY : mainScroller.scrollTop;
-                 
-                 // Lógica: Se estiver no topo absoluto, monitora touch
-            };
-            
-            // Adicionamos listener de touch no container principal para detectar "puxar pra baixo"
+            // Voltar Capa (Mobile)
             const scrollTarget = document.getElementById('landing-hero') || document;
-            
             let scrollStartY = 0;
-            scrollTarget.addEventListener('touchstart', (e) => {
-                scrollStartY = e.touches[0].clientY;
-            }, { passive: true });
-            
+            scrollTarget.addEventListener('touchstart', (e) => { scrollStartY = e.touches[0].clientY; }, { passive: true });
             scrollTarget.addEventListener('touchmove', (e) => {
                  if (!wrapper.classList.contains('slide-out')) return;
-                 
                  const currentScroll = mainScroller === window ? window.scrollY : mainScroller.scrollTop;
                  const currentY = e.touches[0].clientY;
-                 
-                 // Se estiver EXATAMENTE no topo (0) e puxar pra baixo
-                 if (currentScroll <= 0 && (currentY - scrollStartY > 150)) {
-                     showIntro();
-                 }
+                 if (currentScroll <= 0 && (currentY - scrollStartY > 150)) showIntro();
             }, { passive: true });
 
-
-            // --- LOOP INFINITO ---
+            // --- LOOP ---
             const originalItems = Array.from(track.children);
             [...originalItems, ...originalItems].forEach(item => {
                 const clone = item.cloneNode(true);
@@ -255,7 +230,8 @@
             });
 
             let currentX = 0;
-            let speed = 0.3; 
+            // VELOCIDADE AUTOMÁTICA DOBRADA (Era 0.3, agora 0.6)
+            let speed = 0.6; 
             let isAnimating = true; 
             let itemWidth = 0;
             let totalOriginalWidth = 0;
@@ -284,7 +260,8 @@
                 isAnimating = false;
                 const targetMove = direction === 'next' ? -itemWidth : itemWidth;
                 const startX = currentX;
-                const duration = 400; 
+                // DURAÇÃO DO SWIPE REDUZIDA (Era 400ms, agora 250ms)
+                const duration = 250; 
                 const startTime = performance.now();
 
                 function step(currentTime) {
