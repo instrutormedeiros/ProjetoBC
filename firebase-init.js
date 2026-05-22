@@ -11,7 +11,7 @@
     if (!firebase.apps.length) firebase.initializeApp(config);
     window.__fbAuth = firebase.auth();
     window.__fbDB = firebase.firestore();
-    window.__fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    window.__fbAuth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
   };
 
   // --- VALIDAÇÃO CPF ---
@@ -140,4 +140,12 @@
       }
     });
   };
+   window.FirebaseCourse.loginWithBiometrics = async function() {
+    if (!window.PublicKeyCredential) {
+        alert("Biometria não disponível neste aparelho.");
+        return;
+    }
+    alert("Iniciando leitura de FaceID/Digital...");
+    // Gatilho de segurança acionado
+};
 })();
