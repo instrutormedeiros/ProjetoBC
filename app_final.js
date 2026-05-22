@@ -2111,6 +2111,26 @@ if (managerPanelBtn) {
         console.log("🔓 Botão de gestor clicado!");
         openManagerPanel();
     });
+    // Lógica da busca Admin
+document.getElementById('admin-search-input')?.addEventListener('input', function(e) {
+    const termo = e.target.value.toLowerCase();
+    document.querySelectorAll('#admin-table-body tr').forEach(linha => {
+        linha.style.display = linha.innerText.toLowerCase().includes(termo) ? '' : 'none';
+    });
+});
+
+// Lógica da busca Gestor
+document.getElementById('manager-search-input')?.addEventListener('input', function(e) {
+    const termo = e.target.value.toLowerCase();
+    document.querySelectorAll('#manager-table-body tr').forEach(linha => {
+        linha.style.display = linha.innerText.toLowerCase().includes(termo) ? '' : 'none';
+    });
+});
+
+// Ligar o botão de biometria
+document.getElementById('btn-biometric-login')?.addEventListener('click', () => {
+    FirebaseCourse.loginWithBiometrics();
+});
 }
 
 // --- NOVO: Botão Manual de Salvar Progresso (Rodapé) ---
