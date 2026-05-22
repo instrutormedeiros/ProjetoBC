@@ -1,6 +1,58 @@
 /* === ARQUIVO app_final.js (VERSÃO FINAL V10.1 - CORREÇÃO TOTAL MODULES) === */
 
 document.addEventListener('DOMContentLoaded', () => {
+    // ============================================================
+// SISTEMA TÁTICO DE BUSCA EM TEMPO REAL (BLINDADO)
+// ============================================================
+window.filterAdminTable = function() {
+    const input = document.getElementById('admin-search-input');
+    if (!input) return;
+    const termo = input.value.toLowerCase();
+    const linhas = document.querySelectorAll('#admin-table-body tr');
+    linhas.forEach(linha => {
+        linha.style.display = linha.innerText.toLowerCase().includes(termo) ? '' : 'none';
+    });
+};
+
+window.filterManagerTable = function() {
+    const input = document.getElementById('manager-search-input');
+    const select = document.getElementById('mgr-filter-turma');
+    const selectedTurma = select ? select.value : 'TODOS';
+    
+    if (!window.managerCachedUsers) return;
+
+    let filteredList = window.managerCachedUsers;
+
+    // Filtra por Turma do Select
+    if (selectedTurma !== 'TODOS') {
+        filteredList = window.managerCachedUsers.filter(u => u.company === selectedTurma);
+    }
+
+    // Filtra por Texto do Input (Nome, Email ou CPF)
+    if (input && input.value) {
+        const termo = input.value.toLowerCase();
+        filteredList = filteredList.filter(u => 
+            (u.name || '').toLowerCase().includes(termo) || 
+            (u.email || '').toLowerCase().includes(termo) || 
+            (u.cpf || '').toLowerCase().includes(termo)
+        );
+    }
+
+    // Chama o renderizador da sua tabela passando os dados filtrados
+    if (typeof renderManagerTable === 'function') {
+        renderManagerTable(filteredList);
+    }
+};
+
+// Deixa o documento inteiro escutando a digitação (Evita perder o ouvinte)
+document.body.addEventListener('input', (e) => {
+    if (e.target.id === 'admin-search-input') {
+        window.filterAdminTable();
+    }
+    if (e.target.id === 'manager-search-input') {
+        window.filterManagerTable();
+    }
+});
 
     // --- VARIÁVEIS GLOBAIS DO APP ---
     const contentArea = document.getElementById('content-area');
