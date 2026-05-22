@@ -1196,3 +1196,20 @@ details[open] summary ~ * {
     .intro-nav-arrow::after { content: ''; position: absolute; inset: -10px; }
     .intro-bg-image-zoom { background-position: center center; transform: none !important; }
 }
+/* === DESIGN DE ALTA PERFORMANCE === */
+.glass-panel {
+    background: rgba(17, 24, 39, 0.6) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.search-input-elite {
+    width: 100%;
+    padding: 12px 15px 12px 45px;
+    background: rgba(31, 41, 55, 0.8) !important;
+    border: 1px solid rgba(234, 88, 12, 0.3) !important;
+    border-radius: 12px;
+    color: white;
+    transition: all 0.3s ease;
+}
