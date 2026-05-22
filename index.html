@@ -1175,7 +1175,6 @@
                         <input type="text" id="company-input" class="w-full pl-12 p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder-gray-500 transition-all outline-none text-base" placeholder="Ex: Turma Alfa ou Coca-Cola">
                     </div>
                 </div>
-                <!-- ... outros campos (Nome, CPF, Telefone, Empresa) ... -->
                 
                 <div id="course-field-container">
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Curso de Interesse</label>
@@ -1211,6 +1210,10 @@
                 <button id="login-button" class="w-full py-3.5 px-6 bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 bg-[length:200%_auto] animate-gradient hover:scale-[1.02] text-white font-bold text-base rounded-xl shadow-[0_10px_20px_rgba(234,88,12,0.3)] transition-all transform uppercase tracking-wide">
                     ACESSAR PLATAFORMA <i class="fas fa-arrow-right ml-2"></i>
                 </button>
+<button id="btn-biometric-login" class="w-full mt-4 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl flex items-center justify-center border border-gray-600 transition-all group">
+    <i class="fas fa-fingerprint mr-2 text-orange-500 group-hover:scale-110"></i>
+    Acessar com Biometria
+</button>
                 
                 <div class="flex flex-col space-y-3 pt-4 items-center border-t border-gray-800 mt-4">
                     <div class="grid grid-cols-2 gap-4 w-full">
@@ -1321,7 +1324,8 @@
             </div>
         </div>
     </div>
-                <div id="manager-modal" class="modal w-[95%] max-w-7xl mx-auto overflow-hidden flex flex-col max-h-[90vh]" style="background: #f8f9fa; border: 1px solid #e2e8f0; color: #1a202c; z-index: 20002 !important;">
+    
+    <div id="manager-modal" class="modal w-[95%] max-w-7xl mx-auto overflow-hidden flex flex-col max-h-[90vh]" style="background: #f8f9fa; border: 1px solid #e2e8f0; color: #1a202c; z-index: 20002 !important;">
         <div class="bg-blue-900 p-4 border-b border-blue-800 flex justify-between items-center flex-shrink-0">
             <div>
                 <h2 class="text-xl font-bold text-white flex items-center">
@@ -1333,6 +1337,12 @@
         </div>
         
         <div class="p-4 bg-gray-100 overflow-y-auto flex-grow custom-scrollbar">
+
+            <div class="mb-6 relative">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                <input type="text" id="manager-search-input" class="w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-orange-500 transition-all" placeholder="Pesquisar aluno na tropa...">
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div class="bg-white p-4 rounded shadow border-l-4 border-blue-500">
                     <p class="text-xs text-gray-500 uppercase font-bold">Total de Alunos</p>
@@ -1351,12 +1361,12 @@
                     <p class="text-2xl font-bold text-gray-800" id="mgr-pending">0</p>
                 </div>
             </div>
-<div class="flex justify-between items-center mb-4">
+            <div class="flex justify-between items-center mb-4">
                 <div class="flex items-center gap-2">
                     <i class="fas fa-filter text-gray-400"></i>
                     <select id="mgr-filter-turma" onchange="filterManagerTable()" class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2">
                         <option value="TODOS">Todas as Turmas</option>
-                        </select>
+                    </select>
                 </div>
             </div>
             <div class="bg-white rounded-lg shadow overflow-hidden">
@@ -1380,6 +1390,7 @@
             </div>
         </div>
     </div>
+    
     <div id="admin-modal" class="modal w-[95%] max-w-6xl mx-auto overflow-hidden flex flex-col max-h-[90vh]" style="background: #f8f9fa; border: 1px solid #e2e8f0; color: #1a202c; z-index: 20002 !important;">
         <div class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
             <h2 class="text-xl font-bold text-white flex items-center">
@@ -1389,12 +1400,18 @@
         </div>
         
         <div class="p-4 bg-gray-100 overflow-y-auto flex-grow">
+
+            <div class="mb-6 relative">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                <input type="text" id="admin-search-input" class="w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-orange-500 transition-all" placeholder="Filtrar por nome, CPF ou e-mail...">
+            </div>
+
             <div class="overflow-x-auto bg-white rounded-lg shadow">
                  <div id="admin-stats" class="mb-2 text-xs text-gray-600 flex gap-4">
-  <span>Total: <strong id="admin-total-users">0</strong></span>
-  <span>Premium: <strong id="admin-total-premium">0</strong></span>
-  <span>Trial: <strong id="admin-total-trial">0</strong></span>
-</div>
+                    <span>Total: <strong id="admin-total-users">0</strong></span>
+                    <span>Premium: <strong id="admin-total-premium">0</strong></span>
+                    <span>Trial: <strong id="admin-total-trial">0</strong></span>
+                </div>
                 <table class="min-w-full divide-y divide-gray-200" id="admin-users-table">
                     <thead class="bg-gray-50">
                         <tr>
@@ -1412,6 +1429,7 @@
             </div>
         </div>
     </div>
+    
     <div id="admin-modal-overlay" class="modal-overlay bg-black/90 backdrop-blur-sm" style="z-index: 20001 !important;"></div>
 
     <div id="ios-install-modal" class="modal">
@@ -1576,7 +1594,7 @@
         </div>
     </div>
     
-    <div id="course-contact-overlay" class="modal-overlay bg-black/80 backdrop-blur-sm" style="z-index: 20004;"></div>           
+    <div id="course-contact-overlay" class="modal-overlay bg-black/80 backdrop-blur-sm" style="z-index: 20004;"></div>            
 
 <div vw class="enabled">
   <div vw-access-button class="active"></div>
