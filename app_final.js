@@ -14,6 +14,7 @@ window.filterAdminTable = function() {
     });
 };
 
+// 1. Substitua sua função window.filterManagerTable atual por esta:
 window.filterManagerTable = function() {
     const input = document.getElementById('manager-search-input');
     const select = document.getElementById('mgr-filter-turma');
@@ -23,12 +24,12 @@ window.filterManagerTable = function() {
 
     let filteredList = window.managerCachedUsers;
 
-    // Filtra por Turma do Select
+    // Filtro por Turma
     if (selectedTurma !== 'TODOS') {
         filteredList = window.managerCachedUsers.filter(u => u.company === selectedTurma);
     }
 
-    // Filtra por Texto do Input (Nome, Email ou CPF)
+    // Filtro em Tempo Real por Texto (Nome, Email ou CPF)
     if (input && input.value) {
         const termo = input.value.toLowerCase();
         filteredList = filteredList.filter(u => 
@@ -38,13 +39,12 @@ window.filterManagerTable = function() {
         );
     }
 
-    // Chama o renderizador da sua tabela passando os dados filtrados
-    if (typeof renderManagerTable === 'function') {
-        renderManagerTable(filteredList);
-    }
+    // Renderiza a tabela filtrada
+    renderManagerTable(filteredList);
 };
 
-// Deixa o documento inteiro escutando a digitação (Evita perder o ouvinte)
+// 2. Garanta que o evento de digitação esteja no corpo do documento (blindagem)
+// Cole isso dentro do seu document.addEventListener('DOMContentLoaded', ...)
 document.body.addEventListener('input', (e) => {
     if (e.target.id === 'admin-search-input') {
         window.filterAdminTable();
