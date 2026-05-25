@@ -2158,32 +2158,21 @@ window.manageUserAccess = async function(uid) {
             nextButton?.classList.remove('blinking-button');
         });
 const managerPanelBtn = document.getElementById("manager-panel-btn");
-if (managerPanelBtn) {
-    managerPanelBtn.addEventListener("click", () => {
-        console.log("🔓 Botão de gestor clicado!");
-        openManagerPanel();
-    });
-    // Lógica da busca Admin
-document.getElementById('admin-search-input')?.addEventListener('input', function(e) {
-    const termo = e.target.value.toLowerCase();
-    document.querySelectorAll('#admin-table-body tr').forEach(linha => {
-        linha.style.display = linha.innerText.toLowerCase().includes(termo) ? '' : 'none';
-    });
-});
+        if (managerPanelBtn) {
+            managerPanelBtn.addEventListener("click", () => {
+                openManagerPanel();
+            });
+        }
 
-// Lógica da busca Gestor
-document.getElementById('manager-search-input')?.addEventListener('input', function(e) {
-    const termo = e.target.value.toLowerCase();
-    document.querySelectorAll('#manager-table-body tr').forEach(linha => {
-        linha.style.display = linha.innerText.toLowerCase().includes(termo) ? '' : 'none';
-    });
-});
-
-// Ligar o botão de biometria
-document.getElementById('btn-biometric-login')?.addEventListener('click', () => {
-    FirebaseCourse.loginWithBiometrics();
-});
-}
+        // Ligar o botão de biometria (Agora FORA do bloqueio, funciona 100%)
+        document.getElementById('btn-biometric-login')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof FirebaseCourse !== 'undefined' && FirebaseCourse.loginWithBiometrics) {
+                FirebaseCourse.loginWithBiometrics();
+            } else {
+                alert("Aguarde, o módulo de segurança está carregando...");
+            }
+        });
 
 // --- NOVO: Botão Manual de Salvar Progresso (Rodapé) ---
 document.getElementById('manual-sync-btn')?.addEventListener('click', async () => {
@@ -2755,18 +2744,28 @@ if (filterSelect) {
 
 // 2. Função de Filtro Inteligente
 window.filterManagerTable = function() {
+    const input = document.getElementById('manager-search-input');
     const select = document.getElementById('mgr-filter-turma');
-    const selectedTurma = select ? select.value : 'TODOS';
     
-    if (!window.managerCachedUsers) return;
-
-    let filteredList = window.managerCachedUsers;
-
-    if (selectedTurma !== 'TODOS') {
-        filteredList = window.managerCachedUsers.filter(u => u.company === selectedTurma);
-    }
-
-    renderManagerTable(filteredList);
+    const termo = input ? input.value.toLowerCase() : '';
+    const turmaSelecionada = select ? select.value.toUpperCase() : 'TODOS';
+    
+    const linhas = document.querySelectorAll('#manager-table-body tr');
+    
+    linhas.forEach(linha => {
+        // Ignora a linha de "Carregando..."
+        if (linha.cells.length < 3) return; 
+        
+        const textoLinha = linha.innerText.toLowerCase();
+        // A turma está na 3ª coluna (índice 2)
+        const turmaDaLinha = linha.cells[2].innerText.trim().toUpperCase();
+        
+        const bateTexto = textoLinha.includes(termo);
+        const bateTurma = (turmaSelecionada === 'TODOS' || turmaDaLinha.includes(turmaSelecionada));
+        
+        // Só exibe a linha se bater com a busca E com a turma selecionada
+        linha.style.display = (bateTexto && bateTurma) ? '' : 'none';
+    });
 };
 
 // 3. Função de Tabela com Progresso Corrigido
