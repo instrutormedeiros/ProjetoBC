@@ -4,13 +4,50 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================================
 // SISTEMA TÁTICO DE BUSCA EM TEMPO REAL (BLINDADO)
 // ============================================================
+const normalizeSearchText = (value) => String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+const onlyDigits = (value) => String(value || '').replace(/\D/g, '');
+
+const userMatchesSearch = (user, searchTerm) => {
+    const term = normalizeSearchText(searchTerm);
+    const termDigits = onlyDigits(searchTerm);
+
+    if (!term && !termDigits) return true;
+
+    const fields = [
+        user?.name,
+        user?.email,
+        user?.cpf,
+        user?.phone,
+        user?.company,
+        user?.courseType,
+        user?.status,
+        user?.planType
+    ];
+
+    const textMatch = term && fields.some(field => normalizeSearchText(field).includes(term));
+    const digitMatch = termDigits && [user?.cpf, user?.phone].some(field => onlyDigits(field).includes(termDigits));
+
+    return Boolean(textMatch || digitMatch);
+};
+
 window.filterAdminTable = function() {
     const input = document.getElementById('admin-search-input');
     if (!input) return;
-    const termo = input.value.toLowerCase();
+    const termo = normalizeSearchText(input.value);
+    const termoDigits = onlyDigits(input.value);
     const linhas = document.querySelectorAll('#admin-table-body tr');
     linhas.forEach(linha => {
-        linha.style.display = linha.innerText.toLowerCase().includes(termo) ? '' : 'none';
+        const rowText = normalizeSearchText(linha.innerText);
+        const rowDigits = onlyDigits(linha.innerText);
+        const matchesEmpty = !termo && !termoDigits;
+        const matchesText = termo && rowText.includes(termo);
+        const matchesDigits = termoDigits && rowDigits.includes(termoDigits);
+        linha.style.display = (matchesEmpty || matchesText || matchesDigits) ? '' : 'none';
     });
 };
 
@@ -30,41 +67,21 @@ window.filterManagerTable = function() {
 
     // Filtra por Texto do Input (Nome, Email ou CPF)
     if (input && input.value) {
-        const termo = input.value.toLowerCase();
-        filteredList = filteredList.filter(u => 
-            (u.name || '').toLowerCase().includes(termo) || 
-            (u.email || '').toLowerCase().includes(termo) || 
-            (u.cpf || '').toLowerCase().includes(termo)
-        );
+        filteredList = filteredList.filter(u => userMatchesSearch(u, input.value));
     }
 
-    // Chama o renderizador da tabela — suporta tanto escopo local quanto global
-    if (typeof window.renderManagerTable === 'function') {
-        window.renderManagerTable(filteredList);
-    } else {
-        // Fallback: filtro direto no DOM caso renderManagerTable não esteja exposta
-        const tbody = document.getElementById('manager-table-body');
-        if (!tbody) return;
-        tbody.querySelectorAll('tr').forEach(row => {
-            const text = row.innerText.toLowerCase();
-            const termo = input ? input.value.toLowerCase() : '';
-            const matchText = text.includes(termo);
-            const matchTurma = selectedTurma === 'TODOS' || text.includes(selectedTurma.toLowerCase());
-            row.style.display = (matchText && matchTurma) ? '' : 'none';
-        });
+    // Chama o renderizador da sua tabela passando os dados filtrados
+    if (typeof renderManagerTable === 'function') {
+        renderManagerTable(filteredList);
     }
 };
 
-// Listener global unificado — cobre busca de módulos, admin e gestor
+// Deixa o documento inteiro escutando a digitação (Evita perder o ouvinte)
 document.body.addEventListener('input', (e) => {
     if (e.target.id === 'admin-search-input') {
         window.filterAdminTable();
     }
     if (e.target.id === 'manager-search-input') {
-        window.filterManagerTable();
-    }
-    // Busca do select de turma do painel gestor
-    if (e.target.id === 'mgr-filter-turma') {
         window.filterManagerTable();
     }
 });
@@ -2178,7 +2195,15 @@ if (managerPanelBtn) {
         console.log("🔓 Botão de gestor clicado!");
         openManagerPanel();
     });
-    // Buscas Admin e Gestor — gerenciadas pelo listener global no body (ver addEventListeners)
+    // Lógica da busca Admin
+document.getElementById('admin-search-input')?.addEventListener('input', function(e) {
+    window.filterAdminTable();
+});
+
+// Lógica da busca Gestor
+document.getElementById('manager-search-input')?.addEventListener('input', function(e) {
+    window.filterManagerTable();
+});
 
 // Ligar o botão de biometria
 document.getElementById('btn-biometric-login')?.addEventListener('click', () => {
@@ -2224,50 +2249,32 @@ document.getElementById('manual-sync-btn')?.addEventListener('click', async () =
         // 2. Busca
         document.body.addEventListener('input', e => {
             if(e.target.matches('.module-search')) {
-                const s = e.target.value.toLowerCase().trim();
+                const s = e.target.value.toLowerCase();
                 const container = e.target.closest('div.relative');
-                if (!container) return;
-                const accordionContainer = container.nextElementSibling;
-                if (!accordionContainer) return;
-
-                if (s.length === 0) {
-                    // Reseta: fecha todos os painéis e mostra todos os itens
-                    accordionContainer.querySelectorAll('.module-list-item').forEach(i => i.style.display = '');
-                    accordionContainer.querySelectorAll('.accordion-button').forEach(btn => {
-                        btn.classList.remove('active');
-                        const panel = btn.nextElementSibling;
-                        if (panel) panel.style.maxHeight = null;
-                    });
-                    return;
-                }
-
-                accordionContainer.querySelectorAll('.module-list-item').forEach(i => {
-                    const text = i.textContent.toLowerCase();
-                    const match = text.includes(s);
-                    i.style.display = match ? 'flex' : 'none';
-                    if (match) {
-                        // Garante que o painel pai esteja aberto
-                        const panel = i.closest('.accordion-panel');
-                        if (panel) {
-                            const btn = panel.previousElementSibling;
-                            if (btn && !btn.classList.contains('active')) {
-                                btn.classList.add('active');
-                                panel.style.maxHeight = panel.scrollHeight + 'px';
+                if (container) {
+                    const accordionContainer = container.nextElementSibling;
+                    if (accordionContainer) {
+                            accordionContainer.querySelectorAll('.module-list-item').forEach(i => {
+                            const text = i.textContent.toLowerCase();
+                            const match = text.includes(s);
+                            i.style.display = match ? 'flex' : 'none';
+                            if(match && s.length > 0) {
+                                const panel = i.closest('.accordion-panel');
+                                const btn = panel.previousElementSibling;
+                                if(!btn.classList.contains('active')) {
+                                    btn.classList.add('active');
+                                    panel.style.maxHeight = panel.scrollHeight + "px";
+                                }
                             }
+                        });
+                        if(s.length === 0) {
+                            accordionContainer.querySelectorAll('.accordion-button').forEach(btn => {
+                                btn.classList.remove('active');
+                                btn.nextElementSibling.style.maxHeight = null;
+                            });
                         }
                     }
-                });
-
-                // Esconde categorias completamente vazias durante a busca
-                accordionContainer.querySelectorAll('.accordion-panel').forEach(panel => {
-                    const visibleItems = panel.querySelectorAll('.module-list-item[style="display: flex;"]');
-                    const hasVisible = [...panel.querySelectorAll('.module-list-item')].some(i => i.style.display !== 'none');
-                    const btn = panel.previousElementSibling;
-                    if (!hasVisible && btn) {
-                        btn.classList.remove('active');
-                        panel.style.maxHeight = null;
-                    }
-                });
+                }
             }
         });
 
@@ -2772,7 +2779,26 @@ if (filterSelect) {
     }
 };
 
-// Nota: filterManagerTable está definida no topo do arquivo (listener global).
+// 2. Função de Filtro Inteligente
+window.filterManagerTable = function() {
+    const input = document.getElementById('manager-search-input');
+    const select = document.getElementById('mgr-filter-turma');
+    const selectedTurma = select ? select.value : 'TODOS';
+    
+    if (!window.managerCachedUsers) return;
+
+    let filteredList = window.managerCachedUsers;
+
+    if (selectedTurma !== 'TODOS') {
+        filteredList = window.managerCachedUsers.filter(u => u.company === selectedTurma);
+    }
+
+    if (input && input.value) {
+        filteredList = filteredList.filter(u => userMatchesSearch(u, input.value));
+    }
+
+    renderManagerTable(filteredList);
+};
 
 // 3. Função de Tabela com Progresso Corrigido
 window.renderManagerTable = function(usersList) {
