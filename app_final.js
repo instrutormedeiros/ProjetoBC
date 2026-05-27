@@ -38,18 +38,33 @@ window.filterManagerTable = function() {
         );
     }
 
-    // Chama o renderizador da sua tabela passando os dados filtrados
-    if (typeof renderManagerTable === 'function') {
-        renderManagerTable(filteredList);
+    // Chama o renderizador da tabela — suporta tanto escopo local quanto global
+    if (typeof window.renderManagerTable === 'function') {
+        window.renderManagerTable(filteredList);
+    } else {
+        // Fallback: filtro direto no DOM caso renderManagerTable não esteja exposta
+        const tbody = document.getElementById('manager-table-body');
+        if (!tbody) return;
+        tbody.querySelectorAll('tr').forEach(row => {
+            const text = row.innerText.toLowerCase();
+            const termo = input ? input.value.toLowerCase() : '';
+            const matchText = text.includes(termo);
+            const matchTurma = selectedTurma === 'TODOS' || text.includes(selectedTurma.toLowerCase());
+            row.style.display = (matchText && matchTurma) ? '' : 'none';
+        });
     }
 };
 
-// Deixa o documento inteiro escutando a digitação (Evita perder o ouvinte)
+// Listener global unificado — cobre busca de módulos, admin e gestor
 document.body.addEventListener('input', (e) => {
     if (e.target.id === 'admin-search-input') {
         window.filterAdminTable();
     }
     if (e.target.id === 'manager-search-input') {
+        window.filterManagerTable();
+    }
+    // Busca do select de turma do painel gestor
+    if (e.target.id === 'mgr-filter-turma') {
         window.filterManagerTable();
     }
 });
@@ -2163,21 +2178,7 @@ if (managerPanelBtn) {
         console.log("🔓 Botão de gestor clicado!");
         openManagerPanel();
     });
-    // Lógica da busca Admin
-document.getElementById('admin-search-input')?.addEventListener('input', function(e) {
-    const termo = e.target.value.toLowerCase();
-    document.querySelectorAll('#admin-table-body tr').forEach(linha => {
-        linha.style.display = linha.innerText.toLowerCase().includes(termo) ? '' : 'none';
-    });
-});
-
-// Lógica da busca Gestor
-document.getElementById('manager-search-input')?.addEventListener('input', function(e) {
-    const termo = e.target.value.toLowerCase();
-    document.querySelectorAll('#manager-table-body tr').forEach(linha => {
-        linha.style.display = linha.innerText.toLowerCase().includes(termo) ? '' : 'none';
-    });
-});
+    // Buscas Admin e Gestor — gerenciadas pelo listener global no body (ver addEventListeners)
 
 // Ligar o botão de biometria
 document.getElementById('btn-biometric-login')?.addEventListener('click', () => {
@@ -2223,32 +2224,50 @@ document.getElementById('manual-sync-btn')?.addEventListener('click', async () =
         // 2. Busca
         document.body.addEventListener('input', e => {
             if(e.target.matches('.module-search')) {
-                const s = e.target.value.toLowerCase();
+                const s = e.target.value.toLowerCase().trim();
                 const container = e.target.closest('div.relative');
-                if (container) {
-                    const accordionContainer = container.nextElementSibling;
-                    if (accordionContainer) {
-                            accordionContainer.querySelectorAll('.module-list-item').forEach(i => {
-                            const text = i.textContent.toLowerCase();
-                            const match = text.includes(s);
-                            i.style.display = match ? 'flex' : 'none';
-                            if(match && s.length > 0) {
-                                const panel = i.closest('.accordion-panel');
-                                const btn = panel.previousElementSibling;
-                                if(!btn.classList.contains('active')) {
-                                    btn.classList.add('active');
-                                    panel.style.maxHeight = panel.scrollHeight + "px";
-                                }
+                if (!container) return;
+                const accordionContainer = container.nextElementSibling;
+                if (!accordionContainer) return;
+
+                if (s.length === 0) {
+                    // Reseta: fecha todos os painéis e mostra todos os itens
+                    accordionContainer.querySelectorAll('.module-list-item').forEach(i => i.style.display = '');
+                    accordionContainer.querySelectorAll('.accordion-button').forEach(btn => {
+                        btn.classList.remove('active');
+                        const panel = btn.nextElementSibling;
+                        if (panel) panel.style.maxHeight = null;
+                    });
+                    return;
+                }
+
+                accordionContainer.querySelectorAll('.module-list-item').forEach(i => {
+                    const text = i.textContent.toLowerCase();
+                    const match = text.includes(s);
+                    i.style.display = match ? 'flex' : 'none';
+                    if (match) {
+                        // Garante que o painel pai esteja aberto
+                        const panel = i.closest('.accordion-panel');
+                        if (panel) {
+                            const btn = panel.previousElementSibling;
+                            if (btn && !btn.classList.contains('active')) {
+                                btn.classList.add('active');
+                                panel.style.maxHeight = panel.scrollHeight + 'px';
                             }
-                        });
-                        if(s.length === 0) {
-                            accordionContainer.querySelectorAll('.accordion-button').forEach(btn => {
-                                btn.classList.remove('active');
-                                btn.nextElementSibling.style.maxHeight = null;
-                            });
                         }
                     }
-                }
+                });
+
+                // Esconde categorias completamente vazias durante a busca
+                accordionContainer.querySelectorAll('.accordion-panel').forEach(panel => {
+                    const visibleItems = panel.querySelectorAll('.module-list-item[style="display: flex;"]');
+                    const hasVisible = [...panel.querySelectorAll('.module-list-item')].some(i => i.style.display !== 'none');
+                    const btn = panel.previousElementSibling;
+                    if (!hasVisible && btn) {
+                        btn.classList.remove('active');
+                        panel.style.maxHeight = null;
+                    }
+                });
             }
         });
 
@@ -2753,21 +2772,7 @@ if (filterSelect) {
     }
 };
 
-// 2. Função de Filtro Inteligente
-window.filterManagerTable = function() {
-    const select = document.getElementById('mgr-filter-turma');
-    const selectedTurma = select ? select.value : 'TODOS';
-    
-    if (!window.managerCachedUsers) return;
-
-    let filteredList = window.managerCachedUsers;
-
-    if (selectedTurma !== 'TODOS') {
-        filteredList = window.managerCachedUsers.filter(u => u.company === selectedTurma);
-    }
-
-    renderManagerTable(filteredList);
-};
+// Nota: filterManagerTable está definida no topo do arquivo (listener global).
 
 // 3. Função de Tabela com Progresso Corrigido
 window.renderManagerTable = function(usersList) {
